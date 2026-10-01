@@ -106,14 +106,41 @@ export function createPlacesRepository(db) {
       await conn('places').where({ id }).update(toRow(conn, fields));
     },
 
-    async addModerationEvent({ placeId, actorId, action, fromStatus, toStatus }, conn = db) {
+    async addModerationEvent({ placeId, actorId, action, fromStatus, toStatus, note = null }, conn = db) {
       await conn('place_moderation_events').insert({
         place_id: placeId,
         actor_id: actorId,
         action,
         from_status: fromStatus,
         to_status: toStatus,
+        note,
       });
+    },
+
+    // Any status; for the moderation queue (oldest first) and "my submissions" (newest first).
+    async listForModeration({ status, createdBy, oldestFirst, page, limit }) {
+      const filtered = () => {
+        const query = fromPlaces(db);
+        if (status) query.where('p.status', status);
+        if (createdBy) query.where('p.created_by', createdBy);
+        return query;
+      };
+      const pageQuery = filtered()
+        .select(placeColumns(db))
+        .orderBy('p.created_at', oldestFirst ? 'asc' : 'desc')
+        .orderBy('p.id')
+        .limit(limit)
+        .offset((page - 1) * limit);
+
+      const [places, [{ total }]] = await Promise.all([pageQuery, filtered().count({ total: '*' })]);
+      return { places, total: Number(total) };
+    },
+
+    listModerationEvents(placeId) {
+      return db('place_moderation_events')
+        .select('action', 'from_status', 'to_status', 'note', 'created_at')
+        .where({ place_id: placeId })
+        .orderBy('created_at', 'asc');
     },
   };
 }

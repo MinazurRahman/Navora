@@ -1,4 +1,4 @@
-import { ForbiddenError, NotFoundError } from '../../shared/errors/AppError.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors/AppError.js';
 import { isModerator } from '../../shared/auth/authorization.js';
 import { buildPaginationMeta } from '../../shared/validation/common.schemas.js';
 import { toPlaceDto } from './places.mapper.js';
@@ -95,6 +95,51 @@ export function createPlacesService({ placesRepository, categoriesService, trans
         );
         return toPlaceDto(await placesRepository.findById(id, trx));
       });
+    },
+
+    // Moderator decision on a PENDING submission. decision: 'APPROVED' | 'REJECTED'.
+    async moderate(id, user, decision, note) {
+      return transaction(async (trx) => {
+        const place = await placesRepository.findById(id, trx, { lock: true });
+        if (!place) throw notFound();
+        if (place.status !== 'PENDING') {
+          throw new ConflictError(
+            `Only PENDING places can be approved or rejected (this one is ${place.status})`,
+            'INVALID_STATUS_TRANSITION',
+          );
+        }
+
+        await placesRepository.update(id, { status: decision }, trx);
+        await placesRepository.addModerationEvent(
+          { placeId: id, actorId: user.id, action: decision, fromStatus: 'PENDING', toStatus: decision, note },
+          trx,
+        );
+        return toPlaceDto(await placesRepository.findById(id, trx));
+      });
+    },
+
+    async moderationQueue(query) {
+      const { places, total } = await placesRepository.listForModeration({ ...query, oldestFirst: true });
+      return { places: places.map(toPlaceDto), meta: buildPaginationMeta(query, total) };
+    },
+
+    async mySubmissions(query, user) {
+      const { places, total } = await placesRepository.listForModeration({ ...query, createdBy: user.id });
+      return { places: places.map(toPlaceDto), meta: buildPaginationMeta(query, total) };
+    },
+
+    // Status history incl. rejection reasons: submitter and moderators only.
+    async moderationHistory(id, user) {
+      const place = await findVisible(id, user);
+      if (!isModerator(user) && place.created_by !== user.id) throw notFound();
+      const events = await placesRepository.listModerationEvents(id);
+      return events.map((e) => ({
+        action: e.action,
+        fromStatus: e.from_status,
+        toStatus: e.to_status,
+        note: e.note,
+        createdAt: e.created_at,
+      }));
     },
 
     // DELETE archives: saved itineraries keep referring to a real row.

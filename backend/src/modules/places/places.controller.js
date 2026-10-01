@@ -31,5 +31,27 @@ export function createPlacesController(placesService) {
     async archive(req, res) {
       sendSuccess(res, await placesService.archive(req.validated.params.id, req.user));
     },
+
+    async mine(req, res) {
+      sendPage(res, await placesService.mySubmissions(req.validated.query, req.user));
+    },
+
+    async moderationQueue(req, res) {
+      sendPage(res, await placesService.moderationQueue(req.validated.query));
+    },
+
+    async approve(req, res) {
+      const { id } = req.validated.params;
+      sendSuccess(res, await placesService.moderate(id, req.user, 'APPROVED', req.validated.body.note));
+    },
+
+    async reject(req, res) {
+      const { id } = req.validated.params;
+      sendSuccess(res, await placesService.moderate(id, req.user, 'REJECTED', req.validated.body.reason));
+    },
+
+    async moderationHistory(req, res) {
+      sendSuccess(res, await placesService.moderationHistory(req.validated.params.id, req.user));
+    },
   };
 }

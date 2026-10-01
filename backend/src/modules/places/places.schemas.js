@@ -59,6 +59,25 @@ export const nearbyPlacesQuerySchema = listPlacesQuerySchema.extend({
   radiusKm: queryNumber().pipe(z.number().gt(0).max(50)).default(5),
 });
 
+const placeStatus = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED']);
+
+export const moderationQueueQuerySchema = paginationQuerySchema.extend({
+  status: placeStatus.default('PENDING'),
+});
+
+export const mySubmissionsQuerySchema = paginationQuerySchema.extend({
+  status: placeStatus.optional(),
+});
+
+export const approvePlaceSchema = z.object({
+  note: z.string().trim().max(1000).optional(),
+});
+
+// The submitter sees this reason, so it is required.
+export const rejectPlaceSchema = z.object({
+  reason: z.string().trim().min(1).max(1000),
+});
+
 export const searchPlacesQuerySchema = listPlacesQuerySchema.extend({
   q: z.string().trim().min(1).max(100),
 });

@@ -70,6 +70,18 @@ TEST_DATABASE_URL=postgres://navora:navora_dev_password@localhost:5433/navora_te
 | POST | `/api/v1/places` | Bearer | Submit a place → `PENDING` (moderators: `APPROVED`) |
 | PATCH | `/api/v1/places/:id` | Bearer | Submitter: own `PENDING`/`REJECTED` (rejected → `PENDING`). Moderators: any |
 | DELETE | `/api/v1/places/:id` | Bearer | Archives the place (same permissions as PATCH) |
+| GET | `/api/v1/places/mine` | Bearer | My submissions, any status (`?status=` filter) |
+| GET | `/api/v1/places/:id/moderation-events` | Bearer | Status history incl. rejection reasons (submitter, moderators) |
+| GET | `/api/v1/places/moderation` | Moderator | Queue, oldest first (`?status=`, default `PENDING`) |
+| POST | `/api/v1/places/:id/approve` | Moderator | `{ note? }` — PENDING → APPROVED |
+| POST | `/api/v1/places/:id/reject` | Moderator | `{ reason }` — PENDING → REJECTED (submitter can then edit → PENDING) |
+| GET | `/api/v1/places/:id/reviews` | – | Reviews, newest first, paginated |
+| POST | `/api/v1/places/:id/reviews` | Bearer | `{ rating: 1–5 integer, comment? }`; one per user per approved place |
+| PATCH | `/api/v1/reviews/:id` | Bearer | Author only |
+| DELETE | `/api/v1/reviews/:id` | Bearer | Author, or a moderator |
+
+A place's `rating: { average, count }` is maintained by a database trigger on every review
+change, so reading or filtering by it needs no extra query.
 
 Place list endpoints accept `category` (comma-separated slugs), `maxEntryFee`, `minRating`,
 `page`, `limit` (≤ 50) and return `meta: { page, limit, total, totalPages }`. Places whose

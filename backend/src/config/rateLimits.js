@@ -13,6 +13,8 @@ export const RATE_LIMIT_POLICIES = Object.freeze({
   authIp: { limit: 100, window: '15 m', failOpen: false },
   // Community place submissions, per user.
   submissions: { limit: 20, window: '1 d', failOpen: true },
+  // New reviews, per user.
+  reviews: { limit: 30, window: '1 d', failOpen: true },
 });
 
 // Our own timeout. Upstash's built-in one ALLOWS the request on timeout, which would

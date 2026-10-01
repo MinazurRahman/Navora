@@ -3,7 +3,7 @@ import { sendSuccess } from '../shared/http/response.js';
 
 // Mounts every feature module's router under /api/v1.
 // Feature modules (places, trips, …) are added here as they are implemented.
-export function createV1Router({ authRouter, categoriesRouter, placesRouter }) {
+export function createV1Router({ authRouter, categoriesRouter, placesRouter, reviewsRouter }) {
   const router = Router();
 
   router.get('/', (req, res) => {
@@ -13,6 +13,8 @@ export function createV1Router({ authRouter, categoriesRouter, placesRouter }) {
   router.use('/auth', authRouter);
   router.use('/categories', categoriesRouter);
   router.use('/places', placesRouter);
+  // Defines /places/:placeId/reviews and /reviews/:id itself.
+  router.use(reviewsRouter);
 
   return router;
 }

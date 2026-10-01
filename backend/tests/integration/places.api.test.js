@@ -1,13 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import knex from 'knex';
 import request from 'supertest';
-import { createApp } from '../../src/app.js';
-import { createRepositories } from '../../src/repositories.js';
-import { createLifecycle } from '../../src/shared/lifecycle.js';
-import { buildTestConfig, createInMemoryRateLimiter } from '../helpers/testApp.js';
+import { createIntegrationApp, testDatabaseUrl as url } from '../helpers/integrationApp.js';
 
 // Full app on the real PostGIS test database (spatial SQL cannot be faked).
-const url = process.env.TEST_DATABASE_URL;
 
 // Real Dhaka landmarks. Distances from CENTRE (computed by PostGIS): Hatirjheel 6.42 km,
 // National Museum 8.26 km, Lalbagh 10.42 km, Ahsan Manzil 11.28 km, Chattogram 216.91 km.
@@ -15,26 +10,14 @@ const CENTRE = { latitude: 23.8103, longitude: 90.4125 };
 const at = (latitude, longitude) => ({ latitude, longitude });
 
 describe.skipIf(!url)('Places API (PostGIS)', () => {
+  let ctx;
   let db;
-  let app;
   let user;
   let otherUser;
   let moderator;
 
-  const api = () => request(app);
-  const auth = (session) => ({ Authorization: `Bearer ${session.token}` });
-
-  async function signUp(name, role) {
-    const email = `${name}@example.com`;
-    const password = 'long enough password';
-    const res = await api().post('/api/v1/auth/register').send({ name, email, password });
-    if (role) {
-      await db('users').where({ email }).update({ role });
-      const login = await api().post('/api/v1/auth/login').send({ email, password });
-      return { id: res.body.data.user.id, token: login.body.data.tokens.accessToken };
-    }
-    return { id: res.body.data.user.id, token: res.body.data.tokens.accessToken };
-  }
+  const api = () => request(ctx.app);
+  const auth = (session) => session.headers;
 
   const placeBody = (overrides = {}) => ({
     name: 'Lalbagh Fort',
@@ -52,28 +35,19 @@ describe.skipIf(!url)('Places API (PostGIS)', () => {
   }
 
   beforeAll(async () => {
-    db = knex({ client: 'pg', connection: url, migrations: { directory: './migrations' }, seeds: { directory: './seeds' } });
-    await db.migrate.latest();
-    await db.seed.run();
-    app = createApp({
-      config: buildTestConfig(),
-      lifecycle: createLifecycle(),
-      repositories: createRepositories(db),
-      rateLimiter: createInMemoryRateLimiter(),
-    });
+    ctx = await createIntegrationApp();
+    db = ctx.db;
   });
 
   beforeEach(async () => {
     await db.raw('TRUNCATE users, places CASCADE');
-    user = await signUp('user');
-    otherUser = await signUp('other');
-    moderator = await signUp('moderator', 'moderator');
+    user = await ctx.signUp('user');
+    otherUser = await ctx.signUp('other');
+    moderator = await ctx.signUp('moderator', 'moderator');
   });
 
   afterAll(async () => {
-    if (!db) return;
-    await db.migrate.rollback(undefined, true);
-    await db.destroy();
+    await ctx?.teardown();
   });
 
   describe('create', () => {

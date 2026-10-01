@@ -12,6 +12,7 @@ import { createUsersService } from './modules/users/index.js';
 import { createAuthModule, createTokenService } from './modules/auth/index.js';
 import { createCategoriesModule } from './modules/categories/index.js';
 import { createPlacesModule } from './modules/places/index.js';
+import { createReviewsModule } from './modules/reviews/index.js';
 import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
@@ -19,7 +20,7 @@ import { createV1Router } from './routes/v1.js';
 export function createApp({ config, lifecycle, repositories, rateLimiter }) {
   // Services and modules
   const tokenService = createTokenService(config.auth);
-  const { authenticate, optionalAuth } = createAuthMiddleware({ tokenService });
+  const { authenticate, optionalAuth, requireRole } = createAuthMiddleware({ tokenService });
   const rateLimit = createRateLimitMiddleware({
     rateLimiter,
     policies: RATE_LIMIT_POLICIES,
@@ -40,6 +41,14 @@ export function createApp({ config, lifecycle, repositories, rateLimiter }) {
     placesRepository: repositories.places,
     categoriesService: categoriesModule.categoriesService,
     transaction: repositories.transaction,
+    authenticate,
+    optionalAuth,
+    requireRole,
+    rateLimit,
+  });
+  const reviewsModule = createReviewsModule({
+    reviewsRepository: repositories.reviews,
+    placesService: placesModule.placesService,
     authenticate,
     optionalAuth,
     rateLimit,
@@ -67,6 +76,7 @@ export function createApp({ config, lifecycle, repositories, rateLimiter }) {
       authRouter: authModule.router,
       categoriesRouter: categoriesModule.router,
       placesRouter: placesModule.router,
+      reviewsRouter: reviewsModule.router,
     }),
   );
 
