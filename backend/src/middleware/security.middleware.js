@@ -13,7 +13,7 @@ export function corsMiddleware(allowedOrigins) {
     origin: (origin, callback) => callback(null, Boolean(origin) && allowed.has(origin)),
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
-    exposedHeaders: ['X-Request-Id'],
+    exposedHeaders: ['X-Request-Id', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset', 'Retry-After'],
     credentials: false, // tokens travel in the Authorization header, not cookies
     maxAge: 600,
   });

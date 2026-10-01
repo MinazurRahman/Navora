@@ -71,6 +71,18 @@ TEST_DATABASE_URL=postgres://navora:navora_dev_password@localhost:5433/navora_te
 - Replaying an already-used refresh token is treated as theft and ends that whole session.
 - Logout revokes the session's refresh tokens. The current access token keeps working
   until it expires (≤ 15 min); the client should discard it immediately.
+### Rate limiting
+
+Redis-backed (Upstash), so limits hold across all instances. Policies live in
+`src/config/rateLimits.js`. API responses carry `RateLimit-Limit`, `RateLimit-Remaining`
+and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with `Retry-After`.
+
+| Policy | Applies to | Limit | Redis down |
+|---|---|---|---|
+| `general` | all `/api/v1`, per user (valid token) or IP | 600 / 15 min | allow |
+| `authIp` | login, register, per IP | 100 / 15 min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `authAccount` | login, register, per IP + email | 10 / 15 min | 503 `RATE_LIMIT_UNAVAILABLE` |
+
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).
 

@@ -19,6 +19,8 @@
     "seed": "knex seed:run"
   },
   "dependencies": {
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "argon2": "^0.45.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",

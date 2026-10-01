@@ -55,6 +55,10 @@ const envSchema = z.object({
   JWT_ISSUER: z.string().min(1).default('navora-api'),
   JWT_AUDIENCE: z.string().min(1).default('navora-app'),
   REFRESH_TOKEN_TTL_DAYS: intInRange(1, 90).default(30),
+
+  // Shared by every instance: rate-limit counters and cache.
+  UPSTASH_REDIS_REST_URL: z.string().regex(/^https:\/\/\S+$/, 'must be an https:// URL'),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
 });
 
 export function parseEnv(source) {
@@ -97,6 +101,10 @@ export function parseEnv(source) {
       issuer: e.JWT_ISSUER,
       audience: e.JWT_AUDIENCE,
       refreshTokenTtlDays: e.REFRESH_TOKEN_TTL_DAYS,
+    }),
+    redis: Object.freeze({
+      url: e.UPSTASH_REDIS_REST_URL,
+      token: e.UPSTASH_REDIS_REST_TOKEN,
     }),
   });
 }

@@ -6,6 +6,10 @@ try {
 } catch {
   // no .env: database tests are skipped
 }
+// Placeholders so config validation passes without a .env; the Upstash integration test
+// skips itself when these are in use.
+process.env.UPSTASH_REDIS_REST_URL ??= 'https://upstash.invalid';
+process.env.UPSTASH_REDIS_REST_TOKEN ??= 'placeholder';
 if (process.env.TEST_DATABASE_URL && process.env.TEST_DATABASE_URL === process.env.DATABASE_URL) {
   throw new Error('TEST_DATABASE_URL must not equal DATABASE_URL: the database tests wipe their database.');
 }

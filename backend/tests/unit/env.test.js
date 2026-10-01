@@ -4,6 +4,8 @@ import { parseEnv } from '../../src/config/env.js';
 const base = {
   DATABASE_URL: 'postgres://user:pass@localhost:5432/navora',
   JWT_SECRET: 'x'.repeat(32),
+  UPSTASH_REDIS_REST_URL: 'https://example.upstash.io',
+  UPSTASH_REDIS_REST_TOKEN: 'token',
 };
 
 describe('parseEnv', () => {
@@ -63,6 +65,12 @@ describe('parseEnv', () => {
 
   it('rejects a pool minimum above the maximum', () => {
     expect(() => parseEnv({ ...base, DB_POOL_MIN: '20', DB_POOL_MAX: '5' })).toThrow(/DB_POOL_MIN/);
+  });
+
+  it('requires Upstash credentials over https', () => {
+    const { UPSTASH_REDIS_REST_TOKEN: _token, ...withoutToken } = base;
+    expect(() => parseEnv(withoutToken)).toThrow(/UPSTASH_REDIS_REST_TOKEN/);
+    expect(() => parseEnv({ ...base, UPSTASH_REDIS_REST_URL: 'http://example.upstash.io' })).toThrow(/UPSTASH_REDIS_REST_URL/);
   });
 
   it('returns a frozen config object', () => {

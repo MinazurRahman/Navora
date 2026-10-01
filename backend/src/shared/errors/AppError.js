@@ -46,6 +46,12 @@ export class UnprocessableError extends AppError {
   }
 }
 
+export class RateLimitError extends AppError {
+  constructor(message = 'Too many requests, please try again later') {
+    super('RATE_LIMITED', message, 429);
+  }
+}
+
 export class ServiceUnavailableError extends AppError {
   constructor(message = 'Service temporarily unavailable', details = undefined, code = 'SERVICE_UNAVAILABLE') {
     super(code, message, 503, details);

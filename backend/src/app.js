@@ -3,6 +3,8 @@ import { requestContextMiddleware } from './middleware/requestContext.middleware
 import { httpLoggerMiddleware } from './middleware/httpLogger.middleware.js';
 import { corsMiddleware, securityHeadersMiddleware } from './middleware/security.middleware.js';
 import { createAuthMiddleware } from './middleware/auth.middleware.js';
+import { createRateLimitMiddleware } from './middleware/rateLimit.middleware.js';
+import { RATE_LIMIT_POLICIES, RATE_LIMIT_TIMEOUT_MS } from './config/rateLimits.js';
 import { notFoundMiddleware } from './middleware/notFound.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { createHealthModule } from './modules/health/index.js';
@@ -12,16 +14,23 @@ import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
 // so tests can create it with fakes. Holds no per-user state: safe to run N copies.
-export function createApp({ config, lifecycle, repositories }) {
+export function createApp({ config, lifecycle, repositories, rateLimiter }) {
   // Services and modules
   const tokenService = createTokenService(config.auth);
   const { authenticate } = createAuthMiddleware({ tokenService });
+  const rateLimit = createRateLimitMiddleware({
+    rateLimiter,
+    policies: RATE_LIMIT_POLICIES,
+    timeoutMs: RATE_LIMIT_TIMEOUT_MS,
+    tokenService,
+  });
   const usersService = createUsersService({ usersRepository: repositories.users });
   const authModule = createAuthModule({
     usersService,
     refreshTokenRepository: repositories.refreshTokens,
     tokenService,
     authenticate,
+    rateLimit,
     config,
   });
 
@@ -37,10 +46,10 @@ export function createApp({ config, lifecycle, repositories }) {
   app.use(corsMiddleware(config.corsOrigins));
   app.use(express.json({ limit: config.jsonBodyLimit }));
 
-  // Probes stay outside /api/v1 (and, later, outside rate limiting and auth).
+  // Probes stay outside /api/v1, so they are never rate limited or authenticated.
   app.use(createHealthModule({ healthRepository: repositories.health, lifecycle, config }).router);
 
-  app.use('/api/v1', createV1Router({ authRouter: authModule.router }));
+  app.use('/api/v1', rateLimit('general'), createV1Router({ authRouter: authModule.router }));
 
   app.use(notFoundMiddleware());
   app.use(errorMiddleware());

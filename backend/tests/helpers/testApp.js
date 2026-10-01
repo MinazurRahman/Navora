@@ -9,8 +9,27 @@ export function buildTestConfig(overrides = {}) {
     LOG_LEVEL: 'silent',
     DATABASE_URL: 'postgres://test:test@localhost:5432/navora_unused',
     JWT_SECRET: 'test-only-jwt-secret-that-is-long-enough-123',
+    UPSTASH_REDIS_REST_URL: 'https://upstash.invalid',
+    UPSTASH_REDIS_REST_TOKEN: 'placeholder',
     ...overrides,
   });
+}
+
+// Counts requests per policy + identifier, like the Upstash limiter (fixed window is
+// close enough for tests). `limits` overrides per policy; default is effectively unlimited.
+export function createInMemoryRateLimiter(limits = {}) {
+  const counts = new Map();
+  return {
+    calls: [],
+    async limit(policyName, identifier) {
+      this.calls.push({ policyName, identifier });
+      const key = `${policyName}|${identifier}`;
+      const count = (counts.get(key) ?? 0) + 1;
+      counts.set(key, count);
+      const limit = limits[policyName] ?? 1_000_000;
+      return { success: count <= limit, limit, remaining: limit - count, reset: Date.now() + 60_000 };
+    },
+  };
 }
 
 function withoutPasswordHash({ password_hash: _omit, ...rest }) {
@@ -103,6 +122,7 @@ export function buildTestApp({
   config = buildTestConfig(),
   lifecycle = createLifecycle(),
   repositories = createInMemoryRepositories(),
+  rateLimiter = createInMemoryRateLimiter(),
 } = {}) {
-  return createApp({ config, lifecycle, repositories });
+  return createApp({ config, lifecycle, repositories, rateLimiter });
 }

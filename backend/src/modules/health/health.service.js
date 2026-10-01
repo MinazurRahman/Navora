@@ -1,13 +1,6 @@
 import { ServiceUnavailableError } from '../../shared/errors/AppError.js';
 import { getLogger } from '../../shared/logger.js';
-
-function withTimeout(promise, ms) {
-  let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
+import { withTimeout } from '../../shared/withTimeout.js';
 
 export function createHealthService({ healthRepository, lifecycle, readinessTimeoutMs }) {
   return {
