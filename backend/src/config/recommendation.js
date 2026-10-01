@@ -22,9 +22,6 @@ export const RECOMMENDATION_CONFIG = Object.freeze({
   // Review count at which popularity is maxed out (log scale).
   popularityTargetReviews: 50,
 
-  // Visit length when a place has no typical_visit_minutes.
-  defaultVisitMinutes: 60,
-
   // Nearest approved places considered per request.
   maxCandidates: 500,
 

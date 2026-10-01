@@ -123,6 +123,27 @@ facts in the data; unknown fee/ratings/hours are scored low and listed under `wa
 `meta.suggestions` names the limiting requirements (they are never relaxed automatically).
 Travel time is distance-based until a routing provider is added.
 
+### Trips and itineraries
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/trips` | Bearer | Save trip requirements (see `src/modules/trips/trips.schemas.js`) |
+| GET | `/api/v1/trips` | Bearer | My trips, newest first |
+| GET / PATCH / DELETE | `/api/v1/trips/:id` | Bearer | Owner only (others get 404) |
+| POST | `/api/v1/itineraries/generate` | Bearer | `{ tripId }` → new current itinerary version (routing rate limit) |
+| GET | `/api/v1/itineraries/:id` | Bearer | Owner only |
+
+Generation: candidates from PostGIS → hard constraints → ranking (same rules as
+recommendations) → selected places first, then best-ranked places, each put on the day
+where it adds the least travel → every day simulated minute by minute (opening hours,
+visit length, travel, buffers, daily window, trip back to the start; max 6 stops) → visit
+order by nearest neighbour + 2-opt → saved. Assumptions live in `src/config/planning.js`.
+
+Failures return **422**: `INSUFFICIENT_MATCHING_PLACES` (`emptyDays`, `excludedBy`,
+`suggestions`) or `SELECTED_PLACES_NOT_FEASIBLE` (per place: `reason`, `requirements`).
+Requirements are never relaxed automatically. Warnings in the itinerary:
+`TRAVEL_TIMES_ESTIMATED`, `START_DATE_ASSUMED`, `OPENING_HOURS_UNVERIFIED`, `ENTRY_FEE_UNKNOWN`.
+
 ### Authentication
 
 - Send `Authorization: Bearer <accessToken>`. Access tokens are JWTs valid for 15 minutes.

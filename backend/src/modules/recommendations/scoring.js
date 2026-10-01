@@ -4,7 +4,7 @@
 // Honesty rules: UNKNOWN facility data never satisfies a requirement; unknown fee,
 // ratings or hours are scored low (config.unknownScore) and surfaced as warnings; reasons
 // only state facts present in the data.
-import { openDaysCount, toMinutes, tripDays } from './schedule.js';
+import { openDaysCount, toMinutes, tripDays, visitMinutesFor } from './schedule.js';
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 const km = (meters) => Math.round(meters / 100) / 10;
@@ -37,7 +37,7 @@ function openDays(place, ctx, config) {
   return openDaysCount(place.openingHours, ctx.days, {
     windowStart: ctx.windowStart,
     windowEnd: ctx.windowEnd,
-    visitMinutes: place.typicalVisitMinutes ?? config.defaultVisitMinutes,
+    visitMinutes: visitMinutesFor(place),
   });
 }
 
@@ -81,6 +81,13 @@ export const HARD_CONSTRAINTS = [
     passes: (place, ctx, config) => openDays(place, ctx, config) !== 0,
   },
 ];
+
+// Keys of the hard constraints a single place fails (e.g. for places the user selected).
+export function failedHardConstraints(place, ctx, config, { ignore = [] } = {}) {
+  return HARD_CONSTRAINTS.filter((c) => !ignore.includes(c.key) && c.applies(ctx) && !c.passes(place, ctx, config)).map(
+    (c) => c.key,
+  );
+}
 
 // Returns eligible places and, per constraint, how many places it excluded. A place that
 // fails several constraints is counted under each, so the counts show which requirement

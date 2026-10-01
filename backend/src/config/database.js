@@ -1,4 +1,9 @@
 import knex from 'knex';
+import pg from 'pg';
+
+// DATE columns as plain "YYYY-MM-DD" strings. By default pg builds a JS Date at local
+// midnight, which shifts the day when serialised to UTC (e.g. in Asia/Dhaka, UTC+6).
+pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
 
 // Shared by the app (createDb) and the Knex CLI (knexfile.js) so both use identical settings.
 export function buildKnexConfig(config) {

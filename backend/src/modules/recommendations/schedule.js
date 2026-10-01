@@ -1,8 +1,18 @@
 // Pure date/time helpers for schedule compatibility (no I/O).
+import { PLANNING_CONFIG } from '../../config/planning.js';
 
 export function toMinutes(hhmm) {
   const [hours, minutes] = hhmm.split(':').map(Number);
   return hours * 60 + minutes;
+}
+
+export function toHHMM(minutes) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+// The place's own estimate, else a per-category default, else the global default.
+export function visitMinutesFor(place, config = PLANNING_CONFIG) {
+  return place.typicalVisitMinutes ?? config.visitMinutesByCategory[place.category.slug] ?? config.defaultVisitMinutes;
 }
 
 // "YYYY-MM-DD" in an IANA timezone (not the server's zone, which may differ per instance).

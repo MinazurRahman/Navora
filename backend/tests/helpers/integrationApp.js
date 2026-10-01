@@ -1,5 +1,5 @@
-import knex from 'knex';
 import request from 'supertest';
+import { createDb } from '../../src/config/database.js';
 import { createApp } from '../../src/app.js';
 import { createRepositories } from '../../src/repositories.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
@@ -11,12 +11,8 @@ export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 // The full app on the real (disposable) PostGIS test database, with caching ON (in-memory
 // Redis), so every integration test also proves cache invalidation is correct.
 export async function createIntegrationApp() {
-  const db = knex({
-    client: 'pg',
-    connection: testDatabaseUrl,
-    migrations: { directory: './migrations' },
-    seeds: { directory: './seeds' },
-  });
+  // Same connection setup as production (incl. pg type parsers), pointed at the test DB.
+  const db = createDb(buildTestConfig({ DATABASE_URL: testDatabaseUrl }));
   await db.migrate.latest();
   await db.seed.run();
 
