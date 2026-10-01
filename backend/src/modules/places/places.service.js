@@ -1,14 +1,24 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors/AppError.js';
 import { isModerator } from '../../shared/auth/authorization.js';
 import { buildPaginationMeta } from '../../shared/validation/common.schemas.js';
+import { hashKey } from '../../integrations/redis/cache.js';
+import { CACHE_TTL } from '../../config/cache.js';
 import { toPlaceDto } from './places.mapper.js';
 
 const notFound = () => new NotFoundError('Place not found', 'PLACE_NOT_FOUND');
 
+// Every public place cache entry lives in this namespace; any write that changes public
+// place data bumps it. Only APPROVED (public) data is ever cached.
+const CACHE_NAMESPACE = 'places';
+
+// ~110 m. Nearby searches from points this close share a cache entry; the query itself
+// uses the rounded point, so cached and fresh results are identical.
+const roundCoordinate = (value) => Math.round(value * 1000) / 1000;
+
 // Approved places are public. Anything else is visible only to its submitter and
 // moderators; for everyone else it does not exist (404, not 403, so nothing leaks).
-function canView(place, user) {
-  return place.status === 'APPROVED' || isModerator(user) || (user && place.created_by === user.id);
+function canView(status, ownerId, user) {
+  return status === 'APPROVED' || isModerator(user) || (user && ownerId === user.id);
 }
 
 // Submitter edit rules: PENDING stays PENDING; REJECTED goes back to PENDING (resubmission);
@@ -23,11 +33,20 @@ function planEdit(place, user) {
   );
 }
 
-export function createPlacesService({ placesRepository, categoriesService, transaction }) {
+export function createPlacesService({ placesRepository, categoriesService, transaction, cache }) {
   async function findVisible(id, user, conn, options) {
     const place = await placesRepository.findById(id, conn, options);
-    if (!place || !canView(place, user)) throw notFound();
+    if (!place || !canView(place.status, place.created_by, user)) throw notFound();
     return place;
+  }
+
+  const invalidateCache = () => cache.bumpVersion(CACHE_NAMESPACE);
+
+  // Invalidate only after the transaction committed.
+  async function writeThenInvalidate(work) {
+    const result = await transaction(work);
+    await invalidateCache();
+    return result;
   }
 
   async function withCategoryId({ category, ...fields }) {
@@ -35,34 +54,60 @@ export function createPlacesService({ placesRepository, categoriesService, trans
     return { ...fields, categoryId: (await categoriesService.requireBySlug(category)).id };
   }
 
-  async function searchPage(query, extra) {
-    const { places, total } = await placesRepository.search({
-      categories: query.category,
+  // Public, approved-only results: safe to cache and share between users.
+  function searchPage(query, extra) {
+    const params = {
+      categories: query.category && [...query.category].sort(),
       maxEntryFee: query.maxEntryFee,
       minRating: query.minRating,
       page: query.page,
       limit: query.limit,
       ...extra,
-    });
-    return { places: places.map(toPlaceDto), meta: buildPaginationMeta(query, total) };
+    };
+    return cache.getOrSet(
+      `${extra.sort}:${hashKey(params)}`,
+      CACHE_TTL.placeLists,
+      async () => {
+        const { places, total } = await placesRepository.search(params);
+        return { places: places.map(toPlaceDto), meta: buildPaginationMeta(query, total) };
+      },
+      { namespace: CACHE_NAMESPACE },
+    );
   }
 
   return {
+    invalidateCache,
+
     list(query) {
       return searchPage(query, { sort: 'newest' });
     },
 
     nearby(query) {
-      const near = { latitude: query.latitude, longitude: query.longitude, radiusMeters: query.radiusKm * 1000 };
+      const near = {
+        latitude: roundCoordinate(query.latitude),
+        longitude: roundCoordinate(query.longitude),
+        radiusMeters: query.radiusKm * 1000,
+      };
       return searchPage(query, { near, sort: 'distance' });
     },
 
     search(query) {
-      return searchPage(query, { q: query.q, sort: 'relevance' });
+      // Case and spacing do not change the results, so they do not change the key either.
+      return searchPage(query, { q: query.q.toLowerCase().replace(/\s+/g, ' '), sort: 'relevance' });
     },
 
     async getById(id, user) {
-      return toPlaceDto(await findVisible(id, user));
+      const place = await cache.getOrSet(
+        `detail:${id}`,
+        CACHE_TTL.placeDetail,
+        async () => {
+          const row = await placesRepository.findById(id);
+          return row ? toPlaceDto(row) : null;
+        },
+        { namespace: CACHE_NAMESPACE, cacheIf: (dto) => dto.status === 'APPROVED' },
+      );
+      if (!place || !canView(place.status, place.createdBy, user)) throw notFound();
+      return place;
     },
 
     // Community submissions start PENDING; moderators' places are approved directly.
@@ -70,7 +115,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
       const fields = await withCategoryId(input);
       const status = isModerator(user) ? 'APPROVED' : 'PENDING';
 
-      return transaction(async (trx) => {
+      return writeThenInvalidate(async (trx) => {
         const id = await placesRepository.create({ ...fields, status, createdBy: user.id }, trx);
         await placesRepository.addModerationEvent(
           { placeId: id, actorId: user.id, action: 'SUBMITTED', fromStatus: null, toStatus: status },
@@ -83,7 +128,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
     async update(id, patch, user) {
       const fields = await withCategoryId(patch);
 
-      return transaction(async (trx) => {
+      return writeThenInvalidate(async (trx) => {
         // Row lock: a moderator decision and a resubmission cannot interleave.
         const place = await findVisible(id, user, trx, { lock: true });
         const { action, toStatus } = planEdit(place, user);
@@ -99,7 +144,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
 
     // Moderator decision on a PENDING submission. decision: 'APPROVED' | 'REJECTED'.
     async moderate(id, user, decision, note) {
-      return transaction(async (trx) => {
+      return writeThenInvalidate(async (trx) => {
         const place = await placesRepository.findById(id, trx, { lock: true });
         if (!place) throw notFound();
         if (place.status !== 'PENDING') {
@@ -144,7 +189,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
 
     // DELETE archives: saved itineraries keep referring to a real row.
     async archive(id, user) {
-      return transaction(async (trx) => {
+      return writeThenInvalidate(async (trx) => {
         const place = await findVisible(id, user, trx, { lock: true });
         if (place.status !== 'ARCHIVED') {
           planEdit(place, user); // same permission rules as editing

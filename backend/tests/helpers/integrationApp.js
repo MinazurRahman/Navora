@@ -3,11 +3,13 @@ import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { createRepositories } from '../../src/repositories.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
-import { buildTestConfig, createInMemoryRateLimiter } from './testApp.js';
+import { createCache } from '../../src/integrations/redis/cache.js';
+import { buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
 export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 
-// The full app on the real (disposable) PostGIS test database.
+// The full app on the real (disposable) PostGIS test database, with caching ON (in-memory
+// Redis), so every integration test also proves cache invalidation is correct.
 export async function createIntegrationApp() {
   const db = knex({
     client: 'pg',
@@ -18,11 +20,13 @@ export async function createIntegrationApp() {
   await db.migrate.latest();
   await db.seed.run();
 
+  const redis = createInMemoryRedis();
   const app = createApp({
     config: buildTestConfig(),
     lifecycle: createLifecycle(),
     repositories: createRepositories(db),
     rateLimiter: createInMemoryRateLimiter(),
+    cache: createCache(redis),
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.
@@ -38,10 +42,16 @@ export async function createIntegrationApp() {
     return { id: res.body.data.user.id, token, headers: { Authorization: `Bearer ${token}` } };
   }
 
+  // Empties users/places and the cache between tests.
+  async function reset() {
+    await db.raw('TRUNCATE users, places CASCADE');
+    redis.store.clear();
+  }
+
   async function teardown() {
     await db.migrate.rollback(undefined, true);
     await db.destroy();
   }
 
-  return { db, app, signUp, teardown };
+  return { db, app, redis, signUp, reset, teardown };
 }

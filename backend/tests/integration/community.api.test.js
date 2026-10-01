@@ -34,7 +34,7 @@ describe.skipIf(!testDatabaseUrl)('Community: submissions, moderation, reviews (
   });
 
   beforeEach(async () => {
-    await ctx.db.raw('TRUNCATE users, places CASCADE');
+    await ctx.reset();
     submitter = await ctx.signUp('submitter');
     reviewer = await ctx.signUp('reviewer');
     otherUser = await ctx.signUp('other');

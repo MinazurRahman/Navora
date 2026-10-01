@@ -25,8 +25,9 @@ export function createPlacesModule({
   optionalAuth,
   requireRole,
   rateLimit,
+  cache,
 }) {
-  const placesService = createPlacesService({ placesRepository, categoriesService, transaction });
+  const placesService = createPlacesService({ placesRepository, categoriesService, transaction, cache });
   const c = createPlacesController(placesService);
   const moderatorOnly = [authenticate, requireRole('moderator', 'admin')];
   const router = Router();

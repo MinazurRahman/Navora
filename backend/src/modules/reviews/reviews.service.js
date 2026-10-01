@@ -38,6 +38,8 @@ export function createReviewsService({ reviewsRepository, placesService }) {
 
       try {
         const id = await reviewsRepository.create({ userId: user.id, placeId, ...input });
+        // The DB trigger changed the place's rating: cached place data is stale.
+        await placesService.invalidateCache();
         return toReviewDto(await reviewsRepository.findById(id));
       } catch (err) {
         if (err.code === '23505' && err.constraint === 'reviews_user_place_key') {
@@ -53,6 +55,7 @@ export function createReviewsService({ reviewsRepository, placesService }) {
       if (review.user_id !== user.id) throw new ForbiddenError('You can only edit your own reviews');
 
       await reviewsRepository.update(id, patch);
+      await placesService.invalidateCache();
       return toReviewDto(await reviewsRepository.findById(id));
     },
 
@@ -63,6 +66,7 @@ export function createReviewsService({ reviewsRepository, placesService }) {
         throw new ForbiddenError('You can only delete your own reviews');
       }
       await reviewsRepository.delete(id);
+      await placesService.invalidateCache();
       return { id, deleted: true };
     },
   };

@@ -4,6 +4,7 @@ import { createDb } from './config/database.js';
 import { createRedis } from './config/redis.js';
 import { RATE_LIMIT_POLICIES } from './config/rateLimits.js';
 import { createUpstashRateLimiter } from './integrations/redis/rateLimiter.js';
+import { createCache } from './integrations/redis/cache.js';
 import { logger } from './shared/logger.js';
 import { createLifecycle } from './shared/lifecycle.js';
 import { createApp } from './app.js';
@@ -19,6 +20,7 @@ const app = createApp({
   lifecycle,
   repositories: createRepositories(db),
   rateLimiter: createUpstashRateLimiter(redis, RATE_LIMIT_POLICIES),
+  cache: createCache(redis),
 });
 
 const server = http.createServer(app);

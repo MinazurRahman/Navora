@@ -17,7 +17,7 @@ import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
 // so tests can create it with fakes. Holds no per-user state: safe to run N copies.
-export function createApp({ config, lifecycle, repositories, rateLimiter }) {
+export function createApp({ config, lifecycle, repositories, rateLimiter, cache }) {
   // Services and modules
   const tokenService = createTokenService(config.auth);
   const { authenticate, optionalAuth, requireRole } = createAuthMiddleware({ tokenService });
@@ -45,6 +45,7 @@ export function createApp({ config, lifecycle, repositories, rateLimiter }) {
     optionalAuth,
     requireRole,
     rateLimit,
+    cache,
   });
   const reviewsModule = createReviewsModule({
     reviewsRepository: repositories.reviews,

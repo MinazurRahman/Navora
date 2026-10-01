@@ -83,6 +83,18 @@ TEST_DATABASE_URL=postgres://navora:navora_dev_password@localhost:5433/navora_te
 A place's `rating: { average, count }` is maintained by a database trigger on every review
 change, so reading or filtering by it needs no extra query.
 
+### Caching
+
+Upstash Redis, cache-aside (`src/integrations/redis/cache.js`); PostgreSQL stays the source
+of truth and every entry has a TTL (`src/config/cache.js`). Cached: approved place details
+(5 min) and place list / nearby / search results (2 min). Never cached: non-approved places,
+"my submissions", moderation data, anything per-user. Keys are a stable hash of the
+validated query (parameter order, category order and search-text case do not matter);
+nearby coordinates are rounded to ~110 m for both the key and the query. Any write that
+changes public place data — place create/update/archive/approve/reject and review
+create/update/delete — invalidates all place entries by bumping a namespace version. If
+Redis is unreachable, requests are served from PostgreSQL.
+
 Place list endpoints accept `category` (comma-separated slugs), `maxEntryFee`, `minRating`,
 `page`, `limit` (≤ 50) and return `meta: { page, limit, total, totalPages }`. Places whose
 fee is unknown or that have no rating yet are excluded by `maxEntryFee` / `minRating`.

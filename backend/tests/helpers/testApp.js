@@ -2,6 +2,31 @@ import { randomUUID } from 'node:crypto';
 import { parseEnv } from '../../src/config/env.js';
 import { createApp } from '../../src/app.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
+import { createCache } from '../../src/integrations/redis/cache.js';
+
+// Stand-in for the Upstash client (get/set/del/incr). Values round-trip through JSON like
+// the real client, so tests see the same shapes (Dates become strings, no shared objects).
+export function createInMemoryRedis() {
+  const store = new Map();
+  return {
+    store,
+    async get(key) {
+      return store.has(key) ? JSON.parse(store.get(key)) : null;
+    },
+    async set(key, value) {
+      store.set(key, JSON.stringify(value));
+      return 'OK';
+    },
+    async del(key) {
+      return store.delete(key) ? 1 : 0;
+    },
+    async incr(key) {
+      const next = (store.has(key) ? JSON.parse(store.get(key)) : 0) + 1;
+      store.set(key, JSON.stringify(next));
+      return next;
+    },
+  };
+}
 
 export function buildTestConfig(overrides = {}) {
   return parseEnv({
@@ -123,6 +148,7 @@ export function buildTestApp({
   lifecycle = createLifecycle(),
   repositories = createInMemoryRepositories(),
   rateLimiter = createInMemoryRateLimiter(),
+  cache = createCache(createInMemoryRedis()),
 } = {}) {
-  return createApp({ config, lifecycle, repositories, rateLimiter });
+  return createApp({ config, lifecycle, repositories, rateLimiter, cache });
 }

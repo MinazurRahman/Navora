@@ -40,7 +40,7 @@ describe.skipIf(!url)('Places API (PostGIS)', () => {
   });
 
   beforeEach(async () => {
-    await db.raw('TRUNCATE users, places CASCADE');
+    await ctx.reset();
     user = await ctx.signUp('user');
     otherUser = await ctx.signUp('other');
     moderator = await ctx.signUp('moderator', 'moderator');
