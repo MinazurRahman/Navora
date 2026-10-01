@@ -10,6 +10,8 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 import { createHealthModule } from './modules/health/index.js';
 import { createUsersService } from './modules/users/index.js';
 import { createAuthModule, createTokenService } from './modules/auth/index.js';
+import { createCategoriesModule } from './modules/categories/index.js';
+import { createPlacesModule } from './modules/places/index.js';
 import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
@@ -17,7 +19,7 @@ import { createV1Router } from './routes/v1.js';
 export function createApp({ config, lifecycle, repositories, rateLimiter }) {
   // Services and modules
   const tokenService = createTokenService(config.auth);
-  const { authenticate } = createAuthMiddleware({ tokenService });
+  const { authenticate, optionalAuth } = createAuthMiddleware({ tokenService });
   const rateLimit = createRateLimitMiddleware({
     rateLimiter,
     policies: RATE_LIMIT_POLICIES,
@@ -32,6 +34,15 @@ export function createApp({ config, lifecycle, repositories, rateLimiter }) {
     authenticate,
     rateLimit,
     config,
+  });
+  const categoriesModule = createCategoriesModule({ categoriesRepository: repositories.categories });
+  const placesModule = createPlacesModule({
+    placesRepository: repositories.places,
+    categoriesService: categoriesModule.categoriesService,
+    transaction: repositories.transaction,
+    authenticate,
+    optionalAuth,
+    rateLimit,
   });
 
   const app = express();
@@ -49,7 +60,15 @@ export function createApp({ config, lifecycle, repositories, rateLimiter }) {
   // Probes stay outside /api/v1, so they are never rate limited or authenticated.
   app.use(createHealthModule({ healthRepository: repositories.health, lifecycle, config }).router);
 
-  app.use('/api/v1', rateLimit('general'), createV1Router({ authRouter: authModule.router }));
+  app.use(
+    '/api/v1',
+    rateLimit('general'),
+    createV1Router({
+      authRouter: authModule.router,
+      categoriesRouter: categoriesModule.router,
+      placesRouter: placesModule.router,
+    }),
+  );
 
   app.use(notFoundMiddleware());
   app.use(errorMiddleware());

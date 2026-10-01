@@ -13,8 +13,12 @@ export const paginationQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT).default(20),
 });
 
-export const latitudeSchema = z.coerce.number().min(-90).max(90);
-export const longitudeSchema = z.coerce.number().min(-180).max(180);
+// Query-string numbers. Plain z.coerce.number() turns "" into 0, so "?latitude=" would
+// silently mean the equator; an empty value is rejected instead.
+export const queryNumber = () => z.preprocess((v) => (v === '' ? undefined : v), z.coerce.number());
+
+export const latitudeSchema = queryNumber().pipe(z.number().min(-90).max(90));
+export const longitudeSchema = queryNumber().pipe(z.number().min(-180).max(180));
 
 export const coordinatesSchema = z.object({
   latitude: latitudeSchema,

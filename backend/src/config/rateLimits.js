@@ -11,6 +11,8 @@ export const RATE_LIMIT_POLICIES = Object.freeze({
   authAccount: { limit: 10, window: '15 m', failOpen: false },
   // Login/register spraying many emails from one IP. Loose enough for a campus NAT.
   authIp: { limit: 100, window: '15 m', failOpen: false },
+  // Community place submissions, per user.
+  submissions: { limit: 20, window: '1 d', failOpen: true },
 });
 
 // Our own timeout. Upstash's built-in one ALLOWS the request on timeout, which would

@@ -62,6 +62,19 @@ TEST_DATABASE_URL=postgres://navora:navora_dev_password@localhost:5433/navora_te
 | POST | `/api/v1/auth/refresh` | – | `{ refreshToken }` → new `{ user, tokens }`; the old refresh token stops working |
 | POST | `/api/v1/auth/logout` | – | `{ refreshToken }` → revokes that login session |
 | GET | `/api/v1/auth/me` | Bearer | Current user |
+| GET | `/api/v1/categories` | – | Category slugs and names |
+| GET | `/api/v1/places` | – | Approved places, newest first. Filters below |
+| GET | `/api/v1/places/nearby` | – | `latitude`, `longitude`, `radiusKm` (≤ 50, default 5); closest first, with `distanceMeters` |
+| GET | `/api/v1/places/search` | – | `q` (full-text + typo-tolerant name match); best match first |
+| GET | `/api/v1/places/:id` | optional | Approved: anyone. Pending/rejected/archived: submitter and moderators only (404 otherwise) |
+| POST | `/api/v1/places` | Bearer | Submit a place → `PENDING` (moderators: `APPROVED`) |
+| PATCH | `/api/v1/places/:id` | Bearer | Submitter: own `PENDING`/`REJECTED` (rejected → `PENDING`). Moderators: any |
+| DELETE | `/api/v1/places/:id` | Bearer | Archives the place (same permissions as PATCH) |
+
+Place list endpoints accept `category` (comma-separated slugs), `maxEntryFee`, `minRating`,
+`page`, `limit` (≤ 50) and return `meta: { page, limit, total, totalPages }`. Places whose
+fee is unknown or that have no rating yet are excluded by `maxEntryFee` / `minRating`.
+Place bodies use `location: { latitude, longitude }` and `category: "<slug>"`.
 
 ### Authentication
 
