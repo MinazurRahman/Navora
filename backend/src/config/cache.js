@@ -3,4 +3,5 @@
 export const CACHE_TTL = Object.freeze({
   placeDetail: 300,
   placeLists: 120, // list, nearby, search
+  recommendations: 120,
 });

@@ -16,6 +16,34 @@ const locationSchema = z.object({
   longitude: z.number().min(-180).max(180),
 });
 
+const tagSlug = z.string().trim().toLowerCase().regex(/^[a-z0-9_]{1,50}$/, 'must be an interest slug like "history"');
+
+// "HH:MM", 00:00–24:00. Same format for every time-of-day in the API.
+export const timeOfDaySchema = z
+  .string()
+  .regex(/^(([01]\d|2[0-3]):[0-5]\d|24:00)$/, 'must be HH:MM between 00:00 and 24:00');
+
+function sameDayHoursDoNotOverlap(hours) {
+  const sorted = [...hours].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.opensAt.localeCompare(b.opensAt));
+  return sorted.every((h, i) => i === 0 || sorted[i - 1].dayOfWeek !== h.dayOfWeek || sorted[i - 1].closesAt <= h.opensAt);
+}
+
+// Weekly schedule. [] = hours unknown (never assumed open). A day with no entry, when
+// other days have entries, is closed. Overnight hours: split across two days.
+const openingHoursSchema = z
+  .array(
+    z
+      .object({
+        dayOfWeek: z.number().int().min(1).max(7), // ISO: 1 = Monday
+        opensAt: timeOfDaySchema,
+        closesAt: timeOfDaySchema,
+      })
+      // "HH:MM" strings compare correctly as text, including "24:00".
+      .refine((h) => h.opensAt < h.closesAt, 'opensAt must be before closesAt (split overnight hours across two days)'),
+  )
+  .max(28)
+  .refine(sameDayHoursDoNotOverlap, 'opening hours on the same day must not overlap');
+
 // Unknown keys (status, createdBy, rating…) are stripped: clients cannot set them.
 const placeFields = {
   name: z.string().trim().min(1).max(200),
@@ -32,6 +60,8 @@ const placeFields = {
   wheelchairAccessible: facilityStatus.optional(),
   accessibilityNotes: optionalText(1000),
   restrictions: optionalText(1000),
+  tags: z.array(tagSlug).max(10).transform((slugs) => [...new Set(slugs)]).optional(),
+  openingHours: openingHoursSchema.optional(),
 };
 
 export const createPlaceSchema = z.object(placeFields);

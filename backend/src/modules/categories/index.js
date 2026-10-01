@@ -12,5 +12,11 @@ export function createCategoriesModule({ categoriesRepository }) {
     sendSuccess(res, await categoriesService.list());
   });
 
-  return { router, categoriesService };
+  // Interests (tags) the frontend can offer, e.g. history, food, nature.
+  const tagsRouter = Router();
+  tagsRouter.get('/', async (req, res) => {
+    sendSuccess(res, await categoriesService.listTags());
+  });
+
+  return { router, tagsRouter, categoriesService };
 }

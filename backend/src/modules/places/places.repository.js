@@ -38,6 +38,14 @@ const placeColumns = (conn) => [
   'c.slug as category_slug', 'c.name as category_name',
   conn.raw('ST_Y(p.location::geometry) AS latitude'),
   conn.raw('ST_X(p.location::geometry) AS longitude'),
+  // Per-row subqueries on indexed keys, inside the same SQL statement (no N+1).
+  conn.raw(`(SELECT coalesce(array_agg(t.slug ORDER BY t.slug), '{}')
+             FROM place_tags pt JOIN tags t ON t.id = pt.tag_id WHERE pt.place_id = p.id) AS tags`),
+  conn.raw(`(SELECT coalesce(json_agg(json_build_object(
+               'dayOfWeek', h.day_of_week,
+               'opensAt', to_char(h.opens_at, 'HH24:MI'),
+               'closesAt', to_char(h.closes_at, 'HH24:MI')) ORDER BY h.day_of_week, h.opens_at), '[]')
+             FROM place_opening_hours h WHERE h.place_id = p.id) AS opening_hours`),
 ];
 
 const fromPlaces = (conn) => conn('places as p').join('categories as c', 'c.id', 'p.category_id');
@@ -104,6 +112,22 @@ export function createPlacesRepository(db) {
 
     async update(id, fields, conn = db) {
       await conn('places').where({ id }).update(toRow(conn, fields));
+    },
+
+    async replaceTags(placeId, tagIds, conn = db) {
+      await conn('place_tags').where({ place_id: placeId }).delete();
+      if (tagIds.length > 0) {
+        await conn('place_tags').insert(tagIds.map((tagId) => ({ place_id: placeId, tag_id: tagId })));
+      }
+    },
+
+    async replaceOpeningHours(placeId, hours, conn = db) {
+      await conn('place_opening_hours').where({ place_id: placeId }).delete();
+      if (hours.length > 0) {
+        await conn('place_opening_hours').insert(
+          hours.map((h) => ({ place_id: placeId, day_of_week: h.dayOfWeek, opens_at: h.opensAt, closes_at: h.closesAt })),
+        );
+      }
     },
 
     async addModerationEvent({ placeId, actorId, action, fromStatus, toStatus, note = null }, conn = db) {

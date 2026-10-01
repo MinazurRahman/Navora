@@ -13,6 +13,9 @@ export function toPlaceDto(row) {
     entryFee: toNumberOrNull(row.entry_fee),
     currency: row.currency,
     typicalVisitMinutes: row.typical_visit_minutes,
+    tags: row.tags,
+    // [] = opening hours unknown
+    openingHours: row.opening_hours,
     facilities: {
       parking: row.parking_available,
       petFriendly: row.pet_friendly,

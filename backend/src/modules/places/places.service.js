@@ -9,7 +9,7 @@ const notFound = () => new NotFoundError('Place not found', 'PLACE_NOT_FOUND');
 
 // Every public place cache entry lives in this namespace; any write that changes public
 // place data bumps it. Only APPROVED (public) data is ever cached.
-const CACHE_NAMESPACE = 'places';
+export const CACHE_NAMESPACE = 'places';
 
 // ~110 m. Nearby searches from points this close share a cache entry; the query itself
 // uses the rounded point, so cached and fresh results are identical.
@@ -49,9 +49,17 @@ export function createPlacesService({ placesRepository, categoriesService, trans
     return result;
   }
 
-  async function withCategoryId({ category, ...fields }) {
-    if (category === undefined) return fields;
-    return { ...fields, categoryId: (await categoriesService.requireBySlug(category)).id };
+  // Resolves slugs from the request body to IDs before the transaction starts.
+  async function resolveReferences({ category, tags, ...fields }) {
+    const resolved = { ...fields };
+    if (category !== undefined) resolved.categoryId = (await categoriesService.requireBySlug(category)).id;
+    if (tags !== undefined) resolved.tagIds = (await categoriesService.requireTags(tags)).map((tag) => tag.id);
+    return resolved;
+  }
+
+  async function writeTagsAndHours(placeId, { tagIds, openingHours }, trx) {
+    if (tagIds !== undefined) await placesRepository.replaceTags(placeId, tagIds, trx);
+    if (openingHours !== undefined) await placesRepository.replaceOpeningHours(placeId, openingHours, trx);
   }
 
   // Public, approved-only results: safe to cache and share between users.
@@ -110,13 +118,26 @@ export function createPlacesService({ placesRepository, categoriesService, trans
       return place;
     },
 
+    // Approved places within radiusMeters, nearest first, capped at `limit` (for the
+    // recommender, which caches its own results).
+    async findCandidates({ latitude, longitude, radiusMeters, limit }) {
+      const { places, total } = await placesRepository.search({
+        near: { latitude, longitude, radiusMeters },
+        sort: 'distance',
+        page: 1,
+        limit,
+      });
+      return { places: places.map(toPlaceDto), total };
+    },
+
     // Community submissions start PENDING; moderators' places are approved directly.
     async create(input, user) {
-      const fields = await withCategoryId(input);
+      const fields = await resolveReferences(input);
       const status = isModerator(user) ? 'APPROVED' : 'PENDING';
 
       return writeThenInvalidate(async (trx) => {
         const id = await placesRepository.create({ ...fields, status, createdBy: user.id }, trx);
+        await writeTagsAndHours(id, fields, trx);
         await placesRepository.addModerationEvent(
           { placeId: id, actorId: user.id, action: 'SUBMITTED', fromStatus: null, toStatus: status },
           trx,
@@ -126,7 +147,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
     },
 
     async update(id, patch, user) {
-      const fields = await withCategoryId(patch);
+      const fields = await resolveReferences(patch);
 
       return writeThenInvalidate(async (trx) => {
         // Row lock: a moderator decision and a resubmission cannot interleave.
@@ -134,6 +155,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
         const { action, toStatus } = planEdit(place, user);
 
         await placesRepository.update(id, { ...fields, status: toStatus }, trx);
+        await writeTagsAndHours(id, fields, trx);
         await placesRepository.addModerationEvent(
           { placeId: id, actorId: user.id, action, fromStatus: place.status, toStatus },
           trx,

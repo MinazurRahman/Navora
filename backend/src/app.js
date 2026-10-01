@@ -13,6 +13,7 @@ import { createAuthModule, createTokenService } from './modules/auth/index.js';
 import { createCategoriesModule } from './modules/categories/index.js';
 import { createPlacesModule } from './modules/places/index.js';
 import { createReviewsModule } from './modules/reviews/index.js';
+import { createRecommendationsModule } from './modules/recommendations/index.js';
 import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
@@ -55,6 +56,13 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache 
     rateLimit,
   });
 
+  const recommendationsModule = createRecommendationsModule({
+    placesService: placesModule.placesService,
+    categoriesService: categoriesModule.categoriesService,
+    cache,
+    rateLimit,
+  });
+
   const app = express();
 
   app.set('trust proxy', config.trustProxy);
@@ -78,6 +86,8 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache 
       categoriesRouter: categoriesModule.router,
       placesRouter: placesModule.router,
       reviewsRouter: reviewsModule.router,
+      tagsRouter: categoriesModule.tagsRouter,
+      recommendationsRouter: recommendationsModule.router,
     }),
   );
 

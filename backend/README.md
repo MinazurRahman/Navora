@@ -98,7 +98,30 @@ Redis is unreachable, requests are served from PostgreSQL.
 Place list endpoints accept `category` (comma-separated slugs), `maxEntryFee`, `minRating`,
 `page`, `limit` (≤ 50) and return `meta: { page, limit, total, totalPages }`. Places whose
 fee is unknown or that have no rating yet are excluded by `maxEntryFee` / `minRating`.
-Place bodies use `location: { latitude, longitude }` and `category: "<slug>"`.
+Place bodies use `location: { latitude, longitude }` and `category: "<slug>"`, plus optional
+`tags: ["history", …]` (interests, see `GET /api/v1/tags`) and
+`openingHours: [{ dayOfWeek: 1–7 (Mon = 1), opensAt: "HH:MM", closesAt: "HH:MM" }]`
+(`[]` = unknown; split overnight hours across two days).
+
+### Recommendations
+
+`POST /api/v1/recommendations` (no login needed; rate-limited). Body: `location` (required),
+`searchRadiusKm` (≤ 50, default 10), `interests`, `preferredCategories`,
+`budget: { amount, type: "total" | "per_day" }`, `durationDays`, `startDate` (default today,
+Asia/Dhaka), `dailyStartTime` / `dailyEndTime` ("HH:MM"), `travelingWithPet`,
+`parkingRequired`, `wheelchairAccessRequired`, `minimumRating`, `limit`.
+
+1. **Hard constraints** remove places first: radius; pet / parking / wheelchair only when
+   explicitly `YES` (`NO` and `UNKNOWN` are excluded); `minimumRating` (unrated places do
+   not qualify); places known to be closed during the daily hours on every trip day.
+2. **Soft preferences** rank the rest: interest match, preferred category, proximity,
+   budget, Bayesian rating, popularity, schedule fit. Weights: `src/config/recommendation.js`.
+
+Each result: `{ place, score (0–100), breakdown, reasons, warnings }`. Reasons only state
+facts in the data; unknown fee/ratings/hours are scored low and listed under `warnings`.
+`meta.excludedBy` counts places removed per requirement; when few places qualify,
+`meta.suggestions` names the limiting requirements (they are never relaxed automatically).
+Travel time is distance-based until a routing provider is added.
 
 ### Authentication
 
