@@ -5,6 +5,7 @@ import { buildTestApp, createInMemoryRateLimiter } from '../helpers/testApp.js';
 import { byIpAndEmail, createRateLimitMiddleware } from '../../src/middleware/rateLimit.middleware.js';
 import { errorMiddleware } from '../../src/middleware/error.middleware.js';
 import { createTokenService } from '../../src/modules/auth/token.service.js';
+import { RATE_LIMIT_POLICIES } from '../../src/config/rateLimits.js';
 
 const credentials = { email: 'ayesha@example.com', password: 'wrong password' };
 const failingLimiter = { limit: async () => { throw new Error('fetch failed'); } };
@@ -105,6 +106,58 @@ describe('credential endpoints (login, register)', () => {
     const app = buildTestApp({ rateLimiter: createInMemoryRateLimiter({ authIp: 0, authAccount: 0 }) });
     const res = await request(app).post('/api/v1/auth/refresh').send({ refreshToken: 'unknown' });
     expect(res.status).toBe(401); // reached the handler, not 429
+  });
+});
+
+describe('community submissions', () => {
+  async function registeredApp(limits) {
+    const app = buildTestApp({ rateLimiter: createInMemoryRateLimiter(limits) });
+    const { body } = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'A', email: 'a@example.com', password: 'long enough password' });
+    return { app, headers: { Authorization: `Bearer ${body.data.tokens.accessToken}` } };
+  }
+
+  it('limits place submissions per user with 429', async () => {
+    const { app, headers } = await registeredApp({ submissions: 0 });
+    const res = await request(app).post('/api/v1/places').set(headers).send({});
+
+    expect(res.status).toBe(429);
+    expect(res.headers['retry-after']).toBeDefined();
+  });
+
+  it('limits new reviews per user with 429', async () => {
+    const { app, headers } = await registeredApp({ reviews: 0 });
+    const res = await request(app).post('/api/v1/places/0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e/reviews').set(headers).send({ rating: 5 });
+
+    expect(res.status).toBe(429);
+  });
+
+  it('counts submissions per user, not per IP', async () => {
+    const rateLimiter = createInMemoryRateLimiter();
+    const app = buildTestApp({ rateLimiter });
+    const { body } = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'A', email: 'a@example.com', password: 'long enough password' });
+
+    await request(app).post('/api/v1/places').set({ Authorization: `Bearer ${body.data.tokens.accessToken}` }).send({});
+    expect(rateLimiter.calls.find((c) => c.policyName === 'submissions').identifier).toBe(`user:${body.data.user.id}`);
+  });
+});
+
+describe('policy configuration', () => {
+  it('defines a policy for every limited area, with valid limits and windows', () => {
+    for (const name of ['general', 'authIp', 'authAccount', 'recommendations', 'routing', 'submissions', 'reviews']) {
+      const policy = RATE_LIMIT_POLICIES[name];
+      expect(policy, name).toBeDefined();
+      expect(Number.isInteger(policy.limit) && policy.limit > 0, name).toBe(true);
+      expect(policy.window, name).toMatch(/^\d+ (ms|s|m|h|d)$/);
+    }
+  });
+
+  it('fails closed exactly where agreed: credentials and the paid routing API', () => {
+    const failClosed = Object.entries(RATE_LIMIT_POLICIES).filter(([, p]) => !p.failOpen).map(([name]) => name);
+    expect(failClosed.sort()).toEqual(['authAccount', 'authIp', 'routing']);
   });
 });
 

@@ -119,6 +119,10 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `general` | all `/api/v1`, per user (valid token) or IP | 600 / 15 min | allow |
 | `authIp` | login, register, per IP | 100 / 15 min | 503 `RATE_LIMIT_UNAVAILABLE` |
 | `authAccount` | login, register, per IP + email | 10 / 15 min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `submissions` | `POST /places`, per user | 20 / day | allow |
+| `reviews` | `POST /places/:id/reviews`, per user | 30 / day | allow |
+| `recommendations` | recommendation endpoint (when built), per user or IP | 20 / min | allow |
+| `routing` | itinerary generation / route optimization (when built), per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).

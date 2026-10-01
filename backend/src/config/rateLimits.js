@@ -15,6 +15,11 @@ export const RATE_LIMIT_POLICIES = Object.freeze({
   submissions: { limit: 20, window: '1 d', failOpen: true },
   // New reviews, per user.
   reviews: { limit: 30, window: '1 d', failOpen: true },
+  // Recommendation scoring (CPU-heavy, no paid API), per user or IP.
+  recommendations: { limit: 20, window: '1 m', failOpen: true },
+  // Itinerary generation/regeneration and route optimization: calls a paid routing API,
+  // so it fails closed (decision confirmed 2026-10-01).
+  routing: { limit: 10, window: '1 m', failOpen: false },
 });
 
 // Our own timeout. Upstash's built-in one ALLOWS the request on timeout, which would
