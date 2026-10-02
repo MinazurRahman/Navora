@@ -30,7 +30,7 @@ and `citext` beforehand as a superuser).
 |---|---|
 | `npm run dev` | Start with auto-restart on file changes |
 | `npm start` | Start (production) |
-| `npm test` | Run all tests |
+| `npm test` | Run all tests (CI runs them on every pull request) |
 | `npm run migrate:latest` / `migrate:rollback` / `migrate:status` | Database migrations |
 | `npm run seed` | Load reference data (idempotent) |
 
@@ -43,7 +43,7 @@ instances do not race each other.
 npm test
 ```
 
-Unit and API tests need no database. Schema tests in `tests/integration/` run only when
+Unit and API tests need no database. Database tests (`tests/integration/`, `tests/contract/`) run only when
 `TEST_DATABASE_URL` points at a **disposable** PostGIS database (they wipe it):
 
 ```bash
@@ -133,7 +133,8 @@ Each result: `{ place, score (0–100), breakdown, reasons, warnings }`. Reasons
 facts in the data; unknown fee/ratings/hours are scored low and listed under `warnings`.
 `meta.excludedBy` counts places removed per requirement; when few places qualify,
 `meta.suggestions` names the limiting requirements (they are never relaxed automatically).
-Travel time is distance-based until a routing provider is added.
+Scheduling uses distance-based travel estimates (fast for many candidates); itineraries
+re-check the final days with the routing provider.
 
 ### Trips and itineraries
 
@@ -214,6 +215,7 @@ Requirements are never relaxed automatically. Warnings in the itinerary:
 - Replaying an already-used refresh token is treated as theft and ends that whole session.
 - Logout revokes the session's refresh tokens. The current access token keeps working
   until it expires (≤ 15 min); the client should discard it immediately.
+
 ### Rate limiting
 
 Redis-backed (Upstash), so limits hold across all instances. Policies live in
@@ -227,8 +229,8 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `authAccount` | login, register, per IP + email | 10 / 15 min | 503 `RATE_LIMIT_UNAVAILABLE` |
 | `submissions` | `POST /places`, per user | 20 / day | allow |
 | `reviews` | `POST /places/:id/reviews`, per user | 30 / day | allow |
-| `recommendations` | recommendation endpoint (when built), per user or IP | 20 / min | allow |
-| `routing` | itinerary generation / route optimization (when built), per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `recommendations` | `POST /recommendations`, per user or IP | 20 / min | allow |
+| `routing` | itinerary generate/edit/regenerate, `POST /routing/optimize`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).
@@ -244,17 +246,19 @@ Every response carries an `X-Request-Id` header. Responses use a standard envelo
 
 ```text
 src/
-├── config/       env.js (validated config), database.js (Knex)
+├── config/       validated env, database, Redis, rate limits, cache, planning and scoring settings
 ├── middleware/   request context, HTTP logging, security/CORS, validation, 404, errors
 ├── modules/      one folder per feature: routes → controller → service → repository
 ├── routes/       v1.js mounts module routers under /api/v1
+├── integrations/ Redis (cache, rate limiter), maps (routing providers)
 ├── shared/       errors, logger, response helpers, common validation schemas
 ├── app.js        createApp(deps): builds the Express app (no listen; used by tests)
 ├── server.js     composition root: real dependencies, listen, signal handling
 └── shutdown.js   graceful shutdown sequence
 migrations/       Knex migrations (ESM), raw SQL for PostGIS/enums/triggers
 seeds/            reference data
-tests/            unit/, api/, integration/
+tests/            unit/, api/, integration/ (PostGIS), contract/ (OpenAPI)
+docs/             openapi.yaml (API contract)
 ```
 
 ## Running behind a load balancer
