@@ -12,13 +12,14 @@ export { createItinerariesRepository } from './itineraries.repository.js';
 
 const generateSchema = z.object({ tripId: z.uuid() });
 
-export function createItinerariesModule({ itinerariesRepository, tripsService, placesService, transaction, authenticate, rateLimit }) {
+export function createItinerariesModule({ itinerariesRepository, tripsService, placesService, transaction, mapService, authenticate, rateLimit }) {
   const service = createItinerariesService({
     itinerariesRepository,
     tripsService,
     placesService,
     transaction,
     travel: createEstimatedTravel(PLANNING_CONFIG),
+    mapService,
     recommendationConfig: RECOMMENDATION_CONFIG,
     planningConfig: PLANNING_CONFIG,
   });

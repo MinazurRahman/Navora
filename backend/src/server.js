@@ -5,6 +5,7 @@ import { createRedis } from './config/redis.js';
 import { RATE_LIMIT_POLICIES } from './config/rateLimits.js';
 import { createUpstashRateLimiter } from './integrations/redis/rateLimiter.js';
 import { createCache } from './integrations/redis/cache.js';
+import { createMapServiceFromConfig } from './integrations/maps/index.js';
 import { logger } from './shared/logger.js';
 import { createLifecycle } from './shared/lifecycle.js';
 import { createApp } from './app.js';
@@ -15,12 +16,14 @@ import { createShutdownHandler } from './shutdown.js';
 const db = createDb(env, { logger });
 const lifecycle = createLifecycle();
 const redis = createRedis(env);
+const cache = createCache(redis);
 const app = createApp({
   config: env,
   lifecycle,
   repositories: createRepositories(db),
   rateLimiter: createUpstashRateLimiter(redis, RATE_LIMIT_POLICIES),
-  cache: createCache(redis),
+  cache,
+  mapService: createMapServiceFromConfig(env, { cache }),
 });
 
 const server = http.createServer(app);

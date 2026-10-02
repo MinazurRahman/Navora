@@ -22,5 +22,3 @@ export function createEstimatedTravel(config = PLANNING_CONFIG) {
     return { distanceMeters, durationSeconds: Math.round(minutes * 60) };
   };
 }
-
-export const ESTIMATED_TRAVEL_PROVIDER = 'estimate';

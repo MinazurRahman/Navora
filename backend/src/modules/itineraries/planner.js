@@ -9,6 +9,17 @@ const latestClosing = (place, dayOfWeek) => {
   return closes.length > 0 ? Math.max(...closes) : Infinity;
 };
 
+// Orders one day's stops (nearest neighbour + 2-opt) and simulates it. If opening hours
+// make that order impossible, tries visiting the places that close earliest first.
+export function scheduleDay({ stops, dayOfWeek, start, mode, windowStart, windowEnd, travel, config = PLANNING_CONFIG }) {
+  const legSeconds = (a, b) => travel(a.location ?? a, b.location ?? b, mode).durationSeconds;
+  const simulate = (ordered) => simulateDay({ stops: ordered, start, dayOfWeek, windowStart, windowEnd, travel, mode, config });
+
+  const optimized = simulate(optimizeOrder(start, stops, legSeconds, { returnToStart: config.returnToStart }));
+  if (optimized.feasible) return optimized;
+  return simulate([...stops].sort((a, b) => latestClosing(a, dayOfWeek) - latestClosing(b, dayOfWeek)));
+}
+
 /**
  * @param ranked     eligible places, best first (already through the hard constraints)
  * @param mandatory  places the user explicitly selected: must all be scheduled
@@ -28,24 +39,17 @@ export function planTrip({
   travel,
   config = PLANNING_CONFIG,
 }) {
+  // Memoised: allocation evaluates the same legs many times.
   const legCache = new Map();
-  const legSeconds = (a, b) => {
-    const from = a.location ?? a;
-    const to = b.location ?? b;
+  const cachedTravel = (from, to, travelMode) => {
     const key = `${from.latitude},${from.longitude}>${to.latitude},${to.longitude}`;
-    if (!legCache.has(key)) legCache.set(key, travel(from, to, mode).durationSeconds);
+    if (!legCache.has(key)) legCache.set(key, travel(from, to, travelMode));
     return legCache.get(key);
   };
   const simulate = (dayOfWeek, stops) =>
-    simulateDay({ stops, start, dayOfWeek, windowStart, windowEnd, travel, mode, config });
-
-  // Route optimisation first; if opening hours make that order impossible, try visiting
-  // the places that close earliest first.
-  const scheduleFor = (dayOfWeek, stops) => {
-    const optimized = simulate(dayOfWeek, optimizeOrder(start, stops, legSeconds, { returnToStart: config.returnToStart }));
-    if (optimized.feasible) return optimized;
-    return simulate(dayOfWeek, [...stops].sort((a, b) => latestClosing(a, dayOfWeek) - latestClosing(b, dayOfWeek)));
-  };
+    simulateDay({ stops, start, dayOfWeek, windowStart, windowEnd, travel: cachedTravel, mode, config });
+  const scheduleFor = (dayOfWeek, stops) =>
+    scheduleDay({ stops, dayOfWeek, start, mode, windowStart, windowEnd, travel: cachedTravel, config });
 
   const plans = days.map((day) => ({ ...day, stops: [], schedule: { stops: [], totals: { travelSeconds: 0 } } }));
   const used = new Set();

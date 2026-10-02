@@ -4,25 +4,34 @@ import { createApp } from '../../src/app.js';
 import { createRepositories } from '../../src/repositories.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
 import { createCache } from '../../src/integrations/redis/cache.js';
+import { createEstimateProvider, createMapService, createMapServiceFromConfig } from '../../src/integrations/maps/index.js';
+import { PLANNING_CONFIG } from '../../src/config/planning.js';
 import { buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
 export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 
 // The full app on the real (disposable) PostGIS test database, with caching ON (in-memory
 // Redis), so every integration test also proves cache invalidation is correct.
-export async function createIntegrationApp() {
+// mapProvider: optional fake routing provider (default: the distance estimate).
+export async function createIntegrationApp({ mapProvider } = {}) {
   // Same connection setup as production (incl. pg type parsers), pointed at the test DB.
   const db = createDb(buildTestConfig({ DATABASE_URL: testDatabaseUrl }));
   await db.migrate.latest();
   await db.seed.run();
 
+  const config = buildTestConfig();
   const redis = createInMemoryRedis();
+  const cache = createCache(redis);
+  const mapService = mapProvider
+    ? createMapService({ provider: mapProvider, fallback: createEstimateProvider(PLANNING_CONFIG), cache, ttlSeconds: 60 })
+    : createMapServiceFromConfig(config, { cache });
   const app = createApp({
-    config: buildTestConfig(),
+    config,
     lifecycle: createLifecycle(),
     repositories: createRepositories(db),
     rateLimiter: createInMemoryRateLimiter(),
-    cache: createCache(redis),
+    cache,
+    mapService,
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.

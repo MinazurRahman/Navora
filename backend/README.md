@@ -139,6 +139,20 @@ where it adds the least travel → every day simulated minute by minute (opening
 visit length, travel, buffers, daily window, trip back to the start; max 6 stops) → visit
 order by nearest neighbour + 2-opt → saved. Assumptions live in `src/config/planning.js`.
 
+### Routing provider
+
+All road data goes through `src/integrations/maps` (`getDistanceMatrix`, `getRoute`,
+`getTravelTime`); nothing else knows which provider is used. `MAP_PROVIDER=estimate`
+(default, no external calls) or `openrouteservice` (needs `MAP_API_KEY`; car, walking,
+cycling). The planner allocates places with fast estimates, then re-checks and re-orders
+every day with one provider matrix request (dropping the lowest-ranked non-selected stop if
+real times do not fit, with a `STOP_REMOVED_AFTER_ROUTING` warning) and stores a road
+polyline per day. Real results are cached in Redis for 24 h. Timeouts, provider rate limits,
+outages, unroutable points, missing data and unsupported modes (e.g. public transport on
+ORS) fall back to estimates marked `travelTimesEstimated: true` with the reason in the
+`TRAVEL_TIMES_ESTIMATED` warning — or a 503 `ROUTING_UNAVAILABLE` with
+`MAP_FALLBACK_TO_ESTIMATE=false`. Adding a provider = one adapter in `providers/`.
+
 Failures return **422**: `INSUFFICIENT_MATCHING_PLACES` (`emptyDays`, `excludedBy`,
 `suggestions`) or `SELECTED_PLACES_NOT_FEASIBLE` (per place: `reason`, `requirements`).
 Requirements are never relaxed automatically. Warnings in the itinerary:

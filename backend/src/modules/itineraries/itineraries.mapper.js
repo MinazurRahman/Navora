@@ -30,6 +30,8 @@ export function toItineraryDto({ itinerary, days, stops }) {
         travelMinutes: toMinutes(day.total_travel_seconds),
         visitMinutes: day.total_visit_minutes,
       },
+      // Encoded polyline (precision 5) of the road route; null when only estimates exist.
+      routePolyline: day.route_polyline,
       stops: stops
         .filter((stop) => stop.day_id === day.id)
         .map((stop) => ({

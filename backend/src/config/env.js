@@ -59,6 +59,13 @@ const envSchema = z.object({
   // Shared by every instance: rate-limit counters and cache.
   UPSTASH_REDIS_REST_URL: z.string().regex(/^https:\/\/\S+$/, 'must be an https:// URL'),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+
+  // Routing provider. "estimate" = straight-line estimates, no external calls.
+  MAP_PROVIDER: z.enum(['estimate', 'openrouteservice']).default('estimate'),
+  MAP_API_KEY: z.string().min(1).optional(),
+  MAP_TIMEOUT_MS: intInRange(500, 30_000).default(5_000),
+  // On provider failure: "true" = use flagged estimates; "false" = fail with 503.
+  MAP_FALLBACK_TO_ESTIMATE: z.enum(['true', 'false']).default('true'),
 });
 
 export function parseEnv(source) {
@@ -71,6 +78,9 @@ export function parseEnv(source) {
   const e = result.data;
   if (e.DB_POOL_MIN > e.DB_POOL_MAX) {
     throw new Error('Invalid environment configuration:\n  - DB_POOL_MIN: must not exceed DB_POOL_MAX');
+  }
+  if (e.MAP_PROVIDER !== 'estimate' && !e.MAP_API_KEY) {
+    throw new Error(`Invalid environment configuration:\n  - MAP_API_KEY: required when MAP_PROVIDER=${e.MAP_PROVIDER}`);
   }
 
   return Object.freeze({
@@ -105,6 +115,12 @@ export function parseEnv(source) {
     redis: Object.freeze({
       url: e.UPSTASH_REDIS_REST_URL,
       token: e.UPSTASH_REDIS_REST_TOKEN,
+    }),
+    maps: Object.freeze({
+      provider: e.MAP_PROVIDER,
+      apiKey: e.MAP_API_KEY,
+      timeoutMs: e.MAP_TIMEOUT_MS,
+      fallbackToEstimate: e.MAP_FALLBACK_TO_ESTIMATE === 'true',
     }),
   });
 }

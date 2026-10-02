@@ -11,16 +11,25 @@ import {
 import { MAX_SEARCH_RADIUS_KM } from '../recommendations/recommendations.service.js';
 import { toHHMM, todayIn } from '../recommendations/schedule.js';
 import { ROUTE_ALGORITHM } from '../routing/optimizer.js';
-import { ESTIMATED_TRAVEL_PROVIDER } from '../routing/travelEstimator.js';
-import { planTrip } from './planner.js';
+import { planTrip, scheduleDay } from './planner.js';
 import { toItineraryDto } from './itineraries.mapper.js';
 
 const notFound = () => new NotFoundError('Itinerary not found', 'ITINERARY_NOT_FOUND');
 
-function collectWarnings({ plan, startDate, startDateAssumed }) {
-  const warnings = [
-    { code: 'TRAVEL_TIMES_ESTIMATED', message: 'Travel times are estimates based on distance, not live routing data.' },
-  ];
+function collectWarnings({ plan, startDate, startDateAssumed, routing }) {
+  const warnings = [];
+  if (routing.estimated) {
+    warnings.push({
+      code: 'TRAVEL_TIMES_ESTIMATED',
+      message:
+        routing.fallbackReasons.length > 0
+          ? `Road travel times were unavailable (${routing.fallbackReasons.join(', ')}); travel times are distance-based estimates.`
+          : 'Travel times are distance-based estimates, not road routing data.',
+    });
+  }
+  for (const { placeId, dayNumber } of routing.dropped) {
+    warnings.push({ code: 'STOP_REMOVED_AFTER_ROUTING', message: 'Removed: actual travel times left no room for this visit.', placeId, dayNumber });
+  }
   if (startDateAssumed) {
     warnings.push({ code: 'START_DATE_ASSUMED', message: `No start date was set; the plan starts on ${startDate}.` });
   }
@@ -37,8 +46,9 @@ function collectWarnings({ plan, startDate, startDateAssumed }) {
   return warnings;
 }
 
-function toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recommendationConfig, partySize }) {
+function toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recommendationConfig, partySize, routing }) {
   const days = plan.days.map((day) => ({
+    route_polyline: day.routePolyline ?? null,
     day_number: day.dayNumber,
     date: day.date,
     start_time: toHHMM(ctx.windowStart),
@@ -65,10 +75,11 @@ function toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recomm
       total_distance_m: sum('total_distance_m'),
       total_travel_seconds: sum('total_travel_seconds'),
       total_visit_minutes: sum('total_visit_minutes'),
-      estimated_cost: plan.budget.spentKnown,
+      // From the final stops (routing may have removed some after allocation).
+      estimated_cost: days.flatMap((day) => day.stops).reduce((total, stop) => total + (stop.estimated_cost ?? 0), 0),
       currency: trip.budget?.currency ?? 'BDT',
-      routing_provider: ESTIMATED_TRAVEL_PROVIDER,
-      travel_times_estimated: true,
+      routing_provider: routing.provider,
+      travel_times_estimated: routing.estimated,
       algorithm: ROUTE_ALGORITHM,
       // Snapshot: the trip can change later; this records what the plan was built from.
       generation_params: JSON.stringify({ trip, startDate, startDateAssumed, weights: recommendationConfig.weights }),
@@ -83,7 +94,8 @@ export function createItinerariesService({
   tripsService,
   placesService,
   transaction,
-  travel,
+  travel, // fast estimate, used while allocating many candidates
+  mapService, // real road data for the final days (provider-agnostic)
   recommendationConfig,
   planningConfig,
   today = () => todayIn(recommendationConfig.timezone),
@@ -104,6 +116,58 @@ export function createItinerariesService({
       else accepted.push(place);
     }
     return { accepted, rejected };
+  }
+
+  // Re-checks a planned day with the map service's travel times (one small matrix request)
+  // and re-orders it. If real times make the day infeasible, drops the lowest-ranked stop
+  // the user did not select, until it fits.
+  async function refineDay(day, { trip, ctx, rankOf, selectedIds }) {
+    const pointKey = (p) => `${p.latitude},${p.longitude}`;
+    let stops = day.schedule.stops.map((s) => s.place);
+    const dropped = [];
+
+    while (stops.length > 0) {
+      const points = [trip.startLocation, ...stops.map((p) => p.location)];
+      const matrix = await mapService.getDistanceMatrix(points, trip.travelMode);
+      const index = new Map(points.map((p, i) => [pointKey(p), i]));
+      const travel = (from, to) => {
+        const i = index.get(pointKey(from));
+        const j = index.get(pointKey(to));
+        return { durationSeconds: matrix.durations[i][j], distanceMeters: matrix.distances[i][j] };
+      };
+
+      const schedule = scheduleDay({
+        stops,
+        dayOfWeek: day.dayOfWeek,
+        start: trip.startLocation,
+        mode: trip.travelMode,
+        windowStart: ctx.windowStart,
+        windowEnd: ctx.windowEnd,
+        travel,
+        config: planningConfig,
+      });
+      if (schedule.feasible) return { schedule, matrix, dropped };
+
+      const droppable = stops.filter((p) => !selectedIds.has(p.id));
+      if (droppable.length === 0) {
+        throw new UnprocessableError('SELECTED_PLACES_NOT_FEASIBLE', 'Some selected places do not fit into the trip', {
+          places: stops.map((p) => ({ placeId: p.id, name: p.name, reason: 'NOT_ENOUGH_TIME', dayNumber: day.dayNumber })),
+        });
+      }
+      const worst = droppable.reduce((a, b) => (rankOf(a.id) >= rankOf(b.id) ? a : b));
+      stops = stops.filter((p) => p !== worst);
+      dropped.push({ placeId: worst.id, dayNumber: day.dayNumber });
+    }
+    return { schedule: { stops: [], totals: { distanceMeters: 0, travelSeconds: 0, visitMinutes: 0 } }, matrix: null, dropped };
+  }
+
+  // Road geometry for drawing the day on a map; skipped when only estimates are available.
+  async function routePolyline(schedule, trip, matrix) {
+    if (!matrix || matrix.estimated || schedule.stops.length === 0) return null;
+    const points = [trip.startLocation, ...schedule.stops.map((s) => s.place.location)];
+    if (planningConfig.returnToStart) points.push(trip.startLocation);
+    const route = await mapService.getRoute(points, trip.travelMode);
+    return route.estimated ? null : route.geometry;
   }
 
   return {
@@ -169,6 +233,26 @@ export function createItinerariesService({
         });
       }
 
+      // 10b. Re-check and re-order each planned day with the map service's travel times.
+      const rankIndex = new Map(ranked.map((place, i) => [place.id, i]));
+      const rankOf = (id) => rankIndex.get(id) ?? -1;
+      const routing = { provider: 'estimate', estimated: false, fallbackReasons: [], dropped: [] };
+      for (const day of plan.days) {
+        if (day.schedule.stops.length === 0) continue;
+        const refined = await refineDay(day, { trip, ctx, rankOf, selectedIds });
+        day.schedule = refined.schedule;
+        routing.dropped.push(...refined.dropped);
+        if (!refined.matrix) continue;
+        if (refined.matrix.estimated) {
+          routing.estimated = true;
+          const reason = refined.matrix.fallbackReason;
+          if (reason && !routing.fallbackReasons.includes(reason)) routing.fallbackReasons.push(reason);
+        }
+        // Provider of record: the real one if it served at least partially, else "estimate".
+        if (refined.matrix.provider !== 'estimate') routing.provider = refined.matrix.provider;
+        day.routePolyline = await routePolyline(day.schedule, trip, refined.matrix);
+      }
+
       // Every day needs at least one stop; requirements are never relaxed to get there.
       const emptyDays = plan.days.filter((day) => day.schedule.stops.length === 0);
       if (emptyDays.length > 0) {
@@ -191,8 +275,8 @@ export function createItinerariesService({
       }
 
       // 11. Save as a new current version.
-      const warnings = collectWarnings({ plan, startDate, startDateAssumed });
-      const rows = toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recommendationConfig, partySize: trip.partySize });
+      const warnings = collectWarnings({ plan, startDate, startDateAssumed, routing });
+      const rows = toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recommendationConfig, partySize: trip.partySize, routing });
       const id = await transaction((trx) => itinerariesRepository.createVersion({ tripId, ...rows }, trx));
       getLogger().info({ tripId, itineraryId: id, days: rows.days.length }, 'Itinerary generated');
 
