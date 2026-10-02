@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEnv } from '../../src/config/env.js';
+import { parseEnv, productionWarnings } from '../../src/config/env.js';
 
 const base = {
   DATABASE_URL: 'postgres://user:pass@localhost:5432/navora',
@@ -71,6 +71,28 @@ describe('parseEnv', () => {
     const { UPSTASH_REDIS_REST_TOKEN: _token, ...withoutToken } = base;
     expect(() => parseEnv(withoutToken)).toThrow(/UPSTASH_REDIS_REST_TOKEN/);
     expect(() => parseEnv({ ...base, UPSTASH_REDIS_REST_URL: 'http://example.upstash.io' })).toThrow(/UPSTASH_REDIS_REST_URL/);
+  });
+
+  it('warns about risky production settings, and only in production', () => {
+    const risky = parseEnv({ ...base, NODE_ENV: 'production' });
+    const warnings = productionWarnings(risky).join('\n');
+    expect(warnings).toMatch(/TRUST_PROXY=0/);
+    expect(warnings).toMatch(/CORS_ORIGINS is empty/);
+    expect(warnings).toMatch(/MAP_PROVIDER=estimate/);
+    expect(productionWarnings(parseEnv({ ...base, NODE_ENV: 'development' }))).toEqual([]);
+  });
+
+  it('has no warnings for a well-configured production deployment', () => {
+    const good = parseEnv({
+      ...base,
+      NODE_ENV: 'production',
+      TRUST_PROXY: '1',
+      CORS_ORIGINS: 'https://app.navora.example',
+      SHUTDOWN_DRAIN_MS: '5000',
+      MAP_PROVIDER: 'openrouteservice',
+      MAP_API_KEY: 'k',
+    });
+    expect(productionWarnings(good)).toEqual([]);
   });
 
   it('returns a frozen config object', () => {

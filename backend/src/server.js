@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { env } from './config/env.js';
+import { env, productionWarnings } from './config/env.js';
 import { createDb } from './config/database.js';
 import { createRedis } from './config/redis.js';
 import { RATE_LIMIT_POLICIES } from './config/rateLimits.js';
@@ -11,6 +11,8 @@ import { createLifecycle } from './shared/lifecycle.js';
 import { createApp } from './app.js';
 import { createRepositories } from './repositories.js';
 import { createShutdownHandler } from './shutdown.js';
+
+for (const warning of productionWarnings(env)) logger.warn(`Configuration: ${warning}`);
 
 // Composition root: creates real dependencies, wires the app, starts listening.
 const db = createDb(env, { logger });

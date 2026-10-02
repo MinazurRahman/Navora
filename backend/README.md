@@ -268,3 +268,5 @@ load balancer without sticky sessions.
   in-flight requests, closes the database pool, then exits.
 - Keep `HTTP_KEEP_ALIVE_TIMEOUT_MS` above the load balancer's idle timeout.
 - Keep `instances × DB_POOL_MAX` below PostgreSQL's `max_connections`.
+- In production the server logs a `Configuration:` warning at startup for risky settings
+  (TRUST_PROXY=0, empty CORS_ORIGINS, SHUTDOWN_DRAIN_MS=0, estimate routing, debug logging).

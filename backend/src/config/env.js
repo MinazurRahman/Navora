@@ -125,4 +125,27 @@ export function parseEnv(source) {
   });
 }
 
+// Settings that are valid but almost certainly wrong in production. Warnings, not errors:
+// e.g. a deployment without a proxy legitimately has TRUST_PROXY=0.
+export function productionWarnings(config) {
+  if (!config.isProduction) return [];
+  const warnings = [];
+  if (config.trustProxy === 0) {
+    warnings.push('TRUST_PROXY=0: behind a load balancer or reverse proxy every client then shares one rate-limit bucket and logs show the proxy IP. Set it to the number of proxy hops.');
+  }
+  if (config.corsOrigins.length === 0) {
+    warnings.push('CORS_ORIGINS is empty: no browser frontend can call the API.');
+  }
+  if (config.shutdown.drainMs === 0) {
+    warnings.push('SHUTDOWN_DRAIN_MS=0: the load balancer may still route requests to an instance that is shutting down.');
+  }
+  if (config.maps.provider === 'estimate') {
+    warnings.push('MAP_PROVIDER=estimate: itineraries use distance-based travel-time estimates, not road routing.');
+  }
+  if (config.logLevel === 'debug' || config.logLevel === 'trace') {
+    warnings.push(`LOG_LEVEL=${config.logLevel}: very verbose logging in production.`);
+  }
+  return warnings;
+}
+
 export const env = parseEnv(process.env);
