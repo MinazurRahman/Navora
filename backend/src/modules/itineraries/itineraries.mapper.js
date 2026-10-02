@@ -10,6 +10,7 @@ export function toItineraryDto({ itinerary, days, stops }) {
     tripId: itinerary.trip_id,
     version: itinerary.version,
     isCurrent: itinerary.is_current,
+    userModified: itinerary.is_user_modified,
     routing: {
       provider: itinerary.routing_provider,
       algorithm: itinerary.algorithm,
@@ -61,5 +62,6 @@ export function toItineraryDto({ itinerary, days, stops }) {
     warnings: itinerary.warnings,
     generatedFrom: itinerary.generation_params,
     createdAt: itinerary.created_at,
+    updatedAt: itinerary.updated_at,
   };
 }

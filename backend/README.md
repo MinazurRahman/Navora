@@ -131,7 +131,18 @@ Travel time is distance-based until a routing provider is added.
 | GET | `/api/v1/trips` | Bearer | My trips, newest first |
 | GET / PATCH / DELETE | `/api/v1/trips/:id` | Bearer | Owner only (others get 404) |
 | POST | `/api/v1/itineraries/generate` | Bearer | `{ tripId }` → new current itinerary version (routing rate limit) |
-| GET | `/api/v1/itineraries/:id` | Bearer | Owner only |
+| GET | `/api/v1/itineraries` | Bearer | My itineraries, newest first; `?tripId=`, `?current=true`, `page`, `limit` |
+| GET | `/api/v1/itineraries/:id` | Bearer | Full itinerary |
+| PATCH | `/api/v1/itineraries/:id` | Bearer | Edit the current version: `{ days: [{ dayNumber, placeIds, optimizeOrder? }] }` |
+| POST | `/api/v1/itineraries/:id/regenerate` | Bearer | New version from the trip's current requirements |
+| DELETE | `/api/v1/itineraries/:id` | Bearer | Delete a version; the newest remaining one becomes current |
+
+Itineraries belong to the trip's owner; anyone else gets 404. An edit replaces each listed
+day with exactly those places in that order (`optimizeOrder: true` re-orders them), which
+covers reordering, removing, moving and adding. Edited days are re-scheduled with routing
+travel times; places must be approved and meet the trip's mandatory requirements
+(`422 PLACE_VIOLATES_REQUIREMENTS`), days must fit (`422 ITINERARY_DAY_INFEASIBLE`), and a
+failed edit changes nothing. Older versions are read-only (`409 ITINERARY_NOT_CURRENT`).
 
 Generation: candidates from PostGIS → hard constraints → ranking (same rules as
 recommendations) → selected places first, then best-ranked places, each put on the day
