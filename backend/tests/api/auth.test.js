@@ -233,6 +233,18 @@ describe('POST /api/v1/auth/refresh', () => {
   });
 });
 
+describe('refresh token housekeeping', () => {
+  it('expired tokens are removed when the user signs in again', async () => {
+    await register();
+    for (const token of repositories.state.refreshTokens) token.expires_at = new Date(Date.now() - 1000);
+
+    await login({ email: 'ayesha@example.com', password: PASSWORD });
+
+    expect(repositories.state.refreshTokens).toHaveLength(1);
+    expect(repositories.state.refreshTokens[0].expires_at > new Date()).toBe(true);
+  });
+});
+
 describe('POST /api/v1/auth/logout', () => {
   it('revokes the session so its refresh token can no longer be used', async () => {
     const { body } = await register();

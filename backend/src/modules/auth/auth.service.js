@@ -21,6 +21,7 @@ export function createAuthService({
 }) {
   // familyId groups one login's chain of rotated refresh tokens.
   async function issueSession(user, familyId = randomUUID()) {
+    await refreshTokenRepository.deleteExpiredForUser(user.id); // keeps the table from growing forever
     const { token, tokenHash } = generateRefreshToken();
     const expiresAt = new Date(now().getTime() + refreshTokenTtlDays * DAY_MS);
     const { id: refreshTokenId } = await refreshTokenRepository.create({

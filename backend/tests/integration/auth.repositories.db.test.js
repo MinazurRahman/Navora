@@ -57,6 +57,21 @@ describe.skipIf(!url)('auth repositories against PostgreSQL', () => {
     expect((await refreshTokens.findByHash(tokenHash)).revoked_at).toBeInstanceOf(Date);
   });
 
+  it("deletes only that user's expired tokens, keeping revoked-but-valid ones for reuse detection", async () => {
+    const alice = await users.create({ name: 'A', email: 'a@example.com', passwordHash: 'h' });
+    const bob = await users.create({ name: 'B', email: 'b@example.com', passwordHash: 'h' });
+    const past = new Date(Date.now() - 60_000);
+    const future = new Date(Date.now() + 60_000);
+    await refreshTokens.create({ userId: alice.id, familyId: randomUUID(), tokenHash: 'd'.repeat(64), expiresAt: past });
+    await refreshTokens.create({ userId: alice.id, familyId: randomUUID(), tokenHash: 'e'.repeat(64), expiresAt: future });
+    await refreshTokens.claim('e'.repeat(64)); // revoked, not expired
+    await refreshTokens.create({ userId: bob.id, familyId: randomUUID(), tokenHash: 'f'.repeat(64), expiresAt: past });
+
+    await refreshTokens.deleteExpiredForUser(alice.id);
+
+    expect((await db('refresh_tokens').select('token_hash')).map((r) => r.token_hash).sort()).toEqual(['e'.repeat(64), 'f'.repeat(64)]);
+  });
+
   it('revokes every active token in a family', async () => {
     const user = await users.create({ name: 'A', email: 'a@example.com', passwordHash: 'h' });
     const familyId = randomUUID();

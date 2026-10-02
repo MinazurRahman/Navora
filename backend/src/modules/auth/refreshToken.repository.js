@@ -29,6 +29,12 @@ export function createRefreshTokenRepository(db) {
       await db('refresh_tokens').where({ id }).update({ replaced_by_id: replacedById });
     },
 
+    // Housekeeping without a scheduled job: expired tokens of one user (uses the user_id
+    // index). Revoked-but-unexpired tokens stay: reuse detection needs them.
+    async deleteExpiredForUser(userId) {
+      await db('refresh_tokens').where({ user_id: userId }).where('expires_at', '<', db.fn.now()).delete();
+    },
+
     async revokeFamily(familyId) {
       await db('refresh_tokens')
         .where({ family_id: familyId })

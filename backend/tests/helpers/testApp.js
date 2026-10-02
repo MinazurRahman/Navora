@@ -134,6 +134,12 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
       async setReplacedBy(id, replacedById) {
         refreshTokens.find((t) => t.id === id).replaced_by_id = replacedById;
       },
+      async deleteExpiredForUser(userId) {
+        const now = new Date();
+        for (let i = refreshTokens.length - 1; i >= 0; i -= 1) {
+          if (refreshTokens[i].user_id === userId && refreshTokens[i].expires_at < now) refreshTokens.splice(i, 1);
+        }
+      },
       async revokeFamily(familyId) {
         for (const t of refreshTokens) if (t.family_id === familyId && t.revoked_at === null) t.revoked_at = new Date();
       },
