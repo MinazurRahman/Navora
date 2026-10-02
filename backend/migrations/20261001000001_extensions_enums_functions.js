@@ -33,8 +33,8 @@ export async function down(knex) {
     DROP TYPE IF EXISTS facility_status;
     DROP TYPE IF EXISTS place_status;
     DROP TYPE IF EXISTS user_role;
-    DROP EXTENSION IF EXISTS citext;
-    DROP EXTENSION IF EXISTS pg_trgm;
-    DROP EXTENSION IF EXISTS postgis;
   `);
+  // Extensions are left installed: they are database-wide and other objects may depend on
+  // them (the postgis/postgis Docker image pre-installs postgis_topology, which needs
+  // postgis). `up` uses IF NOT EXISTS, so re-applying works.
 }
