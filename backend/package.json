@@ -16,7 +16,8 @@
     "migrate:latest": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "migrate:status": "knex migrate:status",
-    "seed": "knex seed:run"
+    "seed": "knex seed:run",
+    "seed:demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.2.0",

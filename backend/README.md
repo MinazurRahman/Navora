@@ -33,6 +33,7 @@ and `citext` beforehand as a superuser).
 | `npm test` | Run all tests (CI runs them on every pull request) |
 | `npm run migrate:latest` / `migrate:rollback` / `migrate:status` | Database migrations |
 | `npm run seed` | Load reference data (idempotent) |
+| `npm run seed:demo` | Demo places for development: approximate coordinates; fees, hours and facilities unknown. Refuses in production |
 
 Run migrations as a **separate deploy step**, never on application start, so multiple
 instances do not race each other.

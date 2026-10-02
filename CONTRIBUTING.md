@@ -73,6 +73,7 @@ Passwords containing `@ : / #` must be URL-encoded in the connection strings (`@
 ```bash
 npm run migrate:latest
 npm run seed
+npm run seed:demo               # optional: demo places to work with
 npm test
 npm run dev                     # http://localhost:3000/ready should say "ready"
 ```
@@ -84,6 +85,7 @@ npm run dev                     # http://localhost:3000/ready should say "ready"
 | `npm test` / `npm run test:watch` | Run tests once / on every change |
 | `npm run migrate:latest` / `migrate:rollback` / `migrate:status` | Database migrations |
 | `npm run seed` | Load categories and interest tags (safe to re-run) |
+| `npm run seed:demo` | Load ~44 demo Dhaka places for development (after `seed`; refuses in production) |
 
 ---
 
