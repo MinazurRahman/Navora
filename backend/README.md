@@ -139,6 +139,24 @@ where it adds the least travel → every day simulated minute by minute (opening
 visit length, travel, buffers, daily window, trip back to the start; max 6 stops) → visit
 order by nearest neighbour + 2-opt → saved. Assumptions live in `src/config/planning.js`.
 
+### Route optimisation
+
+`POST /api/v1/routing/optimize` (Bearer; `routing` rate limit) orders places the user chose:
+
+```json
+{ "start": { "latitude": 23.81, "longitude": 90.41 }, "travelMode": "car", "returnToStart": true,
+  "days": [{ "date": "2026-10-05", "dailyStartTime": "09:00", "dailyEndTime": "18:00", "placeIds": ["…"] }] }
+```
+
+Each day separately: distance matrix → nearest neighbour → 2-opt → feasibility check
+(opening hours, visit length, daily window). If the shortest order clashes with opening
+hours, an opening-hours-aware order is used (`reorderedForOpeningHours`). Chosen places are
+never dropped: an impossible day comes back with `feasible: false` and `infeasibility`.
+Response per day: ordered `stops` (leg from the previous stop, planned times), `returnToStart`,
+`totals`, `routePolyline`, `metadata` (`initialTravelMinutes` vs `optimizedTravelMinutes`,
+provider, `travelTimesEstimated`). Top-level `metadata.globallyOptimal` is always `false`:
+this is a heuristic, not a guaranteed shortest route.
+
 ### Routing provider
 
 All road data goes through `src/integrations/maps` (`getDistanceMatrix`, `getRoute`,

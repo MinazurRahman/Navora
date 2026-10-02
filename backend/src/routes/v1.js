@@ -12,6 +12,7 @@ export function createV1Router({
   recommendationsRouter,
   tripsRouter,
   itinerariesRouter,
+  routingRouter,
 }) {
   const router = Router();
 
@@ -25,6 +26,7 @@ export function createV1Router({
   router.use('/recommendations', recommendationsRouter);
   router.use('/trips', tripsRouter);
   router.use('/itineraries', itinerariesRouter);
+  router.use('/routing', routingRouter);
   router.use('/places', placesRouter);
   // Defines /places/:placeId/reviews and /reviews/:id itself.
   router.use(reviewsRouter);

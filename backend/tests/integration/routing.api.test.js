@@ -102,6 +102,42 @@ describe.skipIf(!testDatabaseUrl)('Itinerary generation through the map provider
     expect(tight.warnings.map((w) => w.code)).toContain('STOP_REMOVED_AFTER_ROUTING');
   });
 
+  describe('POST /api/v1/routing/optimize', () => {
+    const placeIds = async () => (await api().get('/api/v1/places').query({ limit: 50 })).body.data.map((p) => p.id);
+    const optimize = (body, session = owner) => api().post('/api/v1/routing/optimize').set(session.headers).send({ start: START, ...body });
+
+    it('orders the chosen places per day and returns legs, totals and metadata', async () => {
+      const [a, b, c, d] = await placeIds();
+      const res = await optimize({ days: [{ date: MONDAY, placeIds: [a, b, c] }, { placeIds: [d] }] });
+
+      expect(res.status).toBe(200);
+      const { days, totals, metadata } = res.body.data;
+      expect(days.map((day) => day.stops.length)).toEqual([3, 1]);
+      expect(days[0].stops.map((s) => s.place.id).sort()).toEqual([a, b, c].sort());
+      expect(days[0].stops[0]).toMatchObject({ order: 1, travelFromPrevious: { minutes: expect.any(Number), distanceMeters: expect.any(Number) } });
+      expect(days[0]).toMatchObject({ feasible: true, routePolyline: 'encoded-road-polyline', metadata: { provider: 'fake-roads', travelTimesEstimated: false } });
+      expect(totals.distanceMeters).toBe(days[0].totals.distanceMeters + days[1].totals.distanceMeters);
+      expect(metadata).toMatchObject({ algorithm: 'nearest-neighbor+2opt', globallyOptimal: false });
+    });
+
+    it('rejects unknown, unapproved and duplicate places', async () => {
+      const [a] = await placeIds();
+      const unknown = await optimize({ days: [{ placeIds: ['0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e'] }] });
+      expect(unknown.status).toBe(400);
+      expect(unknown.body.error.details[0].path).toBe('days.0.placeIds.0');
+
+      const pending = (await api().post('/api/v1/places').set(owner.headers).send({ name: 'Mine', category: 'park', location: START })).body.data;
+      expect((await optimize({ days: [{ placeIds: [pending.id] }] })).status).toBe(400);
+      expect((await optimize({ days: [{ placeIds: [a, a] }] })).status).toBe(400);
+    });
+
+    it('validates the request and requires sign-in', async () => {
+      expect((await optimize({ days: [] })).status).toBe(400);
+      expect((await optimize({ start: { latitude: 99, longitude: 0 }, days: [{ placeIds: [(await placeIds())[0]] }] })).status).toBe(400);
+      expect((await api().post('/api/v1/routing/optimize').send({ start: START, days: [] })).status).toBe(401);
+    });
+  });
+
   it('caches provider results: regenerating the same trip does not call the provider again', async () => {
     const trip = await tripWith({});
     await generate(trip.id);
