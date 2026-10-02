@@ -50,6 +50,18 @@ Unit and API tests need no database. Schema tests in `tests/integration/` run on
 TEST_DATABASE_URL=postgres://navora:navora_dev_password@localhost:5433/navora_test npm test
 ```
 
+## API contract (for the frontend)
+
+**[`docs/openapi.yaml`](docs/openapi.yaml)** (OpenAPI 3.1) is the authoritative contract: every
+endpoint with auth, parameters, request bodies, response schemas, every error status and its
+codes, and examples. Open it in any OpenAPI viewer, e.g. paste it into
+https://editor.swagger.io or use the "OpenAPI (Swagger) Editor" VS Code extension.
+
+`tests/contract/openapi.contract.test.js` keeps it true: the spec must be valid, every route in
+the code must be documented (and vice versa), every example must match its schema, and every
+operation is called against the real app with each response's status and body checked against
+the spec. Change an endpoint → update the spec, or the tests fail.
+
 ## Endpoints
 
 | Method | Path | Auth | Purpose |

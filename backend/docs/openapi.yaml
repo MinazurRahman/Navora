@@ -1,0 +1,1926 @@
+openapi: 3.1.0
+info:
+  title: Navora API
+  version: 1.0.0
+  description: |
+    REST API of the Navora City Explore & Travel Planning Platform.
+
+    ## Conventions
+    - **Base URL**: `/api/v1` (health probes are at the root). JSON only: send `Content-Type: application/json`.
+    - **Success**: `{ "success": true, "data": …, "meta"?: … }` — `meta` holds pagination
+      (`page`, `limit`, `total`, `totalPages`) or result statistics.
+    - **Errors**: `{ "success": false, "error": { "code", "message", "details"?, "requestId" } }`.
+      Branch on `code`; `message` is for humans. Every endpoint can also return
+      `429 RATE_LIMITED` and `500 INTERNAL_ERROR`.
+    - **Auth**: `Authorization: Bearer <accessToken>`. Access tokens last 15 minutes. On
+      `401 TOKEN_EXPIRED`, call `POST /auth/refresh` with the refresh token and retry. Each
+      refresh token works **once** — always store the new one; replaying a used one ends the
+      session. Share one refresh call across browser tabs.
+    - **Privacy**: other users' private resources (trips, itineraries, non-approved places)
+      answer `404`, never `403`, so their existence is not revealed.
+    - **Pagination**: `page` (from 1) and `limit` (1–50, default 20).
+    - **Rate limits**: every `/api/v1` response carries `RateLimit-Limit`, `RateLimit-Remaining`
+      and `RateLimit-Reset` (seconds); `429` responses add `Retry-After`.
+    - **Request IDs**: every response has `X-Request-Id`; include it in bug reports.
+    - **Times** are local "HH:MM" (Asia/Dhaka); dates are "YYYY-MM-DD"; timestamps are ISO 8601.
+    - **Unknown is unknown**: facility values are `YES` / `NO` / `UNKNOWN`; `null` fees,
+      ratings or opening hours mean unknown and are never treated as positive.
+servers:
+  - url: http://localhost:3000
+    description: 'Local development'
+tags:
+  - { name: Health }
+  - { name: Auth }
+  - { name: Catalogue }
+  - { name: Places }
+  - { name: Moderation }
+  - { name: Reviews }
+  - { name: Recommendations }
+  - { name: Trips }
+  - { name: Itineraries }
+  - { name: Routing }
+
+paths:
+  # ============================== Health ==============================
+  /health:
+    get:
+      tags: [Health]
+      summary: 'Liveness probe'
+      description: 'The process is up. Checks no dependencies. Not rate limited.'
+      security: []
+      responses:
+        '200':
+          description: 'Alive'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [status, uptimeSeconds]
+                    additionalProperties: false
+                    properties:
+                      status: { const: ok }
+                      uptimeSeconds: { type: integer }
+              example: { success: true, data: { status: ok, uptimeSeconds: 3600 } }
+  /ready:
+    get:
+      tags: [Health]
+      summary: 'Readiness probe'
+      description: 'The database answers and the instance is not shutting down. Point the load balancer here.'
+      security: []
+      responses:
+        '200':
+          description: 'Ready'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [status, checks]
+                    additionalProperties: false
+                    properties:
+                      status: { const: ready }
+                      checks:
+                        type: object
+                        required: [database]
+                        additionalProperties: false
+                        properties: { database: { const: ok } }
+              example: { success: true, data: { status: ready, checks: { database: ok } } }
+        '503':
+          description: '`SERVICE_UNAVAILABLE` — `details` is `{ checks: { database: "fail" } }` or `{ shuttingDown: true }`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: SERVICE_UNAVAILABLE, message: Service dependencies are unavailable, details: { checks: { database: fail } }, requestId: 1d8062e6-e8af-42e6-9d95-bcfc7e4d53f7 } }
+
+  /api/v1:
+    get:
+      tags: [Health]
+      summary: 'API version'
+      security: []
+      responses:
+        '200':
+          description: 'Version info'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [name, version]
+                    additionalProperties: false
+                    properties:
+                      name: { const: navora-api }
+                      version: { const: v1 }
+              example: { success: true, data: { name: navora-api, version: v1 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Auth ==============================
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: 'Create an account'
+      description: 'Creates a user (role `user`) and signs them in. Email is trimmed and lowercased. Rate limited per IP and per IP + email; refuses with 503 if rate limiting is unavailable.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              additionalProperties: false
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+                email: { type: string, format: email, maxLength: 254 }
+                password: { type: string, minLength: 8, maxLength: 128 }
+            example: { name: Ayesha Rahman, email: ayesha@example.com, password: correct horse battery staple }
+      responses:
+        '201':
+          description: 'Account created; response is not cacheable (`Cache-Control: no-store`).'
+          content:
+            application/json:
+              schema: &sessionEnvelope
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Session' }
+              example: &sessionExample
+                success: true
+                data:
+                  user: { id: ff57e577-6935-46cd-8b17-e2e81d72f3cf, name: Ayesha Rahman, email: ayesha@example.com, role: user, profileImageUrl: null, createdAt: '2026-10-01T08:24:19.955Z' }
+                  tokens: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoidXNlciJ9.sig, expiresIn: 900, refreshToken: S79j0NE29UKEq0yXbXkF1Jw7mT3l9h2vR8cP4sA6dGo, refreshTokenExpiresAt: '2026-10-31T08:24:19.955Z' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: '`EMAIL_ALREADY_REGISTERED` (case-insensitive).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: EMAIL_ALREADY_REGISTERED, message: An account with this email already exists, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: 'Sign in'
+      description: 'Same rate limits as register. Wrong password, unknown email and deactivated account all return the same 401.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              additionalProperties: false
+              properties:
+                email: { type: string, format: email, maxLength: 254 }
+                password: { type: string, minLength: 1, maxLength: 128 }
+            example: { email: ayesha@example.com, password: correct horse battery staple }
+      responses:
+        '200':
+          description: 'Signed in.'
+          content:
+            application/json:
+              schema: *sessionEnvelope
+              example: *sessionExample
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: '`INVALID_CREDENTIALS`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: INVALID_CREDENTIALS, message: Invalid email or password, requestId: d4052722-bda2-49d0-9d4a-0056d095d3cc } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 'Get new tokens'
+      description: 'Exchanges a refresh token for a new access token **and a new refresh token**. The old refresh token stops working; presenting it again ends the whole session.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: &refreshBody
+              type: object
+              required: [refreshToken]
+              additionalProperties: false
+              properties:
+                refreshToken: { type: string, minLength: 1, maxLength: 256 }
+            example: { refreshToken: S79j0NE29UKEq0yXbXkF1Jw7mT3l9h2vR8cP4sA6dGo }
+      responses:
+        '200':
+          description: 'New session tokens.'
+          content:
+            application/json:
+              schema: *sessionEnvelope
+              example: *sessionExample
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: '`INVALID_REFRESH_TOKEN` — unknown, expired, already used, or the account is deactivated. Sign in again.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: INVALID_REFRESH_TOKEN, message: Invalid or expired refresh token, requestId: 70f78c54-2c3b-4e33-bb9b-ae8a95ee90b8 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 'Sign out'
+      description: 'Revokes the session''s refresh tokens. The current access token keeps working until it expires (≤ 15 min) — discard it on the client. Always succeeds, even for unknown tokens.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *refreshBody
+            example: { refreshToken: S79j0NE29UKEq0yXbXkF1Jw7mT3l9h2vR8cP4sA6dGo }
+      responses:
+        '200':
+          description: 'Signed out.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [loggedOut]
+                    additionalProperties: false
+                    properties: { loggedOut: { const: true } }
+              example: { success: true, data: { loggedOut: true } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: 'Current user'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 'The signed-in user.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [user]
+                    additionalProperties: false
+                    properties: { user: { $ref: '#/components/schemas/User' } }
+              example: { success: true, data: { user: { id: ff57e577-6935-46cd-8b17-e2e81d72f3cf, name: Ayesha Rahman, email: ayesha@example.com, role: user, profileImageUrl: null, createdAt: '2026-10-01T08:24:19.955Z' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Catalogue ==============================
+  /api/v1/categories:
+    get:
+      tags: [Catalogue]
+      summary: 'Place categories'
+      description: 'Use the `slug` values in place bodies, filters and `preferredCategories`.'
+      security: []
+      responses:
+        '200':
+          description: 'All categories, by name.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Category' } }
+              example: { success: true, data: [{ slug: museum, name: Museum, description: Museums and exhibitions }] }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/tags:
+    get:
+      tags: [Catalogue]
+      summary: 'Interests (tags)'
+      description: 'Use the `slug` values for place `tags` and for `interests` in trips and recommendations.'
+      security: []
+      responses:
+        '200':
+          description: 'All interests, by name.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Tag' } }
+              example: { success: true, data: [{ slug: history, name: History }, { slug: food, name: Food }] }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Places ==============================
+  /api/v1/places:
+    get:
+      tags: [Places]
+      summary: 'List approved places'
+      description: 'Newest first. Cached for up to 2 minutes; changes made through the API show immediately.'
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryFilter'
+        - $ref: '#/components/parameters/MaxEntryFee'
+        - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': &placePage
+          description: 'A page of places.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Place' } }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Places]
+      summary: 'Submit a place'
+      description: 'Community submission → `PENDING` until a moderator approves it (places created by moderators are `APPROVED` at once). Rate limited per user (20/day).'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PlaceInput'
+                - required: [name, category, location]
+            example:
+              name: Lalbagh Fort
+              description: 'Mughal fort complex from the 17th century'
+              category: historical_site
+              location: { latitude: 23.7189, longitude: 90.3882 }
+              entryFee: 20
+              typicalVisitMinutes: 90
+              parkingAvailable: 'YES'
+              tags: [history, architecture]
+              openingHours: [{ dayOfWeek: 1, opensAt: '10:00', closesAt: '17:00' }]
+      responses:
+        '201': &placeOne
+          description: 'The place.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Place' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/nearby:
+    get:
+      tags: [Places]
+      summary: 'Approved places near a point'
+      description: 'Closest first, each with `distanceMeters`. Coordinates are rounded to ~110 m.'
+      security: []
+      parameters:
+        - { name: latitude, in: query, required: true, schema: { type: number, minimum: -90, maximum: 90 }, example: 23.8103 }
+        - { name: longitude, in: query, required: true, schema: { type: number, minimum: -180, maximum: 180 }, example: 90.4125 }
+        - { name: radiusKm, in: query, schema: { type: number, exclusiveMinimum: 0, maximum: 50, default: 5 } }
+        - $ref: '#/components/parameters/CategoryFilter'
+        - $ref: '#/components/parameters/MaxEntryFee'
+        - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': *placePage
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/search:
+    get:
+      tags: [Places]
+      summary: 'Search approved places'
+      description: 'Whole words in name/description, plus typo-tolerant name matching. Best match first.'
+      security: []
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 100 }, example: lalbagh fort }
+        - $ref: '#/components/parameters/CategoryFilter'
+        - $ref: '#/components/parameters/MaxEntryFee'
+        - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': *placePage
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/mine:
+    get:
+      tags: [Places]
+      summary: 'My submissions'
+      description: 'Places I submitted, any status, newest first.'
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PlaceStatusFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': *placePage
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Places]
+      summary: 'Place details'
+      description: 'Approved places are public. Pending, rejected and archived places are visible only to their submitter and moderators (send the token); others get 404.'
+      security: [{}, { bearerAuth: [] }]
+      responses:
+        '200': *placeOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Places]
+      summary: 'Edit a place'
+      description: |
+        Submitter: own `PENDING` places (stay pending) and `REJECTED` places (become `PENDING`, logged as RESUBMITTED).
+        Moderators: any place. `tags` and `openingHours`, when given, replace the current values.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PlaceInput'
+                - minProperties: 1
+            example: { entryFee: 30, parkingAvailable: 'YES' }
+      responses:
+        '200': *placeOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    delete:
+      tags: [Places]
+      summary: 'Archive a place'
+      description: 'Sets status `ARCHIVED` (the row is kept so saved itineraries stay intact). Same permissions as editing. Returns the archived place.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *placeOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/{id}/moderation-events:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Places]
+      summary: 'Status history of a place'
+      description: 'Submissions, edits and moderator decisions with notes (e.g. the rejection reason), oldest first. Submitter and moderators only.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 'The history.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/ModerationEvent' } }
+              example:
+                success: true
+                data:
+                  - { action: SUBMITTED, fromStatus: null, toStatus: PENDING, note: null, createdAt: '2026-10-01T08:30:00.000Z' }
+                  - { action: REJECTED, fromStatus: PENDING, toStatus: REJECTED, note: Wrong location, createdAt: '2026-10-01T09:00:00.000Z' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Moderation ==============================
+  /api/v1/places/moderation:
+    get:
+      tags: [Moderation]
+      summary: 'Moderation queue'
+      description: 'Moderators and admins only. Oldest first.'
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/PlaceStatus' }
+          description: 'Defaults to `PENDING`.'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': *placePage
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderation]
+      summary: 'Approve a submission'
+      description: 'Moderators and admins only. `PENDING` → `APPROVED`.'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                note: { type: string, maxLength: 1000 }
+            example: { note: Verified on site }
+      responses:
+        '200': *placeOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': &invalidTransition
+          description: '`INVALID_STATUS_TRANSITION` — only `PENDING` places can be approved or rejected.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: INVALID_STATUS_TRANSITION, message: Only PENDING places can be approved or rejected (this one is APPROVED), requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderation]
+      summary: 'Reject a submission'
+      description: 'Moderators and admins only. `PENDING` → `REJECTED`. The reason is shown to the submitter, who can fix the place (it becomes `PENDING` again).'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              additionalProperties: false
+              properties:
+                reason: { type: string, minLength: 1, maxLength: 1000 }
+            example: { reason: The location pin is on the wrong street }
+      responses:
+        '200': *placeOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': *invalidTransition
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Reviews ==============================
+  /api/v1/places/{placeId}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/PlaceId'
+    get:
+      tags: [Reviews]
+      summary: 'Reviews of a place'
+      description: 'Newest first. 404 if the place is not visible to the caller.'
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: 'A page of reviews.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Review' } }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Reviews]
+      summary: 'Review a place'
+      description: 'One review per user per approved place. The place''s average rating updates immediately. Rate limited per user (30/day).'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              additionalProperties: false
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5, description: Whole stars only. }
+                comment: { type: [string, 'null'], maxLength: 2000 }
+            example: { rating: 4, comment: Beautiful tiles }
+      responses:
+        '201': &reviewOne
+          description: 'The review.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Review' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: '`REVIEW_ALREADY_EXISTS` (edit your review instead) or `PLACE_NOT_REVIEWABLE` (not approved).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: REVIEW_ALREADY_EXISTS, message: You have already reviewed this place; edit your review instead, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/reviews/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Reviews]
+      summary: 'Edit my review'
+      description: 'Author only (moderators cannot change someone else''s words).'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: [string, 'null'], maxLength: 2000 }
+            example: { rating: 5 }
+      responses:
+        '200': *reviewOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    delete:
+      tags: [Reviews]
+      summary: 'Delete a review'
+      description: 'The author, or a moderator removing abuse.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': &deleted
+          description: 'Deleted.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Deleted' }
+              example: { success: true, data: { id: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b, deleted: true } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Recommendations ==============================
+  /api/v1/recommendations:
+    post:
+      tags: [Recommendations]
+      summary: 'Recommend places'
+      description: |
+        1. Hard requirements remove places: search radius; pet / parking / wheelchair need an explicit `YES`;
+           `minimumRating` excludes unrated places; places known to be closed during the daily hours on every trip day.
+        2. The rest are ranked by interest, preferred category, distance, budget, rating, popularity and schedule fit.
+
+        No sign-in needed (a token, if sent, only changes how the rate limit counts). Cached for up to 2 minutes.
+      security: [{}, { bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [location]
+              additionalProperties: false
+              properties:
+                location: { $ref: '#/components/schemas/Location' }
+                searchRadiusKm: { type: number, exclusiveMinimum: 0, maximum: 50, default: 10 }
+                interests: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' }, default: [] }
+                preferredCategories: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' }, default: [] }
+                budget:
+                  type: object
+                  required: [amount, type]
+                  additionalProperties: false
+                  properties:
+                    amount: { type: number, minimum: 0, maximum: 100000000 }
+                    type: { type: string, enum: [total, per_day] }
+                    currency: { type: string, pattern: '^[A-Z]{3}$', default: BDT }
+                durationDays: { type: integer, minimum: 1, maximum: 14, default: 1 }
+                startDate: { type: string, format: date, description: Default today (Asia/Dhaka). }
+                dailyStartTime: { $ref: '#/components/schemas/TimeOfDay' }
+                dailyEndTime: { $ref: '#/components/schemas/TimeOfDay' }
+                travelingWithPet: { type: boolean, default: false }
+                parkingRequired: { type: boolean, default: false }
+                wheelchairAccessRequired: { type: boolean, default: false }
+                minimumRating: { type: number, minimum: 1, maximum: 5 }
+                limit: { type: integer, minimum: 1, maximum: 50, default: 20 }
+            example:
+              location: { latitude: 23.8103, longitude: 90.4125 }
+              searchRadiusKm: 15
+              interests: [history, food]
+              budget: { amount: 3000, type: total }
+              durationDays: 2
+              startDate: '2026-10-05'
+              dailyStartTime: '09:00'
+              dailyEndTime: '20:00'
+              parkingRequired: true
+      responses:
+        '200':
+          description: 'Ranked places. An empty list (with `meta.suggestions`) when nothing qualifies.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Recommendation' } }
+                  meta: { $ref: '#/components/schemas/RecommendationMeta' }
+              example:
+                success: true
+                data:
+                  - place: { id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: Lalbagh Fort, description: null, category: { slug: historical_site, name: Historical Site }, location: { latitude: 23.7189, longitude: 90.3882 }, address: null, city: Dhaka, entryFee: 20, currency: BDT, typicalVisitMinutes: 90, tags: [history], openingHours: [], facilities: { parking: 'YES', petFriendly: 'NO', wheelchairAccessible: UNKNOWN, accessibilityNotes: null, restrictions: null, verifiedAt: null }, rating: { average: 4.6, count: 23 }, status: APPROVED, createdBy: null, createdAt: '2026-10-01T08:24:19.955Z', updatedAt: '2026-10-01T08:24:19.955Z', distanceMeters: 10420 }
+                    score: 87
+                    breakdown: { interest: 50, proximity: 31, budget: 99, rating: 88, popularity: 82, schedule: 25 }
+                    reasons: [Parking available (matches your parking requirement), 'Matches your interests: history', '10.4 km away, within your 15 km search radius', Entry fee BDT 20 fits your budget, Rated 4.6 from 23 reviews]
+                    warnings: [Opening hours could not be verified]
+                meta: { startDate: '2026-10-05', durationDays: 2, searchRadiusKm: 15, candidatesInRadius: 3, candidatesConsidered: 3, eligible: 1, returned: 1, excludedBy: { parking: 2 }, suggestions: [2 nearby places are not confirmed to have parking, Increase the search radius (currently 15 km)] }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Trips ==============================
+  /api/v1/trips:
+    post:
+      tags: [Trips]
+      summary: 'Save trip requirements'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TripFields'
+                - required: [title, startLocation, durationDays]
+            example:
+              title: Old Dhaka weekend
+              startLocation: { latitude: 23.8103, longitude: 90.4125 }
+              startDate: '2026-10-05'
+              durationDays: 2
+              dailyStartTime: '09:00'
+              dailyEndTime: '18:00'
+              searchRadiusKm: 15
+              budget: { amount: 3000, type: total }
+              travelMode: car
+              parkingRequired: true
+              interests: [history, food]
+      responses:
+        '201': &tripOne
+          description: 'The trip. Defaults: dailyStartTime 09:00, dailyEndTime 20:00, searchRadiusKm 10, travelMode car, partySize 1, requirements false.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Trip' }
+              example:
+                success: true
+                data: { id: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e, title: Old Dhaka weekend, startLocation: { latitude: 23.8103, longitude: 90.4125 }, startAddress: null, startDate: '2026-10-05', durationDays: 2, dailyStartTime: '09:00', dailyEndTime: '18:00', searchRadiusKm: 15, budget: { amount: 3000, type: total, currency: BDT }, travelMode: car, travelingWithPet: false, parkingRequired: true, wheelchairAccessRequired: false, partySize: 1, minimumRating: null, interests: [food, history], preferredCategories: [], selectedPlaceIds: [], currentItineraryId: null, createdAt: '2026-10-01T08:24:19.955Z', updatedAt: '2026-10-01T08:24:19.955Z' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    get:
+      tags: [Trips]
+      summary: 'My trips'
+      description: 'Newest first.'
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: 'A page of trips.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Trip' } }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/trips/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Trips]
+      summary: 'A trip'
+      description: 'Owner only (others get 404).'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *tripOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Trips]
+      summary: 'Change trip requirements'
+      description: 'Only the given fields change; lists replace the saved lists. Existing itineraries keep the requirements they were generated with — regenerate to apply changes.'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TripFields'
+                - minProperties: 1
+            example: { durationDays: 3, travelingWithPet: true }
+      responses:
+        '200': *tripOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    delete:
+      tags: [Trips]
+      summary: 'Delete a trip'
+      description: 'Also deletes its itineraries.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *deleted
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Itineraries ==============================
+  /api/v1/itineraries/generate:
+    post:
+      tags: [Itineraries]
+      summary: 'Generate an itinerary for a trip'
+      description: |
+        Builds a day-by-day plan from the trip's requirements and saves it as the trip's new
+        current version (version 1, 2, …). Places are chosen and ranked like recommendations,
+        selected places are included first, every day is checked against opening hours, visit
+        lengths, travel times and the daily window, and visits are ordered by nearest
+        neighbour + 2-opt (a good route, not a guaranteed shortest one).
+        Uses the routing provider: rate limited (10/min) and refuses with 503 when rate
+        limiting is unavailable.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tripId]
+              additionalProperties: false
+              properties:
+                tripId: { type: string, format: uuid }
+            example: { tripId: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e }
+      responses:
+        '201': &itineraryOne
+          description: 'The saved itinerary.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/Itinerary' }
+              example:
+                success: true
+                data:
+                  id: 6a2f8c1d-4b3e-4f5a-9c8d-7e6f5a4b3c2d
+                  tripId: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e
+                  version: 1
+                  isCurrent: true
+                  userModified: false
+                  routing: { provider: openrouteservice, algorithm: nearest-neighbor+2opt, travelTimesEstimated: false }
+                  totals: { distanceMeters: 24700, travelMinutes: 56, visitMinutes: 120, plannedMinutes: 197, estimatedCost: 40, currency: BDT }
+                  days:
+                    - dayNumber: 1
+                      date: '2026-10-05'
+                      startTime: '09:00'
+                      endTime: '12:17'
+                      totals: { distanceMeters: 24700, travelMinutes: 56, visitMinutes: 120, plannedMinutes: 197 }
+                      routePolyline: _nipCcuyfPCkB~AGtBIb@
+                      stops:
+                        - { order: 1, place: { id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: National Museum, category: { slug: museum, name: Museum }, location: { latitude: 23.7375, longitude: 90.395 } }, plannedStart: '09:24', plannedEnd: '10:24', visitMinutes: 60, travelFromPrevious: { minutes: 24, distanceMeters: 11200 }, estimatedCost: 20, openingHoursVerified: true }
+                        - { order: 2, place: { id: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b, name: Hatirjheel, category: { slug: lake_or_river, name: Lake or River }, location: { latitude: 23.7536, longitude: 90.3994 } }, plannedStart: '10:51', plannedEnd: '11:51', visitMinutes: 60, travelFromPrevious: { minutes: 17, distanceMeters: 4400 }, estimatedCost: 20, openingHoursVerified: false }
+                  warnings:
+                    - { code: OPENING_HOURS_UNVERIFIED, message: Opening hours could not be verified., placeId: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b, dayNumber: 1 }
+                  generatedFrom: { startDate: '2026-10-05', startDateAssumed: false }
+                  createdAt: '2026-10-01T08:30:00.000Z'
+                  updatedAt: '2026-10-01T08:30:00.000Z'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': &generationFailed
+          description: |
+            The requirements cannot be met (they are never relaxed automatically):
+            - `INSUFFICIENT_MATCHING_PLACES` — `details`: `emptyDays` [{dayNumber, date}], `candidatesInRadius`,
+              `eligiblePlaces`, `scheduledPlaces`, `excludedBy` (per requirement), `suggestions`.
+            - `SELECTED_PLACES_NOT_FEASIBLE` — `details.places`: [{ placeId, name?, reason, requirements? }] with
+              reason `NOT_AVAILABLE`, `FAILS_REQUIREMENTS`, `CLOSED_ON_TRIP_DAYS`, `NOT_ENOUGH_TIME`, `NO_ROOM_IN_SCHEDULE` or `OVER_BUDGET`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error:
+                  code: INSUFFICIENT_MATCHING_PLACES
+                  message: Not enough places satisfy the trip requirements to fill every day
+                  details: { emptyDays: [{ dayNumber: 2, date: '2026-10-06' }], candidatesInRadius: 7, eligiblePlaces: 1, scheduledPlaces: 1, excludedBy: { parking: 6 }, suggestions: [6 nearby places are not confirmed to have parking] }
+                  requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/itineraries:
+    get:
+      tags: [Itineraries]
+      summary: 'My itineraries'
+      description: 'All versions of my trips'' itineraries, newest first.'
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: tripId, in: query, schema: { type: string, format: uuid } }
+        - { name: current, in: query, description: '`true` = only each trip''s current version.', schema: { type: string, enum: ['true', 'false'] } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: 'A page of itinerary summaries.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/ItinerarySummary' } }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+              example:
+                success: true
+                data:
+                  - { id: 6a2f8c1d-4b3e-4f5a-9c8d-7e6f5a4b3c2d, tripId: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e, tripTitle: Old Dhaka weekend, version: 2, isCurrent: true, userModified: false, dayCount: 2, stopCount: 7, totals: { distanceMeters: 48200, travelMinutes: 131, visitMinutes: 420, estimatedCost: 140, currency: BDT }, travelTimesEstimated: false, createdAt: '2026-10-01T08:30:00.000Z', updatedAt: '2026-10-01T08:30:00.000Z' }
+                meta: { page: 1, limit: 20, total: 1, totalPages: 1 }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/itineraries/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Itineraries]
+      summary: 'An itinerary'
+      description: 'Owner only (others get 404).'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *itineraryOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Itineraries]
+      summary: 'Edit the current version'
+      description: |
+        Each listed day is replaced by exactly these places, in this order (`optimizeOrder: true` re-orders
+        them for the shortest route) — this covers reordering, removing, moving between days and adding.
+        Days not listed are unchanged. Edited days are re-scheduled with routing travel times; nothing is
+        saved if any check fails. Requirements are those the itinerary was generated with.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [days]
+              additionalProperties: false
+              properties:
+                days:
+                  type: array
+                  minItems: 1
+                  maxItems: 14
+                  description: 'Each dayNumber at most once; a place at most once in the whole itinerary.'
+                  items:
+                    type: object
+                    required: [dayNumber, placeIds]
+                    additionalProperties: false
+                    properties:
+                      dayNumber: { type: integer, minimum: 1, maximum: 14 }
+                      placeIds: { type: array, maxItems: 12, items: { type: string, format: uuid }, description: '`[]` empties the day.' }
+                      optimizeOrder: { type: boolean, default: false }
+            example:
+              days:
+                - { dayNumber: 1, placeIds: [7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b, 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10] }
+      responses:
+        '200': *itineraryOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: '`ITINERARY_NOT_CURRENT` — older versions are read-only.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: ITINERARY_NOT_CURRENT, message: Only the current version of an itinerary can be edited, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '422':
+          description: |
+            - `PLACE_VIOLATES_REQUIREMENTS` — `details.places`: [{ placeId, name, requirements }].
+            - `ITINERARY_DAY_INFEASIBLE` — `details.days`: [{ dayNumber, reason, placeId }], reason
+              `TOO_MANY_STOPS`, `CLOSED`, `EXCEEDS_DAILY_WINDOW` or `NO_TIME_TO_RETURN`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: ITINERARY_DAY_INFEASIBLE, message: The edited days do not fit into the available time, details: { days: [{ dayNumber: 1, reason: CLOSED, placeId: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b }] }, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    delete:
+      tags: [Itineraries]
+      summary: 'Delete a version'
+      description: 'If it was the current version, the newest remaining version becomes current.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *deleted
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/itineraries/{id}/regenerate:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Itineraries]
+      summary: 'Regenerate'
+      description: 'A new current version for the same trip, built from the trip''s **current** requirements. Same limits as generate.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': *itineraryOne
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': *generationFailed
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  # ============================== Routing ==============================
+  /api/v1/routing/optimize:
+    post:
+      tags: [Routing]
+      summary: 'Order chosen places per day'
+      description: |
+        For each day separately: travel times → nearest neighbour → 2-opt → feasibility check (opening
+        hours, visit lengths, daily window). If the shortest order clashes with opening hours, an
+        opening-hours-aware order is used. Chosen places are never dropped; an impossible day is
+        returned with `feasible: false`. The result is a heuristic (`globallyOptimal: false`).
+        Rate limited (10/min); refuses with 503 when rate limiting is unavailable.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start, days]
+              additionalProperties: false
+              properties:
+                start: { $ref: '#/components/schemas/Location' }
+                travelMode: { $ref: '#/components/schemas/TravelMode' }
+                returnToStart: { type: boolean, default: true }
+                days:
+                  type: array
+                  minItems: 1
+                  maxItems: 14
+                  items:
+                    type: object
+                    required: [placeIds]
+                    additionalProperties: false
+                    properties:
+                      date: { type: string, format: date, description: Default today + day index. }
+                      dailyStartTime: { $ref: '#/components/schemas/TimeOfDay' }
+                      dailyEndTime: { $ref: '#/components/schemas/TimeOfDay' }
+                      placeIds: { type: array, minItems: 1, maxItems: 12, uniqueItems: true, items: { type: string, format: uuid }, description: Approved places. }
+            example:
+              start: { latitude: 23.8103, longitude: 90.4125 }
+              travelMode: car
+              days:
+                - { date: '2026-10-05', dailyStartTime: '09:00', dailyEndTime: '18:00', placeIds: [3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b] }
+      responses:
+        '200':
+          description: 'Ordered days.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [days, totals, metadata]
+                    additionalProperties: false
+                    properties:
+                      days: { type: array, items: { $ref: '#/components/schemas/OptimizedDay' } }
+                      totals:
+                        type: object
+                        required: [distanceMeters, travelMinutes]
+                        additionalProperties: false
+                        properties:
+                          distanceMeters: { type: integer }
+                          travelMinutes: { type: integer }
+                      metadata:
+                        type: object
+                        required: [algorithm, globallyOptimal, note, travelMode, returnToStart, allDaysFeasible, travelTimesEstimated]
+                        additionalProperties: false
+                        properties:
+                          algorithm: { type: string }
+                          globallyOptimal: { const: false }
+                          note: { type: string }
+                          travelMode: { $ref: '#/components/schemas/TravelMode' }
+                          returnToStart: { type: boolean }
+                          allDaysFeasible: { type: boolean }
+                          travelTimesEstimated: { type: boolean }
+              example:
+                success: true
+                data:
+                  days:
+                    - dayNumber: 1
+                      date: '2026-10-05'
+                      feasible: true
+                      stops:
+                        - { order: 1, place: { id: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b, name: Hatirjheel, category: { slug: lake_or_river, name: Lake or River }, location: { latitude: 23.7536, longitude: 90.3994 } }, travelFromPrevious: { minutes: 17, distanceMeters: 7900 }, visitMinutes: 45, plannedStart: '09:17', plannedEnd: '10:02', openingHoursVerified: false }
+                        - { order: 2, place: { id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: Lalbagh Fort, category: { slug: historical_site, name: Historical Site }, location: { latitude: 23.7189, longitude: 90.3882 } }, travelFromPrevious: { minutes: 22, distanceMeters: 5600 }, visitMinutes: 75, plannedStart: '10:34', plannedEnd: '11:49', openingHoursVerified: true }
+                      returnToStart: { minutes: 28, distanceMeters: 13300 }
+                      totals: { distanceMeters: 26800, travelMinutes: 67, visitMinutes: 120, endTime: '12:17' }
+                      routePolyline: _nipCcuyfPCkB~AGtBIb@
+                      metadata: { initialTravelMinutes: 67, optimizedTravelMinutes: 67, reorderedForOpeningHours: false, provider: openrouteservice, travelTimesEstimated: false }
+                  totals: { distanceMeters: 26800, travelMinutes: 67 }
+                  metadata: { algorithm: nearest-neighbor+2opt, globallyOptimal: false, note: 'Heuristic ordering (nearest neighbour, improved by 2-opt): usually a short route, not guaranteed to be the shortest possible.', travelMode: car, returnToStart: true, allDaysFeasible: true, travelTimesEstimated: false }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+# Shared components for openapi.yaml (referenced from there).
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token from register, login or refresh. Valid for 15 minutes.'
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: 'Page number, starting at 1.'
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: 'Items per page (max 50).'
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    PlaceId:
+      name: placeId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CategoryFilter:
+      name: category
+      in: query
+      description: 'One or more category slugs, comma-separated (max 20), e.g. `museum,park`.'
+      schema: { type: string, example: 'museum,historical_site' }
+    MaxEntryFee:
+      name: maxEntryFee
+      in: query
+      description: 'Only places whose entry fee is known and at most this amount (BDT). Places with an unknown fee are excluded.'
+      schema: { type: number, minimum: 0 }
+    MinRating:
+      name: minRating
+      in: query
+      description: 'Only places with an average rating of at least this value. Unrated places are excluded.'
+      schema: { type: number, minimum: 1, maximum: 5 }
+    PlaceStatusFilter:
+      name: status
+      in: query
+      schema: { $ref: '#/components/schemas/PlaceStatus' }
+
+  headers:
+    RequestId:
+      description: 'Request ID for support and log correlation (also accepted on requests).'
+      schema: { type: string }
+    RetryAfter:
+      description: 'Seconds until the rate-limit window resets.'
+      schema: { type: integer }
+
+  responses:
+    ValidationError:
+      description: |
+        `VALIDATION_ERROR` — the request is invalid. `details` lists each problem as
+        `{ location: "body" | "query" | "params", path, message }`.
+        Also `INVALID_JSON` (malformed body).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Invalid request data
+              details:
+                - { location: body, path: location.latitude, message: 'Too big: expected number to be <=90' }
+              requestId: 9c06be7a-2622-4a2d-a343-4bfd6041b1c9
+    Unauthorized:
+      description: |
+        Not signed in or token problem: `UNAUTHORIZED` (no token / account unavailable),
+        `INVALID_TOKEN` (malformed or tampered), `TOKEN_EXPIRED` (refresh and retry).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: TOKEN_EXPIRED, message: Access token has expired, requestId: 8f6cd96d-0f5a-4623-9801-e37ba97ef5cf }
+    Forbidden:
+      description: '`FORBIDDEN` — signed in, but not allowed to do this.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: FORBIDDEN, message: Approved places can only be changed by moderators, requestId: 3a889860-fe17-4b6b-a569-5f165fdf44d2 }
+    NotFound:
+      description: |
+        The resource does not exist **or is not yours**: private resources (trips,
+        itineraries, non-approved places) answer 404 to other users.
+        Codes: `NOT_FOUND`, `PLACE_NOT_FOUND`, `REVIEW_NOT_FOUND`, `TRIP_NOT_FOUND`,
+        `ITINERARY_NOT_FOUND`, `ROUTE_NOT_FOUND`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: PLACE_NOT_FOUND, message: Place not found, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 }
+    RateLimited:
+      description: '`RATE_LIMITED` — too many requests. Wait `Retry-After` seconds.'
+      headers:
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: RATE_LIMITED, message: 'Too many requests, please try again later', requestId: d7f1e1a2-1a2b-4c3d-8e9f-0a1b2c3d4e5f }
+    ServiceUnavailable:
+      description: |
+        A dependency is down. `RATE_LIMIT_UNAVAILABLE` (security-sensitive or costly
+        endpoints refuse to run without rate limiting), `ROUTING_UNAVAILABLE` (routing
+        provider down and estimates disabled), `TIMEOUT` (database query too slow).
+        Retry later.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: RATE_LIMIT_UNAVAILABLE, message: 'Service temporarily unavailable, please retry shortly', requestId: 1d8062e6-e8af-42e6-9d95-bcfc7e4d53f7 }
+    InternalError:
+      description: '`INTERNAL_ERROR` — unexpected server error. Quote the `requestId` when reporting it.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error: { code: INTERNAL_ERROR, message: An unexpected error occurred, requestId: 1d8062e6-e8af-42e6-9d95-bcfc7e4d53f7 }
+
+  schemas:
+    # ---------- envelope ----------
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      additionalProperties: false
+      properties:
+        success: { const: false }
+        error:
+          type: object
+          required: [code, message, requestId]
+          additionalProperties: false
+          properties:
+            code: { type: string, description: 'Stable machine-readable code. Branch on this, not on `message`.' }
+            message: { type: string, description: 'Human-readable, may change.' }
+            details: { description: Extra data; shape depends on `code` (documented per endpoint). }
+            requestId: { type: string }
+    PaginationMeta:
+      type: object
+      required: [page, limit, total, totalPages]
+      additionalProperties: false
+      properties:
+        page: { type: integer, minimum: 1 }
+        limit: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      example: { page: 1, limit: 20, total: 45, totalPages: 3 }
+    Deleted:
+      type: object
+      required: [id, deleted]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        deleted: { const: true }
+
+    # ---------- shared value types ----------
+    Location:
+      type: object
+      required: [latitude, longitude]
+      additionalProperties: false
+      properties:
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+      example: { latitude: 23.7189, longitude: 90.3882 }
+    TimeOfDay:
+      type: string
+      pattern: '^(([01]\d|2[0-3]):[0-5]\d|24:00)$'
+      description: 'Local time "HH:MM" (00:00–24:00).'
+      example: '09:00'
+    Slug:
+      type: string
+      pattern: '^[a-z0-9_]{1,50}$'
+    FacilityStatus:
+      type: string
+      enum: [YES, NO, UNKNOWN]
+      description: 'UNKNOWN never counts as YES (a required facility needs an explicit YES).'
+    PlaceStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, ARCHIVED]
+    TravelMode:
+      type: string
+      enum: [car, walking, cycling, public_transport]
+    OpeningHours:
+      type: object
+      required: [dayOfWeek, opensAt, closesAt]
+      additionalProperties: false
+      properties:
+        dayOfWeek: { type: integer, minimum: 1, maximum: 7, description: 'ISO weekday, 1 = Monday.' }
+        opensAt: { $ref: '#/components/schemas/TimeOfDay' }
+        closesAt: { $ref: '#/components/schemas/TimeOfDay' }
+      example: { dayOfWeek: 1, opensAt: '09:00', closesAt: '17:00' }
+    CategoryRef:
+      type: object
+      required: [slug, name]
+      additionalProperties: false
+      properties:
+        slug: { type: string }
+        name: { type: string }
+
+    # ---------- users & auth ----------
+    User:
+      type: object
+      required: [id, name, email, role, profileImageUrl, createdAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [user, moderator, admin] }
+        profileImageUrl: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+      example:
+        id: ff57e577-6935-46cd-8b17-e2e81d72f3cf
+        name: Ayesha Rahman
+        email: ayesha@example.com
+        role: user
+        profileImageUrl: null
+        createdAt: '2026-10-01T08:24:19.955Z'
+    Tokens:
+      type: object
+      required: [tokenType, accessToken, expiresIn, refreshToken, refreshTokenExpiresAt]
+      additionalProperties: false
+      properties:
+        tokenType: { const: Bearer }
+        accessToken: { type: string, description: 'JWT; send as `Authorization: Bearer <accessToken>`.' }
+        expiresIn: { type: integer, description: Access token lifetime in seconds (900). }
+        refreshToken: { type: string, description: Single-use. Store the new one after every refresh. }
+        refreshTokenExpiresAt: { type: string, format: date-time }
+      example:
+        tokenType: Bearer
+        accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciJ9.sig
+        expiresIn: 900
+        refreshToken: S79j0NE29UKEq0yXbXkF1Jw7mT3l9h2vR8cP4sA6dGo
+        refreshTokenExpiresAt: '2026-10-31T08:24:19.955Z'
+    Session:
+      type: object
+      required: [user, tokens]
+      additionalProperties: false
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        tokens: { $ref: '#/components/schemas/Tokens' }
+
+    # ---------- catalogue ----------
+    Category:
+      type: object
+      required: [slug, name, description]
+      additionalProperties: false
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+      example: { slug: museum, name: Museum, description: Museums and exhibitions }
+    Tag:
+      type: object
+      required: [slug, name]
+      additionalProperties: false
+      properties:
+        slug: { type: string }
+        name: { type: string }
+      example: { slug: history, name: History }
+
+    # ---------- places ----------
+    Place:
+      type: object
+      required: [id, name, description, category, location, address, city, entryFee, currency, typicalVisitMinutes, tags, openingHours, facilities, rating, status, createdBy, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+        location: { $ref: '#/components/schemas/Location' }
+        address: { type: [string, 'null'] }
+        city: { type: [string, 'null'] }
+        entryFee: { type: [number, 'null'], description: 'null = unknown, 0 = free.' }
+        currency: { type: string, example: BDT }
+        typicalVisitMinutes: { type: [integer, 'null'] }
+        tags: { type: array, items: { type: string }, description: Interest slugs. }
+        openingHours:
+          type: array
+          items: { $ref: '#/components/schemas/OpeningHours' }
+          description: 'Weekly schedule. Empty = unknown (never assumed open). A missing day, when others are listed, = closed.'
+        facilities:
+          type: object
+          required: [parking, petFriendly, wheelchairAccessible, accessibilityNotes, restrictions, verifiedAt]
+          additionalProperties: false
+          properties:
+            parking: { $ref: '#/components/schemas/FacilityStatus' }
+            petFriendly: { $ref: '#/components/schemas/FacilityStatus' }
+            wheelchairAccessible: { $ref: '#/components/schemas/FacilityStatus' }
+            accessibilityNotes: { type: [string, 'null'] }
+            restrictions: { type: [string, 'null'] }
+            verifiedAt: { type: [string, 'null'], format: date-time }
+        rating:
+          type: object
+          required: [average, count]
+          additionalProperties: false
+          properties:
+            average: { type: [number, 'null'], description: null = no reviews yet. }
+            count: { type: integer, minimum: 0 }
+        status: { $ref: '#/components/schemas/PlaceStatus' }
+        createdBy: { type: [string, 'null'], format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        distanceMeters: { type: integer, description: Only in nearby results and recommendations. }
+      example:
+        id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10
+        name: Lalbagh Fort
+        description: 'Mughal fort complex from the 17th century'
+        category: { slug: historical_site, name: Historical Site }
+        location: { latitude: 23.7189, longitude: 90.3882 }
+        address: Lalbagh Road, Dhaka
+        city: Dhaka
+        entryFee: 20
+        currency: BDT
+        typicalVisitMinutes: 90
+        tags: [architecture, history]
+        openingHours: [{ dayOfWeek: 1, opensAt: '10:00', closesAt: '17:00' }]
+        facilities: { parking: YES, petFriendly: NO, wheelchairAccessible: UNKNOWN, accessibilityNotes: null, restrictions: null, verifiedAt: null }
+        rating: { average: 4.5, count: 12 }
+        status: APPROVED
+        createdBy: ff57e577-6935-46cd-8b17-e2e81d72f3cf
+        createdAt: '2026-10-01T08:24:19.955Z'
+        updatedAt: '2026-10-01T08:24:19.955Z'
+    PlaceInput:
+      type: object
+      additionalProperties: false
+      description: 'Unknown fields (e.g. `status`, `createdBy`) are ignored by the server.'
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 5000 }
+        category: { $ref: '#/components/schemas/Slug' }
+        location: { $ref: '#/components/schemas/Location' }
+        address: { type: [string, 'null'], maxLength: 300 }
+        city: { type: [string, 'null'], maxLength: 100 }
+        entryFee: { type: [number, 'null'], minimum: 0, maximum: 1000000 }
+        typicalVisitMinutes: { type: [integer, 'null'], minimum: 5, maximum: 720 }
+        parkingAvailable: { $ref: '#/components/schemas/FacilityStatus' }
+        petFriendly: { $ref: '#/components/schemas/FacilityStatus' }
+        wheelchairAccessible: { $ref: '#/components/schemas/FacilityStatus' }
+        accessibilityNotes: { type: [string, 'null'], maxLength: 1000 }
+        restrictions: { type: [string, 'null'], maxLength: 1000 }
+        tags: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' } }
+        openingHours:
+          type: array
+          maxItems: 28
+          items: { $ref: '#/components/schemas/OpeningHours' }
+          description: 'opensAt must be before closesAt (split overnight hours across two days); entries on the same day must not overlap. `[]` = unknown.'
+    ModerationEvent:
+      type: object
+      required: [action, fromStatus, toStatus, note, createdAt]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [SUBMITTED, EDITED, RESUBMITTED, APPROVED, REJECTED, ARCHIVED, RESTORED] }
+        fromStatus: { oneOf: [{ $ref: '#/components/schemas/PlaceStatus' }, { type: 'null' }] }
+        toStatus: { $ref: '#/components/schemas/PlaceStatus' }
+        note: { type: [string, 'null'], description: Rejection reason or approval note. }
+        createdAt: { type: string, format: date-time }
+      example: { action: REJECTED, fromStatus: PENDING, toStatus: REJECTED, note: Wrong location, createdAt: '2026-10-01T09:00:00.000Z' }
+
+    # ---------- reviews ----------
+    Review:
+      type: object
+      required: [id, placeId, rating, comment, author, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        placeId: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: [string, 'null'] }
+        author:
+          type: object
+          required: [id, name]
+          additionalProperties: false
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      example:
+        id: 7b0d3c8e-2a51-4f9b-b0e4-3c6d8e9f1a2b
+        placeId: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10
+        rating: 4
+        comment: Beautiful tiles
+        author: { id: ff57e577-6935-46cd-8b17-e2e81d72f3cf, name: Ayesha Rahman }
+        createdAt: '2026-10-01T10:00:00.000Z'
+        updatedAt: '2026-10-01T10:00:00.000Z'
+
+    # ---------- recommendations ----------
+    Recommendation:
+      type: object
+      required: [place, score, breakdown, reasons, warnings]
+      additionalProperties: false
+      properties:
+        place: { $ref: '#/components/schemas/Place' }
+        score: { type: integer, minimum: 0, maximum: 100 }
+        breakdown:
+          type: object
+          description: 'Component scores 0–100. Only components that applied to this request are present.'
+          additionalProperties: false
+          properties:
+            interest: { type: integer }
+            category: { type: integer }
+            proximity: { type: integer }
+            budget: { type: integer }
+            rating: { type: integer }
+            popularity: { type: integer }
+            schedule: { type: integer }
+        reasons: { type: array, items: { type: string }, description: Facts from the data that support the recommendation. }
+        warnings: { type: array, items: { type: string }, description: 'Unknowns (fee, ratings, opening hours) — never presented as positives.' }
+    RecommendationMeta:
+      type: object
+      required: [startDate, durationDays, searchRadiusKm, candidatesInRadius, candidatesConsidered, eligible, returned, excludedBy, suggestions]
+      additionalProperties: false
+      properties:
+        startDate: { type: string, format: date }
+        durationDays: { type: integer }
+        searchRadiusKm: { type: number }
+        candidatesInRadius: { type: integer }
+        candidatesConsidered: { type: integer }
+        eligible: { type: integer }
+        returned: { type: integer }
+        excludedBy:
+          type: object
+          additionalProperties: { type: integer }
+          description: 'Places removed per hard requirement (petFriendly, parking, wheelchairAccessible, minimumRating, openDuringTrip, searchRadius). A place failing several is counted under each.'
+        suggestions: { type: array, items: { type: string }, description: Present when few places qualify. Requirements are never relaxed automatically. }
+
+    # ---------- trips ----------
+    Budget:
+      type: object
+      required: [amount, type]
+      additionalProperties: false
+      properties:
+        amount: { type: number, minimum: 0, maximum: 100000000 }
+        type: { type: string, enum: [total, per_day] }
+    Trip:
+      type: object
+      required: [id, title, startLocation, startAddress, startDate, durationDays, dailyStartTime, dailyEndTime, searchRadiusKm, budget, travelMode, travelingWithPet, parkingRequired, wheelchairAccessRequired, partySize, minimumRating, interests, preferredCategories, selectedPlaceIds, currentItineraryId, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        startLocation: { $ref: '#/components/schemas/Location' }
+        startAddress: { type: [string, 'null'] }
+        startDate: { type: [string, 'null'], format: date, description: null = plans start "today" (Asia/Dhaka). }
+        durationDays: { type: integer, minimum: 1, maximum: 14 }
+        dailyStartTime: { $ref: '#/components/schemas/TimeOfDay' }
+        dailyEndTime: { $ref: '#/components/schemas/TimeOfDay' }
+        searchRadiusKm: { type: number }
+        budget:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [amount, type, currency]
+              additionalProperties: false
+              properties:
+                amount: { type: number }
+                type: { type: string, enum: [total, per_day] }
+                currency: { type: string }
+        travelMode: { $ref: '#/components/schemas/TravelMode' }
+        travelingWithPet: { type: boolean }
+        parkingRequired: { type: boolean }
+        wheelchairAccessRequired: { type: boolean }
+        partySize: { type: integer }
+        minimumRating: { type: [number, 'null'] }
+        interests: { type: array, items: { type: string } }
+        preferredCategories: { type: array, items: { type: string } }
+        selectedPlaceIds: { type: array, items: { type: string, format: uuid } }
+        currentItineraryId: { type: [string, 'null'], format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    TripFields:
+      type: object
+      additionalProperties: false
+      description: 'Unknown fields are ignored. Hard requirements (pet, parking, wheelchair, minimumRating) are never relaxed.'
+      properties:
+        title: { type: string, minLength: 1, maxLength: 150 }
+        startLocation: { $ref: '#/components/schemas/Location' }
+        startAddress: { type: [string, 'null'], maxLength: 300 }
+        startDate: { type: [string, 'null'], format: date }
+        durationDays: { type: integer, minimum: 1, maximum: 14 }
+        dailyStartTime: { $ref: '#/components/schemas/TimeOfDay' }
+        dailyEndTime: { $ref: '#/components/schemas/TimeOfDay' }
+        searchRadiusKm: { type: number, minimum: 0.5, maximum: 50 }
+        budget: { oneOf: [{ $ref: '#/components/schemas/Budget' }, { type: 'null' }] }
+        travelMode: { $ref: '#/components/schemas/TravelMode' }
+        travelingWithPet: { type: boolean }
+        parkingRequired: { type: boolean }
+        wheelchairAccessRequired: { type: boolean }
+        partySize: { type: integer, minimum: 1, maximum: 50 }
+        minimumRating: { type: [number, 'null'], minimum: 1, maximum: 5 }
+        interests: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' } }
+        preferredCategories: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' } }
+        selectedPlaceIds: { type: array, maxItems: 30, items: { type: string, format: uuid }, description: Approved places that must be included. }
+
+    # ---------- itineraries ----------
+    Warning:
+      type: object
+      required: [code, message]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [TRAVEL_TIMES_ESTIMATED, START_DATE_ASSUMED, OPENING_HOURS_UNVERIFIED, ENTRY_FEE_UNKNOWN, STOP_REMOVED_AFTER_ROUTING] }
+        message: { type: string }
+        placeId: { type: string, format: uuid }
+        dayNumber: { type: integer }
+    StopPlace:
+      type: object
+      required: [id, name, category, location]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+        location: { $ref: '#/components/schemas/Location' }
+    Leg:
+      type: object
+      required: [minutes, distanceMeters]
+      additionalProperties: false
+      properties:
+        minutes: { type: integer, minimum: 0 }
+        distanceMeters: { type: integer, minimum: 0 }
+    Itinerary:
+      type: object
+      required: [id, tripId, version, isCurrent, userModified, routing, totals, days, warnings, generatedFrom, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        isCurrent: { type: boolean }
+        userModified: { type: boolean }
+        routing:
+          type: object
+          required: [provider, algorithm, travelTimesEstimated]
+          additionalProperties: false
+          properties:
+            provider: { type: string, description: e.g. "openrouteservice" or "estimate". }
+            algorithm: { type: string, example: nearest-neighbor+2opt }
+            travelTimesEstimated: { type: boolean, description: true = distance-based estimates (see the TRAVEL_TIMES_ESTIMATED warning). }
+        totals:
+          type: object
+          required: [distanceMeters, travelMinutes, visitMinutes, plannedMinutes, estimatedCost, currency]
+          additionalProperties: false
+          properties:
+            distanceMeters: { type: integer }
+            travelMinutes: { type: integer }
+            visitMinutes: { type: integer }
+            plannedMinutes: { type: integer }
+            estimatedCost: { type: [number, 'null'], description: Known entry fees × party size. Unknown fees are listed in warnings. }
+            currency: { type: string }
+        days:
+          type: array
+          items:
+            type: object
+            required: [dayNumber, date, startTime, endTime, totals, routePolyline, stops]
+            additionalProperties: false
+            properties:
+              dayNumber: { type: integer, minimum: 1 }
+              date: { type: string, format: date }
+              startTime: { $ref: '#/components/schemas/TimeOfDay', description: When to leave the start location. }
+              endTime: { $ref: '#/components/schemas/TimeOfDay', description: Back at the start location. }
+              totals:
+                type: object
+                required: [distanceMeters, travelMinutes, visitMinutes, plannedMinutes]
+                additionalProperties: false
+                properties:
+                  distanceMeters: { type: integer }
+                  travelMinutes: { type: integer }
+                  visitMinutes: { type: integer }
+                  plannedMinutes: { type: integer, description: endTime − startTime. }
+              routePolyline: { type: [string, 'null'], description: Encoded polyline (precision 5) of the road route; null without real routing data. }
+              stops:
+                type: array
+                items:
+                  type: object
+                  required: [order, place, plannedStart, plannedEnd, visitMinutes, travelFromPrevious, estimatedCost, openingHoursVerified]
+                  additionalProperties: false
+                  properties:
+                    order: { type: integer, minimum: 1 }
+                    place: { $ref: '#/components/schemas/StopPlace' }
+                    plannedStart: { $ref: '#/components/schemas/TimeOfDay' }
+                    plannedEnd: { $ref: '#/components/schemas/TimeOfDay' }
+                    visitMinutes: { type: integer }
+                    travelFromPrevious: { $ref: '#/components/schemas/Leg' }
+                    estimatedCost: { type: [number, 'null'] }
+                    openingHoursVerified: { type: boolean, description: false = hours unknown; not assumed open. }
+        warnings: { type: array, items: { $ref: '#/components/schemas/Warning' } }
+        generatedFrom: { type: object, description: Snapshot of the trip and settings this version was generated from. }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ItinerarySummary:
+      type: object
+      required: [id, tripId, tripTitle, version, isCurrent, userModified, dayCount, stopCount, totals, travelTimesEstimated, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        tripTitle: { type: string }
+        version: { type: integer }
+        isCurrent: { type: boolean }
+        userModified: { type: boolean }
+        dayCount: { type: integer }
+        stopCount: { type: integer }
+        totals:
+          type: object
+          required: [distanceMeters, travelMinutes, visitMinutes, estimatedCost, currency]
+          additionalProperties: false
+          properties:
+            distanceMeters: { type: integer }
+            travelMinutes: { type: integer }
+            visitMinutes: { type: integer }
+            estimatedCost: { type: [number, 'null'] }
+            currency: { type: string }
+        travelTimesEstimated: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    # ---------- route optimisation ----------
+    OptimizedDay:
+      type: object
+      required: [dayNumber, date, feasible, stops, returnToStart, totals, routePolyline, metadata]
+      additionalProperties: false
+      properties:
+        dayNumber: { type: integer }
+        date: { type: string, format: date }
+        feasible: { type: boolean, description: false = the chosen places do not fit; nothing is dropped. }
+        infeasibility:
+          type: object
+          description: 'Only when feasible = false.'
+          required: [reason, placeId]
+          additionalProperties: false
+          properties:
+            reason: { type: string, enum: [TOO_MANY_STOPS, CLOSED, EXCEEDS_DAILY_WINDOW, NO_TIME_TO_RETURN] }
+            placeId: { type: [string, 'null'], format: uuid }
+        stops:
+          type: array
+          items:
+            type: object
+            required: [order, place, travelFromPrevious, visitMinutes, plannedStart, plannedEnd, openingHoursVerified]
+            additionalProperties: false
+            properties:
+              order: { type: integer }
+              place: { $ref: '#/components/schemas/StopPlace' }
+              travelFromPrevious: { $ref: '#/components/schemas/Leg' }
+              visitMinutes: { type: integer }
+              plannedStart: { oneOf: [{ $ref: '#/components/schemas/TimeOfDay' }, { type: 'null' }], description: null when the day is infeasible. }
+              plannedEnd: { oneOf: [{ $ref: '#/components/schemas/TimeOfDay' }, { type: 'null' }] }
+              openingHoursVerified: { type: boolean }
+        returnToStart: { oneOf: [{ $ref: '#/components/schemas/Leg' }, { type: 'null' }] }
+        totals:
+          type: object
+          required: [distanceMeters, travelMinutes, visitMinutes, endTime]
+          additionalProperties: false
+          properties:
+            distanceMeters: { type: integer }
+            travelMinutes: { type: integer }
+            visitMinutes: { type: integer }
+            endTime: { oneOf: [{ $ref: '#/components/schemas/TimeOfDay' }, { type: 'null' }] }
+        routePolyline: { type: [string, 'null'] }
+        metadata:
+          type: object
+          required: [initialTravelMinutes, optimizedTravelMinutes, reorderedForOpeningHours, provider, travelTimesEstimated]
+          additionalProperties: false
+          properties:
+            initialTravelMinutes: { type: integer, description: Nearest-neighbour route. }
+            optimizedTravelMinutes: { type: integer, description: After 2-opt (and opening-hours reordering). }
+            reorderedForOpeningHours: { type: boolean }
+            provider: { type: string }
+            travelTimesEstimated: { type: boolean }
+            fallbackReason: { type: string, enum: [TIMEOUT, RATE_LIMITED, UNAVAILABLE, INVALID_ROUTE, MISSING_DATA, UNSUPPORTED_MODE] }
