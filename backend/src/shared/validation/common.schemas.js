@@ -7,9 +7,11 @@ export const uuidSchema = z.uuid();
 export const idParamSchema = z.object({ id: uuidSchema });
 
 export const MAX_PAGE_LIMIT = 50;
+// Bounds OFFSET: ?page=99999999 would make the database walk millions of rows to skip them.
+export const MAX_PAGE = 1000;
 
 export const paginationQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+  page: z.coerce.number().int().min(1).max(MAX_PAGE).default(1),
   limit: z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT).default(20),
 });
 

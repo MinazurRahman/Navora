@@ -65,6 +65,12 @@ describe('common schemas', () => {
     expect(buildPaginationMeta({ page: 1, limit: 20 }, 0)).toEqual({ page: 1, limit: 20, total: 0, totalPages: 0 });
   });
 
+  it('bounds pagination so OFFSET cannot be abused', () => {
+    expect(paginationQuerySchema.safeParse({ page: '1000' }).success).toBe(true);
+    expect(paginationQuerySchema.safeParse({ page: '1001' }).success).toBe(false);
+    expect(paginationQuerySchema.safeParse({ limit: '51' }).success).toBe(false);
+  });
+
   it('rejects out-of-range coordinates', () => {
     expect(coordinatesSchema.safeParse({ latitude: -91, longitude: 0 }).success).toBe(false);
     expect(coordinatesSchema.safeParse({ latitude: 0, longitude: 181 }).success).toBe(false);

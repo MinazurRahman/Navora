@@ -18,7 +18,7 @@ info:
       session. Share one refresh call across browser tabs.
     - **Privacy**: other users' private resources (trips, itineraries, non-approved places)
       answer `404`, never `403`, so their existence is not revealed.
-    - **Pagination**: `page` (from 1) and `limit` (1–50, default 20).
+    - **Pagination**: `page` (1–1000) and `limit` (1–50, default 20).
     - **Rate limits**: every `/api/v1` response carries `RateLimit-Limit`, `RateLimit-Remaining`
       and `RateLimit-Reset` (seconds); `429` responses add `Retry-After`.
     - **Request IDs**: every response has `X-Request-Id`; include it in bug reports.
@@ -1250,8 +1250,8 @@ components:
     Page:
       name: page
       in: query
-      description: 'Page number, starting at 1.'
-      schema: { type: integer, minimum: 1, default: 1 }
+      description: 'Page number, starting at 1 (max 1000).'
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
     Limit:
       name: limit
       in: query
