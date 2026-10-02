@@ -31,9 +31,13 @@ function assertPoints(points, min) {
  * mode) are logged and answered with clearly flagged estimates, or a 503 when fallback
  * is disabled. Only real provider results are cached.
  */
+// Provider errors echo the coordinates sent (e.g. "…coordinate 1: 90.0000000 21.0000000"):
+// users' locations must not end up in logs.
+export const maskCoordinates = (text) => text.replace(/-?\d{1,3}\.\d{2,}/g, '<coord>');
+
 export function createMapService({ provider, fallback, cache, ttlSeconds, fallbackToEstimate = true }) {
   async function useFallback(kind, detail, run) {
-    getLogger().warn({ provider: provider.name, kind, detail }, 'Routing provider failed; using estimates');
+    getLogger().warn({ provider: provider.name, kind, detail: maskCoordinates(detail) }, 'Routing provider failed; using estimates');
     if (!fallbackToEstimate) {
       throw new ServiceUnavailableError('Routing service is temporarily unavailable', { reason: kind }, 'ROUTING_UNAVAILABLE');
     }

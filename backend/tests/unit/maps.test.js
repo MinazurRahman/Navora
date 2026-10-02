@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createOpenRouteServiceProvider } from '../../src/integrations/maps/providers/openRouteService.js';
 import { createEstimateProvider } from '../../src/integrations/maps/providers/estimate.js';
-import { createMapService, MAX_POINTS } from '../../src/integrations/maps/mapService.js';
+import { createMapService, maskCoordinates, MAX_POINTS } from '../../src/integrations/maps/mapService.js';
+import { logger } from '../../src/shared/logger.js';
 import { MAP_ERROR, MapProviderError } from '../../src/integrations/maps/errors.js';
 import { createCache } from '../../src/integrations/redis/cache.js';
 import { PLANNING_CONFIG } from '../../src/config/planning.js';
@@ -176,6 +177,22 @@ describe('map service', () => {
   it('getRoute returns road geometry from the provider and none from the estimate', async () => {
     expect((await service(fakeProvider()).getRoute([A, B], 'car')).geometry).toBe('poly');
     expect(await service(estimate).getRoute([A, B, C], 'car')).toMatchObject({ provider: 'estimate', estimated: true, geometry: null });
+  });
+
+  it('keeps user coordinates out of the logs when the provider echoes them', async () => {
+    const warn = vi.spyOn(logger, 'warn');
+    const provider = fakeProvider({
+      getDistanceMatrix: async () => {
+        throw new MapProviderError(MAP_ERROR.INVALID_ROUTE, 'Could not find routable point within a radius of 350.0 meters of specified coordinate 1: 90.4125000 23.8103000.');
+      },
+    });
+    await service(provider).getDistanceMatrix([A, B], 'car');
+
+    const logged = JSON.stringify(warn.mock.calls);
+    warn.mockRestore();
+    expect(logged).toContain('INVALID_ROUTE');
+    expect(logged).not.toMatch(/90\.41|23\.81/);
+    expect(maskCoordinates('coordinate 1: -23.8103 90.4125, radius 350.0')).toBe('coordinate 1: <coord> <coord>, radius 350.0');
   });
 
   it('rejects invalid input from callers', async () => {
