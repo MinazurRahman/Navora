@@ -14,6 +14,7 @@ import { ROUTE_ALGORITHM } from '../routing/optimizer.js';
 import { createMatrixTravel } from '../routing/matrixTravel.js';
 import { planTrip, scheduleDay } from './planner.js';
 import { toItineraryDto } from './itineraries.mapper.js';
+import { validateItinerary } from './validation.js';
 
 const notFound = () => new NotFoundError('Itinerary not found', 'ITINERARY_NOT_FOUND');
 
@@ -52,7 +53,7 @@ function toRows({ plan, trip, ctx, startDate, startDateAssumed, warnings, recomm
     route_polyline: day.routePolyline ?? null,
     day_number: day.dayNumber,
     date: day.date,
-    start_time: toHHMM(ctx.windowStart),
+    start_time: toHHMM(day.departure),
     end_time: toHHMM(day.schedule.endTime),
     total_distance_m: day.schedule.totals.distanceMeters,
     total_travel_seconds: day.schedule.totals.travelSeconds,
@@ -267,6 +268,20 @@ export function createItinerariesService({
             suggestions,
           },
         );
+      }
+
+      // Leave just in time for the first visit (no waiting at the door when it opens late).
+      for (const day of plan.days) {
+        const [first] = day.schedule.stops;
+        day.departure = first.plannedStart - Math.ceil(first.travelSecondsFromPrevious / 60);
+      }
+
+      // Final independent check: never save an itinerary that breaks the user's time
+      // window or a mandatory requirement, whatever the planner did.
+      const violations = validateItinerary(plan.days, ctx, recommendationConfig, { selectedIds, config: planningConfig });
+      if (violations.length > 0) {
+        getLogger().error({ tripId, violations }, 'Generated itinerary failed validation; not saved');
+        throw new Error('Generated itinerary failed validation');
       }
 
       // 11. Save as a new current version.

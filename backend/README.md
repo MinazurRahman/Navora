@@ -171,6 +171,13 @@ ORS) fall back to estimates marked `travelTimesEstimated: true` with the reason 
 `TRAVEL_TIMES_ESTIMATED` warning — or a 503 `ROUTING_UNAVAILABLE` with
 `MAP_FALLBACK_TO_ESTIMATE=false`. Adding a provider = one adapter in `providers/`.
 
+Each day: `startTime` (when to leave: just in time for the first visit), `endTime` (back at
+the start), ordered `stops` (`plannedStart`/`plannedEnd`, `visitMinutes`, travel from the
+previous stop), and `totals` (`distanceMeters`, `travelMinutes`, `visitMinutes`,
+`plannedMinutes` = end − start). Before saving, an independent validator re-checks every
+day (time window, overlaps, visit lengths, opening hours, stop cap) and every place against
+the mandatory requirements; an itinerary that fails is never saved.
+
 Failures return **422**: `INSUFFICIENT_MATCHING_PLACES` (`emptyDays`, `excludedBy`,
 `suggestions`) or `SELECTED_PLACES_NOT_FEASIBLE` (per place: `reason`, `requirements`).
 Requirements are never relaxed automatically. Warnings in the itinerary:
