@@ -99,6 +99,11 @@ export function createPlacesRepository(db) {
       return { places, total: Number(total) };
     },
 
+    // Many places in one query (avoids one query per ID).
+    findByIds(ids, conn = db) {
+      return fromPlaces(conn).select(placeColumns(conn)).whereIn('p.id', ids);
+    },
+
     // lock: SELECT … FOR UPDATE OF p, for status transitions inside a transaction.
     findById(id, conn = db, { lock = false } = {}) {
       const query = fromPlaces(conn).select(placeColumns(conn)).where('p.id', id).first();

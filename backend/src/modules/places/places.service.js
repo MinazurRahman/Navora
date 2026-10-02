@@ -118,6 +118,14 @@ export function createPlacesService({ placesRepository, categoriesService, trans
       return place;
     },
 
+    // One query for many places. Map of id → place, containing only the places this user
+    // may see (same rule as getById); absent IDs are unknown or hidden.
+    async getVisibleByIds(ids, user) {
+      if (ids.length === 0) return new Map();
+      const rows = await placesRepository.findByIds([...new Set(ids)]);
+      return new Map(rows.filter((row) => canView(row.status, row.created_by, user)).map((row) => [row.id, toPlaceDto(row)]));
+    },
+
     // Approved places within radiusMeters, nearest first, capped at `limit` (for the
     // recommender, which caches its own results).
     async findCandidates({ latitude, longitude, radiusMeters, limit }) {

@@ -173,8 +173,9 @@ export function createItinerariesService({
   async function loadSelectedPlaces(trip, ctx, user) {
     const accepted = [];
     const rejected = [];
+    const placesById = await placesService.getVisibleByIds(trip.selectedPlaceIds, user);
     for (const placeId of trip.selectedPlaceIds) {
-      const place = await placesService.getById(placeId, user).catch(() => null);
+      const place = placesById.get(placeId);
       if (!place || place.status !== 'APPROVED') {
         rejected.push({ placeId, reason: 'NOT_AVAILABLE' });
         continue;
@@ -394,10 +395,11 @@ export function createItinerariesService({
       // the user picked them explicitly).
       const placesByDay = [];
       const violating = [];
+      const placesById = await placesService.getVisibleByIds(edits.flatMap((e) => e.placeIds), user);
       for (const [d, edit] of edits.entries()) {
         const places = [];
         for (const [p, placeId] of edit.placeIds.entries()) {
-          const place = await placesService.getById(placeId, user).catch(() => null);
+          const place = placesById.get(placeId);
           if (!place || place.status !== 'APPROVED') {
             throw new ValidationError('Invalid request data', [{ location: 'body', path: `days.${d}.placeIds.${p}`, message: 'Unknown or unapproved place' }]);
           }

@@ -48,8 +48,9 @@ export function createTripsService({ tripsRepository, categoriesService, placesS
       links.categoryIds = (await categoriesService.requireCategories(fields.preferredCategories)).map((c) => c.id);
     }
     if (fields.selectedPlaceIds) {
+      const found = await placesService.getVisibleByIds(fields.selectedPlaceIds, user);
       for (const [index, placeId] of fields.selectedPlaceIds.entries()) {
-        const place = await placesService.getById(placeId, user).catch(() => null);
+        const place = found.get(placeId);
         if (!place || place.status !== 'APPROVED') {
           throw new ValidationError('Invalid request data', [
             { location: 'body', path: `selectedPlaceIds.${index}`, message: 'Unknown or unapproved place' },

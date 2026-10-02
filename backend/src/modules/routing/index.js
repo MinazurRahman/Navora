@@ -42,10 +42,11 @@ export function createRoutingModule({ mapService, placesService, authenticate, r
   // Only places this user can see and that are approved can be routed.
   async function resolvePlaces(days, user) {
     const resolved = [];
+    const found = await placesService.getVisibleByIds(days.flatMap((day) => day.placeIds), user);
     for (const [d, day] of days.entries()) {
       const places = [];
       for (const [p, placeId] of day.placeIds.entries()) {
-        const place = await placesService.getById(placeId, user).catch(() => null);
+        const place = found.get(placeId);
         if (!place || place.status !== 'APPROVED') {
           throw new ValidationError('Invalid request data', [
             { location: 'body', path: `days.${d}.placeIds.${p}`, message: 'Unknown or unapproved place' },
