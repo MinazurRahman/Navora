@@ -1,3 +1,6 @@
+// Longest a single cache call may take before the request falls back to the database.
+export const CACHE_TIMEOUT_MS = 500;
+
 // Cache TTLs in seconds. Short on purpose: invalidation handles writes, TTLs bound the
 // damage if an invalidation is ever missed (e.g. Redis briefly unreachable).
 export const CACHE_TTL = Object.freeze({

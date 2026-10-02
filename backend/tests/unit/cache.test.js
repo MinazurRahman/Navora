@@ -26,6 +26,17 @@ describe('cache primitives', () => {
     expect(await cache.get('k')).toBeNull();
   });
 
+  it('a hanging Redis cannot hang the request: times out and serves from the source', async () => {
+    const hanging = { get: () => new Promise(() => {}), set: () => new Promise(() => {}), del: () => new Promise(() => {}), incr: () => new Promise(() => {}) };
+    const cache = createCache(hanging, { timeoutMs: 30 });
+    const started = Date.now();
+
+    expect(await cache.getOrSet('place:p1', 60, async () => 'from-db', { namespace: 'places' })).toBe('from-db');
+    expect(await cache.get('k')).toBeNull();
+    await expect(cache.bumpVersion('places')).resolves.toBeUndefined();
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
   it('never throws when Redis is down', async () => {
     const cache = createCache(failingRedis());
     await expect(cache.get('k')).resolves.toBeNull();

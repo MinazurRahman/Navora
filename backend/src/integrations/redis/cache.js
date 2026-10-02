@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import { getLogger } from '../../shared/logger.js';
+import { withTimeout } from '../../shared/withTimeout.js';
+import { CACHE_TIMEOUT_MS } from '../../config/cache.js';
 
 const PREFIX = 'nv:v1';
 
@@ -16,13 +18,15 @@ export function hashKey(params) {
 
 // Cache-aside over Upstash Redis. Redis is never the source of truth: every entry has a
 // TTL and can be rebuilt from PostgreSQL. Failures are logged and never fail a request.
-export function createCache(redis) {
+export function createCache(redis, { timeoutMs = CACHE_TIMEOUT_MS } = {}) {
   const fullKey = (key) => `${PREFIX}:${key}`;
   const versionKey = (namespace) => `${PREFIX}:ver:${namespace}`;
+  // The Upstash client has no per-request timeout: a hanging Redis must not hang requests.
+  const timed = (promise) => withTimeout(promise, timeoutMs);
 
   async function safely(operation, fallback, message, context) {
     try {
-      return await operation();
+      return await timed(operation());
     } catch (err) {
       getLogger().warn({ err, ...context }, message);
       return fallback;
@@ -49,8 +53,8 @@ export function createCache(redis) {
     async getOrSet(key, ttlSeconds, load, { namespace, cacheIf = () => true } = {}) {
       let cacheKey;
       try {
-        cacheKey = namespace ? fullKey(`${namespace}:${(await redis.get(versionKey(namespace))) ?? 0}:${key}`) : fullKey(key);
-        const hit = await redis.get(cacheKey);
+        cacheKey = namespace ? fullKey(`${namespace}:${(await timed(redis.get(versionKey(namespace)))) ?? 0}:${key}`) : fullKey(key);
+        const hit = await timed(redis.get(cacheKey));
         if (hit !== null) return hit;
       } catch (err) {
         // Without a trustworthy version we could serve stale data: skip the cache entirely.
@@ -60,7 +64,7 @@ export function createCache(redis) {
 
       const value = await load();
       if (value !== null && value !== undefined && cacheIf(value)) {
-        redis.set(cacheKey, value, { ex: ttlSeconds }).catch((err) => {
+        timed(redis.set(cacheKey, value, { ex: ttlSeconds })).catch((err) => {
           getLogger().warn({ err, key }, 'Cache write failed');
         });
       }
