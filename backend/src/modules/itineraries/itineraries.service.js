@@ -130,10 +130,14 @@ export function createItinerariesService({
       const points = [trip.startLocation, ...stops.map((p) => p.location)];
       const matrix = await mapService.getDistanceMatrix(points, trip.travelMode);
       const index = new Map(points.map((p, i) => [pointKey(p), i]));
+      // Provider times are pure driving/walking time; parking and waiting happen anyway, so
+      // add the same per-leg overhead the estimate includes (estimates already have it).
+      const overheadSeconds = matrix.provider === 'estimate' ? 0 : planningConfig.legOverheadMinutes[trip.travelMode] * 60;
       const travel = (from, to) => {
         const i = index.get(pointKey(from));
         const j = index.get(pointKey(to));
-        return { durationSeconds: matrix.durations[i][j], distanceMeters: matrix.distances[i][j] };
+        const seconds = matrix.durations[i][j];
+        return { durationSeconds: seconds > 0 ? seconds + overheadSeconds : 0, distanceMeters: matrix.distances[i][j] };
       };
 
       const schedule = scheduleDay({

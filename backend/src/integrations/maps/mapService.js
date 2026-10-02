@@ -24,7 +24,7 @@ function assertPoints(points, min) {
  *   { ..., provider: 'openrouteservice' | 'estimate', estimated: boolean, fallbackReason? }
  *
  * - getDistanceMatrix(points, mode) → { durations[from][to] (s), distances[from][to] (m) }
- * - getRoute(points, mode)          → { distanceMeters, durationSeconds, legs[], geometry }
+ * - getRoute(points, mode)          → { distanceMeters, durationSeconds, legs[] | null, geometry }
  * - getTravelTime(from, to, mode)   → { distanceMeters, durationSeconds }
  *
  * Provider failures (timeout, rate limit, outage, no route, missing data, unsupported

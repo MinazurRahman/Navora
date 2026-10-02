@@ -19,8 +19,9 @@ function ors(fetchImpl, timeoutMs = 1_000) {
 }
 
 describe('OpenRouteService adapter', () => {
-  it('sends [lng, lat] coordinates, the right profile and the API key', async () => {
-    const fetchImpl = vi.fn(async () => json(200, { durations: [[0, 60], [70, 0]], distances: [[0, 900], [950, 0]] }));
+  it('sends [lng, lat] coordinates, the right profile and the API key; rounds fractions', async () => {
+    // Real ORS responses contain fractions, e.g. 1078.35 s (seen against the live API).
+    const fetchImpl = vi.fn(async () => json(200, { durations: [[0, 59.6], [70.2, 0]], distances: [[0, 899.5], [950.4, 0]] }));
     const result = await ors(fetchImpl).getDistanceMatrix([A, B], 'walking');
 
     const [url, init] = fetchImpl.mock.calls[0];
@@ -41,6 +42,17 @@ describe('OpenRouteService adapter', () => {
       geometry: '_p~iF~ps|U',
     });
     expect(fetchImpl.mock.calls[0][0]).toBe('https://ors.test/v2/directions/driving-car');
+  });
+
+  it('accepts the live response shape: no segments without instructions', async () => {
+    // Shape observed from the live API with instructions: false.
+    const live = { bbox: [], routes: [{ summary: { distance: 13260.1, duration: 1078.4 }, bbox: [], geometry: '_nipCcuyfPCkB', way_points: [0, 120] }], metadata: {} };
+    expect(await ors(async () => json(200, live)).getRoute([A, B], 'car')).toEqual({
+      distanceMeters: 13260,
+      durationSeconds: 1078,
+      legs: null,
+      geometry: '_nipCcuyfPCkB',
+    });
   });
 
   it.each([

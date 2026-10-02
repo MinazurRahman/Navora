@@ -9,9 +9,11 @@ export const PLANNING_CONFIG = Object.freeze({
   // The day must leave time to get back to the start location (hotel, home).
   returnToStart: true,
 
-  // Travel-time ESTIMATE until a routing provider is configured: straight-line distance
+  // Travel-time ESTIMATE when no routing provider is configured: straight-line distance
   // × detour factor ÷ average speed, plus a fixed overhead per leg (parking, waiting).
   // Itineraries built this way are marked travelTimesEstimated = true.
+  // The per-leg overhead is also added to provider times, which are pure moving time
+  // (OpenRouteService assumes free-flowing traffic).
   detourFactor: 1.35,
   speedsKmh: Object.freeze({ car: 18, walking: 4.5, cycling: 12, public_transport: 14 }),
   legOverheadMinutes: Object.freeze({ car: 10, walking: 0, cycling: 3, public_transport: 10 }),

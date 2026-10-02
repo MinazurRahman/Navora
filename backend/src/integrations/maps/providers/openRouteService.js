@@ -66,7 +66,9 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
       if (!Array.isArray(data.durations) || !Array.isArray(data.distances)) {
         throw new MapProviderError(MAP_ERROR.MISSING_DATA, 'Matrix response has no durations/distances');
       }
-      return { durations: data.durations, distances: data.distances };
+      // ORS returns fractions (e.g. 1078.35 s); the app works in whole seconds/metres.
+      const whole = (matrix) => matrix.map((row) => row.map((value) => (value === null ? null : Math.round(value))));
+      return { durations: whole(data.durations), distances: whole(data.distances) };
     },
 
     async getRoute(points, mode) {
@@ -75,13 +77,17 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
         instructions: false,
       });
       const route = data.routes?.[0];
-      if (!route?.summary || !Array.isArray(route.segments)) {
+      if (!route?.summary) {
         throw new MapProviderError(MAP_ERROR.MISSING_DATA, 'Directions response has no route');
       }
       return {
         distanceMeters: Math.round(route.summary.distance ?? 0),
         durationSeconds: Math.round(route.summary.duration ?? 0),
-        legs: route.segments.map((s) => ({ distanceMeters: Math.round(s.distance), durationSeconds: Math.round(s.duration) })),
+        // ORS only sends per-leg segments together with turn-by-turn instructions, which
+        // we do not request (per-leg times come from the matrix). null when absent.
+        legs: Array.isArray(route.segments)
+          ? route.segments.map((s) => ({ distanceMeters: Math.round(s.distance), durationSeconds: Math.round(s.duration) }))
+          : null,
         geometry: typeof route.geometry === 'string' ? route.geometry : null, // encoded polyline (precision 5)
       };
     },
