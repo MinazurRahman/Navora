@@ -2,7 +2,7 @@ import { createAiService } from './aiService.js';
 import { createDisabledProvider } from './providers/disabled.js';
 import { createOllamaProvider } from './providers/ollama.js';
 
-export { createAiService } from './aiService.js';
+export { aiUnavailableError, createAiService } from './aiService.js';
 export { createDisabledProvider } from './providers/disabled.js';
 export { AI_ERROR, AiProviderError } from './errors.js';
 

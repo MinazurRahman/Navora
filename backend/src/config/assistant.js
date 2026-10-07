@@ -7,4 +7,16 @@ export const ASSISTANT_CONFIG = Object.freeze({
   maxRecommendations: 10,
   // Community-written text: short, and only as data.
   maxDescriptionChars: 200,
+
+  // Request and response bounds.
+  maxQuestionChars: 500,
+  maxAnswerChars: 2_000,
+  maxSuggestions: 5,
+  maxRationaleChars: 300,
+
+  // Low: answers should restate Navora's data, not be creative.
+  temperature: 0.2,
+  // The provider enforces AI_TIMEOUT_MS itself; the service stops waiting this much later
+  // in case a provider ignores cancellation.
+  timeoutGraceMs: 1_000,
 });

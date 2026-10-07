@@ -24,6 +24,11 @@ const PUBLIC_REASON = Object.freeze({
 });
 const publicReason = (kind) => PUBLIC_REASON[kind] ?? 'UNAVAILABLE';
 
+// The one client-facing AI failure: 503 AI_UNAVAILABLE with reason DISABLED | TIMEOUT | UNAVAILABLE.
+export function aiUnavailableError(reason = 'UNAVAILABLE') {
+  return new ServiceUnavailableError('The AI assistant is temporarily unavailable', { reason }, 'AI_UNAVAILABLE');
+}
+
 export function createAiService({ provider }) {
   const enabled = provider.name !== 'disabled';
 
@@ -55,11 +60,7 @@ export function createAiService({ provider }) {
         return result;
       } catch (err) {
         logFailure(err, 'generate');
-        throw new ServiceUnavailableError(
-          'The AI assistant is temporarily unavailable',
-          { reason: publicReason(kindOf(err)) },
-          'AI_UNAVAILABLE',
-        );
+        throw aiUnavailableError(publicReason(kindOf(err)));
       }
     },
 
