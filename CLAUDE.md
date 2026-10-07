@@ -164,7 +164,7 @@ Response envelopes (`shared/http/response.js`, `middleware/error.middleware.js`)
 - All policies live in `config/rateLimits.js`: sliding window, `failOpen` per policy.
   `general` 600/15m (open) · `authIp` 100/15m (closed) · `authAccount` 10/15m per IP+email
   (closed) · `submissions` 20/day (open) · `reviews` 30/day (open) · `recommendations` 20/min
-  (open) · `routing` 10/min (closed).
+  (open) · `routing` 10/min (closed) · `assistant` 10/min (closed) · `assistantDaily` 100/day (closed).
 - Use `rateLimit('<policy>', identify?)`; default identity is the user (valid token) else IP.
 - **Costly or paid-API endpoints must use a fail-closed policy** (503 `RATE_LIMIT_UNAVAILABLE`).
 - Our own 1 s timeout is used; Upstash's built-in timeout is disabled on purpose (it fails open).
@@ -302,7 +302,11 @@ Follow the `integrations/maps` pattern:
 
 ## 25. AI integration rules
 
-There is currently **no AI/LLM code** in the repository. Any AI feature must follow these rules:
+The AI Trip Assistant (`POST /api/v1/ai/trip-assistant`, `GET /api/v1/ai/trip-assistant/status`)
+is the reference implementation: provider abstraction in `src/integrations/ai/` (`disabled`
+default, `ollama`), feature module in `src/modules/assistant/` (`context.js` builds the only data
+the model sees, `prompt.js` holds the system prompt, `output.js` grounds and bounds the reply,
+`assistant.service.js` orchestrates). Every AI feature must follow these rules:
 
 - **AI must never replace deterministic business logic without explicit approval.** Hard
   constraints, scoring, planning, feasibility, routing and validation stay rule-based.

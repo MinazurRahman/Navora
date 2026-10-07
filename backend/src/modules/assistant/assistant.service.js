@@ -38,65 +38,84 @@ export function createAssistantService({ contextLoader, ai, timeoutMs, config })
     }
   }
 
-  return {
-    /**
-     * @param input   { task, question?, placeId?, dayNumber? } (validated here as well)
-     * @param options { signal } cancels the AI call, e.g. when the client disconnects
-     * @returns { task, itinerary, answer, truncated, places, suggestions, source, disclaimer }
-     */
-    async askAboutItinerary(itineraryId, input, user, { signal } = {}) {
-      // 1. Validate and normalise.
-      const parsed = askAssistantSchema.safeParse(input);
-      if (!parsed.success) {
-        throw new ValidationError(
-          'Invalid request data',
-          parsed.error.issues.map((issue) => ({ location: 'body', path: issue.path.join('.'), message: issue.message })),
-        );
-      }
-      const request = parsed.data;
-      // No point loading data for an assistant that is switched off.
-      if (!ai.enabled) throw aiUnavailableError('DISABLED');
-
-      // 2–3. Authorised data (404 for other users' itineraries) → bounded context.
-      const { context, refs } = await contextLoader.forItinerary(itineraryId, user);
-
-      const placeRef = request.placeId && Object.keys(refs).find((ref) => refs[ref] === request.placeId);
-      if (request.placeId && !placeRef) throw invalid('placeId', 'This place is not part of the itinerary or its recommendations');
-      if (request.dayNumber && !context.itinerary.days.some((d) => d.dayNumber === request.dayNumber)) {
-        throw invalid('dayNumber', `This itinerary has no day ${request.dayNumber}`);
-      }
-
-      // 4–7. Prompt → provider (timeout and failures become 503 AI_UNAVAILABLE).
-      const prompt = buildPrompt(context, { ...request, placeRef });
-      const result = await generateWithin(
-        { ...prompt, outputSchema: OUTPUT_SCHEMA, temperature: config.temperature },
-        signal,
+  // loadContext() → { context, refs, itineraryId }, already authorised by the owning services.
+  async function answer(loadContext, input, { signal } = {}) {
+    // 1. Validate and normalise.
+    const parsed = askAssistantSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ValidationError(
+        'Invalid request data',
+        parsed.error.issues.map((issue) => ({ location: 'body', path: issue.path.join('.'), message: issue.message })),
       );
+    }
+    const request = parsed.data;
+    // No point loading data for an assistant that is switched off.
+    if (!ai.enabled) throw aiUnavailableError('DISABLED');
 
-      // 8. Untrusted reply → bounded, grounded response.
-      const output = parseAssistantOutput(result.output, {
-        context,
-        refs,
-        allowSuggestions: request.task === 'suggest_adjustments' && context.itinerary.isCurrent,
-        config,
-      });
-      const log = { task: request.task, itineraryId, provider: ai.providerName, model: ai.model };
-      if (!output) {
-        getLogger().warn(log, 'AI reply unusable (empty or malformed)');
-        throw aiUnavailableError('UNAVAILABLE');
-      }
-      getLogger().info({ ...log, truncated: output.truncated, dropped: output.dropped }, 'Assistant answered');
+    // 2–3. Authorised data (404 for other users' trips/itineraries) → bounded context.
+    const { context, refs, itineraryId } = await loadContext();
 
-      return {
-        task: request.task,
-        itinerary: { id: itineraryId, version: context.itinerary.version, isCurrent: context.itinerary.isCurrent },
-        answer: output.answer,
-        truncated: output.truncated || Boolean(result.truncated),
-        places: output.places,
-        suggestions: output.suggestions,
-        source: { generatedBy: 'ai', provider: ai.providerName, model: ai.model },
-        disclaimer: DISCLAIMER,
-      };
+    const placeRef = request.placeId && Object.keys(refs).find((ref) => refs[ref] === request.placeId);
+    if (request.placeId && !placeRef) throw invalid('placeId', 'This place is not part of the itinerary or its recommendations');
+    if (request.dayNumber && !context.itinerary.days.some((d) => d.dayNumber === request.dayNumber)) {
+      throw invalid('dayNumber', `This itinerary has no day ${request.dayNumber}`);
+    }
+
+    // 4–7. Prompt → provider (timeout and failures become 503 AI_UNAVAILABLE).
+    const prompt = buildPrompt(context, { ...request, placeRef });
+    const result = await generateWithin({ ...prompt, outputSchema: OUTPUT_SCHEMA, temperature: config.temperature }, signal);
+
+    // 8. Untrusted reply → bounded, grounded response.
+    const output = parseAssistantOutput(result.output, {
+      context,
+      refs,
+      allowSuggestions: request.task === 'suggest_adjustments' && context.itinerary.isCurrent,
+      config,
+    });
+    const log = { task: request.task, itineraryId, provider: ai.providerName, model: ai.model };
+    if (!output) {
+      getLogger().warn(log, 'AI reply unusable (empty or malformed)');
+      throw aiUnavailableError('UNAVAILABLE');
+    }
+    getLogger().info({ ...log, truncated: output.truncated, dropped: output.dropped }, 'Assistant answered');
+
+    // Provider and model stay internal (logged above), never part of the API response.
+    return {
+      task: request.task,
+      itinerary: { id: itineraryId, version: context.itinerary.version, isCurrent: context.itinerary.isCurrent },
+      answer: output.answer,
+      truncated: output.truncated || Boolean(result.truncated),
+      places: output.places,
+      suggestions: output.suggestions,
+      source: { generatedBy: 'ai' },
+      disclaimer: DISCLAIMER,
+    };
+  }
+
+  /**
+   * input: { task, question?, placeId?, dayNumber? } (validated here as well)
+   * options: { signal } cancels the AI call, e.g. when the client disconnects
+   * → { task, itinerary, answer, truncated, places, suggestions, source, disclaimer }
+   */
+  const askAboutItinerary = (itineraryId, input, user, options) =>
+    answer(() => contextLoader.forItinerary(itineraryId, user), input, options);
+
+  // The trip's current itinerary (422 ITINERARY_NOT_GENERATED when there is none).
+  const askAboutTrip = (tripId, input, user, options) =>
+    answer(() => contextLoader.forCurrentItinerary(tripId, user), input, options);
+
+  return {
+    askAboutItinerary,
+    askAboutTrip,
+
+    // { itineraryId | tripId, ...input } as accepted by POST /ai/trip-assistant.
+    ask({ itineraryId, tripId, ...input }, user, options) {
+      return itineraryId ? askAboutItinerary(itineraryId, input, user, options) : askAboutTrip(tripId, input, user, options);
+    },
+
+    // { enabled, available, reason? }: no provider, model, host or error details.
+    status(options) {
+      return ai.status(options);
     },
   };
 }

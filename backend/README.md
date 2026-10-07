@@ -208,6 +208,32 @@ Failures return **422**: `INSUFFICIENT_MATCHING_PLACES` (`emptyDays`, `excludedB
 Requirements are never relaxed automatically. Warnings in the itinerary:
 `TRAVEL_TIMES_ESTIMATED`, `START_DATE_ASSUMED`, `OPENING_HOURS_UNVERIFIED`, `ENTRY_FEE_UNKNOWN`.
 
+### AI Trip Assistant (optional)
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/ai/trip-assistant` | Bearer | `{ itineraryId \| tripId, task, question?, placeId?, dayNumber? }` → AI answer about **your** itinerary |
+| GET | `/api/v1/ai/trip-assistant/status` | Bearer | `{ enabled, available, reason? }` |
+
+Tasks: `summarize`, `explain_itinerary`, `explain_place`, `explain_warnings`,
+`suggest_adjustments`, `question`. Read-only: it explains Navora's own data and changes
+nothing; recommendation, itinerary and routing results stay authoritative. Suggestions are
+advice the user can apply with `PATCH /itineraries/:id` (checked there like any edit).
+
+- Off by default (`AI_ENABLED=false`). Runs on a local/self-hosted
+  [Ollama](https://ollama.com) — free, no API key: `ollama pull llama3.2:3b`, then set
+  `AI_ENABLED=true` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `AI_TIMEOUT_MS`, `AI_MAX_OUTPUT_TOKENS`
+  in `.env.example`). Ollama has no authentication: keep it on localhost or a private network.
+- The model only sees a small context built through the owning services (other users'
+  trips/itineraries are 404): no IDs, start location, address or user data. Place references
+  in the reply are checked against that context; answers are capped at 2000 characters.
+- AI disabled, unreachable, too slow or unusable reply → 503 `AI_UNAVAILABLE`
+  (`details.reason`: `DISABLED`, `TIMEOUT`, `UNAVAILABLE`); trip without an itinerary → 422
+  `ITINERARY_NOT_GENERATED`. Nothing else in Navora depends on it.
+- Code: `src/integrations/ai` (provider abstraction: `disabled`, `ollama`),
+  `src/modules/assistant` (context, prompt, output checks, service, routes). Tests use a fake
+  provider; Ollama is never needed to run them.
+
 ### Authentication
 
 - Send `Authorization: Bearer <accessToken>`. Access tokens are JWTs valid for 15 minutes.
@@ -232,6 +258,8 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `reviews` | `POST /places/:id/reviews`, per user | 30 / day | allow |
 | `recommendations` | `POST /recommendations`, per user or IP | 20 / min | allow |
 | `routing` | itinerary generate/edit/regenerate, `POST /routing/optimize`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistant` | `POST /ai/trip-assistant`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistantDaily` | `POST /ai/trip-assistant`, per user | 100 / day | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).

@@ -1,4 +1,4 @@
-import { AppError, UnauthorizedError } from '../../shared/errors/AppError.js';
+import { AppError, UnauthorizedError, UnprocessableError } from '../../shared/errors/AppError.js';
 import { getLogger } from '../../shared/logger.js';
 import { recommendationRequestSchema } from '../recommendations/index.js';
 import { buildAssistantContext } from './context.js';
@@ -58,7 +58,18 @@ export function createAssistantContextLoader({ itinerariesService, tripsService,
         placesService.getVisibleByIds(placeIds, user),
         recommendationsFor(trip, startDate),
       ]);
-      return buildAssistantContext({ trip, startDate, startDateAssumed, itinerary, placesById, recommendations, config });
+      const built = buildAssistantContext({ trip, startDate, startDateAssumed, itinerary, placesById, recommendations, config });
+      return { ...built, itineraryId: itinerary.id };
+    },
+
+    // Context for a trip's current itinerary.
+    async forCurrentItinerary(tripId, user) {
+      requireUser(user);
+      const trip = await tripsService.get(tripId, user); // 404 unless owned
+      if (!trip.currentItineraryId) {
+        throw new UnprocessableError('ITINERARY_NOT_GENERATED', 'This trip has no itinerary yet; generate one first');
+      }
+      return this.forItinerary(trip.currentItineraryId, user);
     },
 
     // Context for a saved trip without an itinerary: requirements and recommendations.

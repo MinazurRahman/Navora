@@ -5,6 +5,7 @@ import { createRepositories } from '../../src/repositories.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
 import { createCache } from '../../src/integrations/redis/cache.js';
 import { createEstimateProvider, createMapService, createMapServiceFromConfig } from '../../src/integrations/maps/index.js';
+import { createAiService, createAiServiceFromConfig } from '../../src/integrations/ai/index.js';
 import { PLANNING_CONFIG } from '../../src/config/planning.js';
 import { buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
@@ -13,7 +14,8 @@ export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 // The full app on the real (disposable) PostGIS test database, with caching ON (in-memory
 // Redis), so every integration test also proves cache invalidation is correct.
 // mapProvider: optional fake routing provider (default: the distance estimate).
-export async function createIntegrationApp({ mapProvider } = {}) {
+// aiProvider: optional fake AI provider (default: AI disabled). Tests never need Ollama.
+export async function createIntegrationApp({ mapProvider, aiProvider } = {}) {
   // Same connection setup as production (incl. pg type parsers), pointed at the test DB.
   const db = createDb(buildTestConfig({ DATABASE_URL: testDatabaseUrl }));
   await db.migrate.latest();
@@ -32,6 +34,7 @@ export async function createIntegrationApp({ mapProvider } = {}) {
     rateLimiter: createInMemoryRateLimiter(),
     cache,
     mapService,
+    aiService: aiProvider ? createAiService({ provider: aiProvider }) : createAiServiceFromConfig(config),
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.

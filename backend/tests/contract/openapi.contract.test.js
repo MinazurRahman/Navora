@@ -13,6 +13,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { createIntegrationApp, testDatabaseUrl } from '../helpers/integrationApp.js';
 import { buildTestApp, createInMemoryRateLimiter } from '../helpers/testApp.js';
+import { AI_ERROR, AiProviderError } from '../../src/integrations/ai/index.js';
 
 const SPEC = 'docs/openapi.yaml';
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
@@ -89,6 +90,7 @@ describe('route parity (code ⇄ spec)', () => {
     'src/modules/trips/index.js': { router: '/api/v1/trips' },
     'src/modules/itineraries/index.js': { router: '/api/v1/itineraries' },
     'src/modules/routing/index.js': { router: '/api/v1/routing' },
+    'src/modules/assistant/index.js': { router: '/api/v1/ai' },
   };
   const ROUTE = /(\w+)\.(get|post|put|patch|delete)\(\s*'([^']*)'/g;
 
@@ -113,7 +115,7 @@ describe('route parity (code ⇄ spec)', () => {
 
     expect([...inCode].filter((r) => !inSpec.has(r)), 'routes missing from the spec').toEqual([]);
     expect([...inSpec].filter((r) => !inCode.has(r)), 'documented routes that do not exist').toEqual([]);
-    expect(inCode.size).toBe(39);
+    expect(inCode.size).toBe(41);
   });
 });
 
@@ -157,8 +159,20 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     return res;
   }
 
+  // Fake AI provider: the contract is checked without Ollama.
+  const aiProvider = {
+    name: 'fake',
+    model: 'fake-model',
+    failing: false,
+    async generate() {
+      if (this.failing) throw new AiProviderError(AI_ERROR.UNAVAILABLE, 'fake outage');
+      return { output: { answer: 'Your trip has one day with three museums.', places: [], suggestions: [] }, truncated: false, usage: {}, durationMs: 1 };
+    },
+    async checkHealth() {},
+  };
+
   beforeAll(async () => {
-    ctx = await createIntegrationApp();
+    ctx = await createIntegrationApp({ aiProvider });
     await ctx.reset();
   });
 
@@ -262,6 +276,20 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
       as: user,
       body: { start: { latitude: 23.75, longitude: 90.39 }, days: [{ date: '2026-10-05', placeIds: approved.map((p) => p.id) }] },
     });
+
+    // --- AI Trip Assistant ---
+    const assistant = (body, as = user) => call('post', '/api/v1/ai/trip-assistant', { as, body });
+    await call('get', '/api/v1/ai/trip-assistant/status', { as: user });
+    await call('get', '/api/v1/ai/trip-assistant/status'); // 401
+    expect((await assistant({ itineraryId: itinerary.id, task: 'summarize' })).status).toBe(200);
+    await assistant({ tripId: trip.id, task: 'question', question: 'What do I see first?' });
+    await assistant({ tripId: impossible.id, task: 'summarize' }); // 422 no itinerary
+    await assistant({ itineraryId: itinerary.id, task: 'summarize' }, other); // 404
+    await assistant({ task: 'summarize' }); // 400
+    await call('post', '/api/v1/ai/trip-assistant', { body: { itineraryId: itinerary.id, task: 'summarize' } }); // 401
+    aiProvider.failing = true;
+    expect((await assistant({ itineraryId: itinerary.id, task: 'summarize' })).status).toBe(503);
+    aiProvider.failing = false;
 
     // --- deletions last ---
     await call('delete', '/api/v1/reviews/{id}', { as: user, params: { id: review.id } });

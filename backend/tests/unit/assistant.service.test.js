@@ -34,7 +34,8 @@ function fakeProvider(reply) {
 }
 
 function setup({ reply = { answer: 'Day 1 visits P1 then P2.', places: ['P1', 'P2'], suggestions: [] }, built = contextFor(), timeoutMs = 1_000, provider } = {}) {
-  const contextLoader = { forItinerary: vi.fn(async () => built) };
+  const loaded = { ...built, itineraryId: id(800) };
+  const contextLoader = { forItinerary: vi.fn(async () => loaded), forCurrentItinerary: vi.fn(async () => loaded) };
   const p = provider ?? fakeProvider(reply);
   const service = createAssistantService({ contextLoader, ai: createAiService({ provider: p }), timeoutMs, config });
   return { service, contextLoader, provider: p };
@@ -66,7 +67,8 @@ describe('assistant service: successful response', () => {
       truncated: false,
       places: [{ id: id(1), name: 'Place 1' }, { id: id(2), name: 'Place 2' }],
       suggestions: [],
-      source: { generatedBy: 'ai', provider: 'fake', model: 'fake-model:1b' },
+      // No provider or model: implementation details stay internal.
+      source: { generatedBy: 'ai' },
       disclaimer: DISCLAIMER,
     });
   });
@@ -108,6 +110,21 @@ describe('assistant service: successful response', () => {
     await ask(service, { task: 'summarize' }, { signal: controller.signal });
     controller.abort();
     expect(provider.generate.mock.calls[0][0].signal.aborted).toBe(true);
+  });
+});
+
+describe('assistant service: ask() by itinerary or trip', () => {
+  it('routes itineraryId to that itinerary and tripId to the current itinerary of the trip', async () => {
+    const { service, contextLoader } = setup();
+    await service.ask({ itineraryId: id(800), task: 'summarize' }, USER);
+    await service.ask({ tripId: id(900), task: 'summarize' }, USER);
+    expect(contextLoader.forItinerary).toHaveBeenCalledWith(id(800), USER);
+    expect(contextLoader.forCurrentItinerary).toHaveBeenCalledWith(id(900), USER);
+  });
+
+  it('reports status without provider details', async () => {
+    const { service } = setup();
+    expect(await service.status()).toEqual({ enabled: true, available: true });
   });
 });
 

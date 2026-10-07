@@ -39,6 +39,7 @@ tags:
   - { name: Trips }
   - { name: Itineraries }
   - { name: Routing }
+  - { name: AI, description: 'AI Trip Assistant: read-only explanations of your own itineraries, generated from Navora data.' }
 
 paths:
   # ============================== Health ==============================
@@ -1237,6 +1238,113 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
+  # ============================== AI ==============================
+  /api/v1/ai/trip-assistant:
+    post:
+      tags: [AI]
+      summary: 'Ask the AI Trip Assistant about your itinerary'
+      description: |
+        Explains, summarises or answers questions about one of **your** itineraries, using only
+        Navora's own data (trip requirements, itinerary, routing, warnings, place details and the
+        recommendation engine's scores and reasons). Give exactly one of `itineraryId` (that
+        version) or `tripId` (the trip's current itinerary).
+
+        The assistant is read-only: it changes nothing. `suggestions` (task `suggest_adjustments`,
+        current version only) are advice that you can apply with `PATCH /itineraries/{id}`, where
+        Navora checks them like any edit. The itinerary, times, prices and requirements shown by
+        Navora are authoritative; the answer is AI-generated — show it as **plain text**.
+
+        Tasks: `summarize`, `explain_itinerary`, `explain_place` (needs `placeId`),
+        `explain_warnings`, `suggest_adjustments`, `question` (needs `question`, 3–500 chars).
+        `placeId` must belong to the itinerary or its recommendations; `dayNumber` must exist.
+
+        Rate limited per user (10/min and 100/day); refuses with 503 when rate limiting is
+        unavailable. When the AI is disabled, unreachable, too slow or returns an unusable reply:
+        503 `AI_UNAVAILABLE` with `details.reason` `DISABLED`, `TIMEOUT` or `UNAVAILABLE`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [task]
+              additionalProperties: false
+              properties:
+                itineraryId: { type: string, format: uuid, description: One itinerary version. Give this or `tripId`. }
+                tripId: { type: string, format: uuid, description: The trip's current itinerary. Give this or `itineraryId`. }
+                task: { $ref: '#/components/schemas/AssistantTask' }
+                question: { type: string, minLength: 3, maxLength: 500, description: Required for task `question`. }
+                placeId: { type: string, format: uuid, description: Focus place; required for task `explain_place`. }
+                dayNumber: { type: integer, minimum: 1, maximum: 14, description: Focus day. }
+            example: { tripId: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e, task: question, question: Why is the National Museum on day 1? }
+      responses:
+        '200':
+          description: 'The assistant''s answer.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/AssistantAnswer' }
+              example:
+                success: true
+                data:
+                  task: question
+                  itinerary: { id: 6a2f8c1d-4b3e-4f5a-9c8d-7e6f5a4b3c2d, version: 1, isCurrent: true }
+                  answer: 'The National Museum matches your interest in history and is 2.1 km from your start. It is open during your daily hours, so Navora scheduled it first on day 1.'
+                  truncated: false
+                  places: [{ id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: National Museum }]
+                  suggestions: []
+                  source: { generatedBy: ai }
+                  disclaimer: "AI-generated explanation of Navora's plan. The itinerary, times, prices and requirements shown by Navora are authoritative; suggestions are not checked until you apply them."
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: '`ITINERARY_NOT_GENERATED` — the trip has no itinerary yet; generate one first.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: { code: ITINERARY_NOT_GENERATED, message: 'This trip has no itinerary yet; generate one first', requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/ai/trip-assistant/status:
+    get:
+      tags: [AI]
+      summary: 'Is the AI Trip Assistant available?'
+      description: |
+        Lets the app show or hide the assistant. Checks that the AI service is reachable and ready;
+        never exposes provider, model, host or error details.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 'Availability.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [enabled, available]
+                    additionalProperties: false
+                    properties:
+                      enabled: { type: boolean, description: Switched on by configuration. }
+                      available: { type: boolean, description: Enabled and currently able to answer. }
+                      reason: { type: string, enum: [DISABLED, TIMEOUT, UNAVAILABLE], description: Why it is not available. }
+              example: { success: true, data: { enabled: true, available: true } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
 # Shared components for openapi.yaml (referenced from there).
 components:
   securitySchemes:
@@ -1356,8 +1464,9 @@ components:
       description: |
         A dependency is down. `RATE_LIMIT_UNAVAILABLE` (security-sensitive or costly
         endpoints refuse to run without rate limiting), `ROUTING_UNAVAILABLE` (routing
-        provider down and estimates disabled), `TIMEOUT` (database query too slow).
-        Retry later.
+        provider down and estimates disabled), `TIMEOUT` (database query too slow),
+        `AI_UNAVAILABLE` (AI Trip Assistant disabled, unreachable, too slow or unusable reply;
+        `details.reason`: `DISABLED`, `TIMEOUT` or `UNAVAILABLE`). Retry later.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1924,3 +2033,55 @@ components:
             provider: { type: string }
             travelTimesEstimated: { type: boolean }
             fallbackReason: { type: string, enum: [TIMEOUT, RATE_LIMITED, UNAVAILABLE, INVALID_ROUTE, MISSING_DATA, UNSUPPORTED_MODE] }
+    # ---------- AI Trip Assistant ----------
+    AssistantTask:
+      type: string
+      enum: [summarize, explain_itinerary, explain_place, explain_warnings, suggest_adjustments, question]
+    AssistantAnswer:
+      type: object
+      required: [task, itinerary, answer, truncated, places, suggestions, source, disclaimer]
+      additionalProperties: false
+      properties:
+        task: { $ref: '#/components/schemas/AssistantTask' }
+        itinerary:
+          type: object
+          required: [id, version, isCurrent]
+          additionalProperties: false
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: integer }
+            isCurrent: { type: boolean }
+        answer: { type: string, maxLength: 2000, description: AI-generated plain text. Never render it as HTML or Markdown. }
+        truncated: { type: boolean, description: The answer was shortened to fit the length limit. }
+        places:
+          type: array
+          description: Places the answer talks about (only places from your itinerary or its recommendations).
+          items:
+            type: object
+            required: [id, name]
+            additionalProperties: false
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+        suggestions:
+          type: array
+          maxItems: 5
+          description: Only for task `suggest_adjustments` on the current version. Advice, not applied.
+          items:
+            type: object
+            required: [type, rationale]
+            additionalProperties: false
+            properties:
+              type: { type: string, enum: [REMOVE_STOP, MOVE_STOP, REORDER_DAY, ADD_RECOMMENDED_PLACE, VERIFY_OPENING_HOURS, VERIFY_ENTRY_FEE] }
+              placeId: { type: string, format: uuid }
+              placeName: { type: string }
+              dayNumber: { type: integer }
+              targetDayNumber: { type: integer, description: For `MOVE_STOP`. }
+              rationale: { type: string, maxLength: 300 }
+        source:
+          type: object
+          required: [generatedBy]
+          additionalProperties: false
+          properties:
+            generatedBy: { const: ai }
+        disclaimer: { type: string }
