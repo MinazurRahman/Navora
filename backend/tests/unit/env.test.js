@@ -95,6 +95,39 @@ describe('parseEnv', () => {
     expect(productionWarnings(good)).toEqual([]);
   });
 
+  it('disables AI by default, with local Ollama defaults', () => {
+    expect(parseEnv(base).ai).toEqual({
+      enabled: false,
+      provider: 'ollama',
+      timeoutMs: 30_000,
+      maxOutputTokens: 600,
+      ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2:3b' },
+    });
+  });
+
+  it('parses the AI settings', () => {
+    const { ai } = parseEnv({
+      ...base,
+      AI_ENABLED: 'true',
+      OLLAMA_BASE_URL: 'http://10.0.0.5:11434',
+      OLLAMA_MODEL: 'qwen2.5:7b',
+      AI_TIMEOUT_MS: '45000',
+      AI_MAX_OUTPUT_TOKENS: '800',
+    });
+    expect(ai).toMatchObject({ enabled: true, timeoutMs: 45_000, maxOutputTokens: 800, ollama: { baseUrl: 'http://10.0.0.5:11434', model: 'qwen2.5:7b' } });
+  });
+
+  it('rejects invalid AI settings', () => {
+    expect(() => parseEnv({ ...base, AI_ENABLED: 'yes' })).toThrow(/AI_ENABLED/);
+    expect(() => parseEnv({ ...base, AI_PROVIDER: 'openai' })).toThrow(/AI_PROVIDER/);
+    expect(() => parseEnv({ ...base, OLLAMA_BASE_URL: 'http://localhost:11434/' })).toThrow(/OLLAMA_BASE_URL/);
+    expect(() => parseEnv({ ...base, OLLAMA_BASE_URL: 'localhost:11434' })).toThrow(/OLLAMA_BASE_URL/);
+    expect(() => parseEnv({ ...base, OLLAMA_MODEL: 'bad model; rm -rf' })).toThrow(/OLLAMA_MODEL/);
+    // Above the HTTP keep-alive timeout an AI call could outlive its connection.
+    expect(() => parseEnv({ ...base, AI_TIMEOUT_MS: '120000' })).toThrow(/AI_TIMEOUT_MS/);
+    expect(() => parseEnv({ ...base, AI_MAX_OUTPUT_TOKENS: '100000' })).toThrow(/AI_MAX_OUTPUT_TOKENS/);
+  });
+
   it('returns a frozen config object', () => {
     const config = parseEnv(base);
     expect(Object.isFrozen(config)).toBe(true);

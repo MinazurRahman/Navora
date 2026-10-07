@@ -66,6 +66,19 @@ const envSchema = z.object({
   MAP_TIMEOUT_MS: intInRange(500, 30_000).default(5_000),
   // On provider failure: "true" = use flagged estimates; "false" = fail with 503.
   MAP_FALLBACK_TO_ESTIMATE: z.enum(['true', 'false']).default('true'),
+
+  // AI assistant. Off by default: the app and CI run without any AI service.
+  AI_ENABLED: z.enum(['true', 'false']).default('false'),
+  AI_PROVIDER: z.enum(['ollama']).default('ollama'),
+  // Local/self-hosted Ollama. It has no authentication: never point this at a public host.
+  OLLAMA_BASE_URL: z
+    .string()
+    .regex(/^https?:\/\/[^/\s]+$/, 'must be a base URL like http://localhost:11434 (no path or trailing slash)')
+    .default('http://localhost:11434'),
+  OLLAMA_MODEL: z.string().regex(/^[A-Za-z0-9._:/-]{1,100}$/, 'must be an Ollama model tag like llama3.2:3b').default('llama3.2:3b'),
+  // Upper bound for one AI call; keep below HTTP_KEEP_ALIVE_TIMEOUT_MS and the load balancer's timeout.
+  AI_TIMEOUT_MS: intInRange(1_000, 60_000).default(30_000),
+  AI_MAX_OUTPUT_TOKENS: intInRange(64, 2_048).default(600),
 });
 
 export function parseEnv(source) {
@@ -121,6 +134,13 @@ export function parseEnv(source) {
       apiKey: e.MAP_API_KEY,
       timeoutMs: e.MAP_TIMEOUT_MS,
       fallbackToEstimate: e.MAP_FALLBACK_TO_ESTIMATE === 'true',
+    }),
+    ai: Object.freeze({
+      enabled: e.AI_ENABLED === 'true',
+      provider: e.AI_PROVIDER,
+      timeoutMs: e.AI_TIMEOUT_MS,
+      maxOutputTokens: e.AI_MAX_OUTPUT_TOKENS,
+      ollama: Object.freeze({ baseUrl: e.OLLAMA_BASE_URL, model: e.OLLAMA_MODEL }),
     }),
   });
 }
