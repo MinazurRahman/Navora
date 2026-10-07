@@ -52,5 +52,5 @@ export function createRecommendationsModule({ placesService, categoriesService, 
     sendSuccess(res, recommendations, { meta });
   });
 
-  return { router };
+  return { router, recommendationsService: service };
 }
