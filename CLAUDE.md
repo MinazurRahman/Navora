@@ -306,8 +306,11 @@ Follow the `integrations/maps` pattern:
 The AI Trip Assistant (`POST /api/v1/ai/trip-assistant`, `GET /api/v1/ai/trip-assistant/status`)
 is the reference implementation: provider abstraction in `src/integrations/ai/` (`disabled`
 default, `ollama`), feature module in `src/modules/assistant/` (`context.js` builds the only data
-the model sees, `prompt.js` holds the system prompt, `output.js` grounds and bounds the reply,
-`assistant.service.js` orchestrates). Every AI feature must follow these rules:
+the model sees, `taskContext.js` reduces it to what each task needs, `budget.js` fits it to the
+model's window, `prompt.js` holds the system prompt, `output.js` grounds and bounds the reply,
+`assistant.service.js` orchestrates). Partial data must be explicit in the context (e.g.
+`itinerary.cost.totalIsComplete`: a sum of known fees is never presented as a total).
+Every AI feature must follow these rules:
 
 - **AI must never replace deterministic business logic without explicit approval.** Hard
   constraints, scoring, planning, feasibility, routing and validation stay rule-based.

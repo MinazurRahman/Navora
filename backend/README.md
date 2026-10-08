@@ -213,7 +213,7 @@ Requirements are never relaxed automatically. Warnings in the itinerary:
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | POST | `/api/v1/ai/trip-assistant` | Bearer | `{ itineraryId \| tripId, task, question?, placeId?, dayNumber? }` → AI answer about **your** itinerary |
-| GET | `/api/v1/ai/trip-assistant/status` | Bearer | `{ enabled, available, reason? }` |
+| GET | `/api/v1/ai/trip-assistant/status` | Bearer | `{ enabled, available, reason? }`: provider reachable and model installed (cached 15 s); does **not** run the model, so it cannot promise an answer within `AI_TIMEOUT_MS` |
 
 Tasks: `summarize`, `explain_itinerary`, `explain_place`, `explain_warnings`,
 `suggest_adjustments`, `question`. Read-only: it explains Navora's own data and changes

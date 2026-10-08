@@ -42,7 +42,9 @@ describe('buildAssistantContext: construction', () => {
   it('describes itinerary stops with visit and travel durations, routing and selection', () => {
     const { context, refs } = build();
     expect(context.itinerary.routing).toEqual({ provider: 'openrouteservice', travelTimesEstimated: false, algorithm: 'nearest-neighbor+2opt' });
-    expect(context.itinerary.totals).toEqual({ distanceKm: 12.3, travelMinutes: 55, visitMinutes: 180, plannedMinutes: 300, estimatedCost: 200, currency: 'BDT' });
+    expect(context.itinerary.totals).toEqual({ distanceKm: 12.3, travelMinutes: 55, visitMinutes: 180, plannedMinutes: 300 });
+    // Day 2's stop has an unknown fee: the known sum is not the total.
+    expect(context.itinerary.cost).toMatchObject({ currency: 'BDT', knownCostTotal: 200, stopsWithKnownCost: 2, stopsWithUnknownCost: 1, totalIsComplete: false });
     expect(context.itinerary.days[0].stops[1]).toEqual({
       place: 'P2',
       name: 'Place 2',
@@ -52,7 +54,7 @@ describe('buildAssistantContext: construction', () => {
       visitMinutes: 60,
       travelMinutesFromPrevious: 15,
       travelKmFromPrevious: 4.3,
-      estimatedCost: 100,
+      entryCost: 100,
       openingHoursVerified: true,
       selectedByUser: true,
     });
@@ -107,6 +109,52 @@ describe('buildAssistantContext: construction', () => {
   });
 });
 
+describe('buildAssistantContext: cost semantics', () => {
+  // Itinerary with the given stop costs (party totals; null = unknown fee), all on day 1.
+  function costOf(costs) {
+    const it = itinerary({ warnings: [] });
+    it.days = [{ ...it.days[0], stops: costs.map((cost, i) => stop(i + 1, i + 1, { estimatedCost: cost })) }];
+    it.totals = { ...it.totals, estimatedCost: costs.reduce((t, c) => t + (c ?? 0), 0) };
+    return build({ itinerary: it, placesById: visible(...costs.map((_, i) => place(i + 1))), recommendations: null }).context.itinerary;
+  }
+
+  it('all fees known: the known total is the trip total', () => {
+    expect(costOf([100, 40]).cost).toEqual({
+      currency: 'BDT', knownCostTotal: 140, stopsWithKnownCost: 2, stopsWithUnknownCost: 0, totalIsComplete: true,
+      explanation: 'Every entry fee is known: the total entry cost is BDT 140.',
+    });
+  });
+
+  it('all fees known and all free: a real total of 0', () => {
+    expect(costOf([0, 0]).cost).toMatchObject({ knownCostTotal: 0, totalIsComplete: true, explanation: 'Every entry fee is known and all are free: the total entry cost is 0.' });
+  });
+
+  it('every fee unknown: no known total (null, not 0), and never "free"', () => {
+    const { cost } = costOf([null, null, null]);
+    expect(cost).toEqual({
+      currency: 'BDT', knownCostTotal: null, stopsWithKnownCost: 0, stopsWithUnknownCost: 3, totalIsComplete: false,
+      explanation: 'No entry fee is known for any of the 3 stops: the entry cost of the trip is unknown (not free).',
+    });
+  });
+
+  it('mixed known and unknown fees: a partial sum, marked incomplete', () => {
+    const { cost } = costOf([100, null, 0]);
+    expect(cost).toMatchObject({ knownCostTotal: 100, stopsWithKnownCost: 2, stopsWithUnknownCost: 1, totalIsComplete: false });
+    expect(cost.explanation).toBe('Known entry fees add up to BDT 100, but 1 of 3 stops have unknown fees: the real total is higher or unknown.');
+  });
+
+  it('keeps per-stop costs distinct: unknown (null) versus known free (0)', () => {
+    const [unknown, free] = costOf([null, 0]).days[0].stops;
+    expect(unknown.entryCost).toBeNull();
+    expect(free.entryCost).toBe(0);
+  });
+
+  it('no longer passes the ambiguous itinerary total on its own', () => {
+    const { totals } = costOf([null, null]);
+    expect(totals).not.toHaveProperty('estimatedCost');
+  });
+});
+
 describe('buildAssistantContext: missing optional data', () => {
   it('keeps unknown values unknown (null / UNKNOWN / "unknown"), never filled in', () => {
     const bare = place(1, {
@@ -150,7 +198,7 @@ describe('buildAssistantContext: missing optional data', () => {
 
   it('keeps an unknown stop cost as null', () => {
     const { context } = build();
-    expect(context.itinerary.days[1].stops[0]).toMatchObject({ place: 'P3', estimatedCost: null, openingHoursVerified: false });
+    expect(context.itinerary.days[1].stops[0]).toMatchObject({ place: 'P3', entryCost: null, openingHoursVerified: false });
   });
 });
 

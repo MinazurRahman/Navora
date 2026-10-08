@@ -77,7 +77,9 @@ export function createAiService({ provider, cache, statusTtlSeconds }) {
       }
     },
 
-    // Never throws: { enabled, available, reason? } with a coarse reason only. Unavailable
+    // Never throws: { enabled, available, reason? } with a coarse reason only. "available" =
+    // provider reachable and model installed (checkHealth); the model is deliberately not run,
+    // so it says nothing about whether an answer finishes within the timeout. Unavailable
     // results are cached too: a down provider must not be probed on every poll. If Redis is
     // unreachable, getOrSet falls back to a direct check (bounded by the provider's health timeout).
     async status({ signal } = {}) {

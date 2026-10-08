@@ -63,6 +63,39 @@ function placeContext(place, { weekdays, maxDescriptionChars }) {
   };
 }
 
+// Entry costs as Navora knows them. The itinerary's estimatedCost only adds KNOWN fees, so 0
+// can mean "every fee is unknown"; the model gets counts and a plain statement instead, so a
+// partial sum can never read as the trip's total. entryCost 0 = known to be free.
+function costContext(itinerary) {
+  const stops = itinerary.days.flatMap((day) => day.stops);
+  const known = stops.filter((stop) => stop.estimatedCost !== null && stop.estimatedCost !== undefined);
+  const unknownCount = stops.length - known.length;
+  const knownTotal = known.reduce((total, stop) => total + stop.estimatedCost, 0);
+  const currency = itinerary.totals.currency;
+
+  let explanation;
+  if (stops.length === 0) explanation = 'No stops, so no entry costs.';
+  else if (unknownCount === 0) {
+    explanation = knownTotal === 0
+      ? 'Every entry fee is known and all are free: the total entry cost is 0.'
+      : `Every entry fee is known: the total entry cost is ${currency} ${knownTotal}.`;
+  } else if (known.length === 0) {
+    explanation = `No entry fee is known for any of the ${stops.length} stops: the entry cost of the trip is unknown (not free).`;
+  } else {
+    explanation = `Known entry fees add up to ${currency} ${knownTotal}, but ${unknownCount} of ${stops.length} stops have unknown fees: the real total is higher or unknown.`;
+  }
+
+  return {
+    currency,
+    // null when no fee is known: a sum of nothing is not a cost of 0.
+    knownCostTotal: known.length > 0 || stops.length === 0 ? knownTotal : null,
+    stopsWithKnownCost: known.length,
+    stopsWithUnknownCost: unknownCount,
+    totalIsComplete: unknownCount === 0,
+    explanation,
+  };
+}
+
 function itineraryContext(itinerary, refOf, selectedIds) {
   const totals = itinerary.totals;
   return {
@@ -79,9 +112,8 @@ function itineraryContext(itinerary, refOf, selectedIds) {
       travelMinutes: totals.travelMinutes,
       visitMinutes: totals.visitMinutes,
       plannedMinutes: totals.plannedMinutes,
-      estimatedCost: totals.estimatedCost,
-      currency: totals.currency,
     },
+    cost: costContext(itinerary),
     days: itinerary.days.map((day) => ({
       dayNumber: day.dayNumber,
       date: day.date,
@@ -99,7 +131,7 @@ function itineraryContext(itinerary, refOf, selectedIds) {
         visitMinutes: stop.visitMinutes,
         travelMinutesFromPrevious: stop.travelFromPrevious.minutes,
         travelKmFromPrevious: km(stop.travelFromPrevious.distanceMeters),
-        estimatedCost: stop.estimatedCost, // null = entry fee unknown
+        entryCost: stop.estimatedCost, // party total; null = unknown (never free), 0 = known free
         openingHoursVerified: stop.openingHoursVerified,
         selectedByUser: selectedIds.has(stop.place.id),
       })),
@@ -113,11 +145,11 @@ function itineraryContext(itinerary, refOf, selectedIds) {
   };
 }
 
+export const ENGINE_NOTE = "Scores and reasons come from Navora's rule-based recommendation engine using current place data.";
+
 function notesFor(itinerary, recommendations) {
   const notes = ['null or UNKNOWN means the information is not known; it never means yes, free or open.'];
-  if (recommendations) {
-    notes.push("Scores and reasons come from Navora's rule-based recommendation engine using current place data.");
-  }
+  if (recommendations) notes.push(ENGINE_NOTE);
   if (itinerary) {
     notes.push('The itinerary was planned when it was generated; place data may have changed since.');
     if (itinerary.routing.travelTimesEstimated) {

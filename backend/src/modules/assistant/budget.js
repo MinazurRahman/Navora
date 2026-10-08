@@ -2,6 +2,7 @@
 // longer prompt silently truncates it, so the model would answer without the data it must be
 // grounded in; instead, detail is removed here in a known order, the model is told, and a
 // request that still does not fit is refused.
+import { shapeContextForTask } from './taskContext.js';
 
 export const REDUCED_NOTE = 'Some details were left out to keep this request small; if something you need is missing, say it is unavailable.';
 
@@ -10,13 +11,6 @@ export function promptBudgetChars({ contextWindowTokens, maxOutputTokens }, conf
   return (contextWindowTokens - maxOutputTokens - config.promptReserveTokens) * config.charsPerToken;
 }
 
-// Always applied. Descriptions are community-written free text (prompt-injection risk): they
-// are only included for the one place the traveller asked about.
-function shapeForTask(context, { placeRef }) {
-  const shaped = structuredClone(context);
-  for (const [ref, place] of Object.entries(shaped.places)) if (ref !== placeRef) delete place.description;
-  return shaped;
-}
 
 // Places still referenced after a reduction: stops, warnings, recommendation results, focus.
 function referencedRefs(ctx, placeRef) {
@@ -83,11 +77,12 @@ const REDUCTIONS = [
 ];
 
 /**
+ * @param task     assistant task: the context is first reduced to what that task needs (taskContext.js)
  * @param measure  (context) → prompt length in characters
  * @returns { context, reduced } or null when even the smallest form does not fit
  */
-export function fitContext(context, { placeRef, dayNumber, budgetChars, measure }) {
-  const ctx = shapeForTask(context, { placeRef });
+export function fitContext(context, { task, placeRef, dayNumber, budgetChars, measure }) {
+  const ctx = shapeContextForTask(context, { task, placeRef });
   if (measure(ctx) <= budgetChars) return { context: ctx, reduced: false };
 
   ctx.notes = [...ctx.notes, REDUCED_NOTE];

@@ -123,7 +123,7 @@ describe('fitContext: prompt budget', () => {
   });
 
   it('keeps a recommended (not yet scheduled) focus place and its result', () => {
-    const fitted = fitContext(small(), { placeRef: 'P4', budgetChars: 4_500, measure });
+    const fitted = fitContext(small(), { placeRef: 'P4', budgetChars: 4_800, measure });
     expect(fitted.context.places.P4.name).toBe('Place 5');
     expect(fitted.context.recommendations.results.map((r) => r.place)).toContain('P4');
   });

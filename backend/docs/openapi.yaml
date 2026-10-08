@@ -1381,10 +1381,13 @@ paths:
       tags: [AI]
       summary: 'Is the AI Trip Assistant available?'
       description: |
-        Lets the app show or hide the assistant. Checks that the AI service is reachable and ready;
-        never exposes provider, model, host or error details. Cheap to poll: the result is shared by
-        all users and cached for up to 15 seconds, so a change can take that long to show.
-        Only the general rate limit applies.
+        Lets the app show or hide the assistant. A cheap check that never runs the model:
+        `available: true` means the AI provider is reachable and the configured model is installed.
+        It does **not** mean the model is loaded or that an answer will finish in time: on slow
+        hardware `POST /ai/trip-assistant` can still answer 503 `AI_UNAVAILABLE` with reason
+        `TIMEOUT` (for example while the model is being loaded). Never exposes provider, model,
+        host or error details. Cheap to poll: the result is shared by all users and cached for up
+        to 15 seconds, so a change can take that long to show. Only the general rate limit applies.
       security: [{ bearerAuth: [] }]
       responses:
         '200':
@@ -1403,7 +1406,7 @@ paths:
                     additionalProperties: false
                     properties:
                       enabled: { type: boolean, description: Switched on by configuration. }
-                      available: { type: boolean, description: Enabled and currently able to answer. }
+                      available: { type: boolean, description: "Enabled, AI provider reachable and model installed. Not a guarantee that an answer finishes within the time limit (the model is not run to check)." }
                       reason: { type: string, enum: [DISABLED, TIMEOUT, UNAVAILABLE], description: Why it is not available; present only when `available` is false. }
               example: { success: true, data: { enabled: true, available: true } }
         '401': { $ref: '#/components/responses/Unauthorized' }

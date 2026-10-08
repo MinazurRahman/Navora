@@ -81,9 +81,11 @@ export function createAssistantService({ contextLoader, ai, timeoutMs, promptBud
       throw invalid('dayNumber', `This itinerary has no day ${request.dayNumber}`);
     }
 
-    // 4. Fit the model's context window (and keep community text out unless asked about).
+    // 4. Only what this task needs, within the model's context window (community text only for
+    //    the place asked about).
     const promptFor = (ctx) => buildPrompt(ctx, { ...request, placeRef });
     const fitted = fitContext(context, {
+      task: request.task,
       placeRef,
       dayNumber: request.dayNumber,
       budgetChars: promptBudgetChars,
