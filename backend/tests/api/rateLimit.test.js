@@ -157,7 +157,7 @@ describe('policy configuration', () => {
 
   it('fails closed exactly where agreed: credentials, the paid routing API and the AI assistant', () => {
     const failClosed = Object.entries(RATE_LIMIT_POLICIES).filter(([, p]) => !p.failOpen).map(([name]) => name);
-    expect(failClosed.sort()).toEqual(['assistant', 'assistantDaily', 'authAccount', 'authIp', 'routing']);
+    expect(failClosed.sort()).toEqual(['assistant', 'assistantDaily', 'assistantGlobal', 'authAccount', 'authIp', 'routing']);
   });
 });
 

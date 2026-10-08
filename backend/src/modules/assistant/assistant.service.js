@@ -1,9 +1,10 @@
-import { ValidationError } from '../../shared/errors/AppError.js';
+import { UnprocessableError, ValidationError } from '../../shared/errors/AppError.js';
 import { getLogger } from '../../shared/logger.js';
 import { aiUnavailableError } from '../../integrations/ai/index.js';
 import { askAssistantSchema } from './assistant.schemas.js';
 import { buildPrompt, OUTPUT_SCHEMA } from './prompt.js';
 import { parseAssistantOutput } from './output.js';
+import { fitContext } from './budget.js';
 
 export const DISCLAIMER =
   "AI-generated explanation of Navora's plan. The itinerary, times, prices and requirements shown by Navora are authoritative; suggestions are not checked until you apply them.";
@@ -14,11 +15,18 @@ const invalid = (path, message) => new ValidationError('Invalid request data', [
  * AI Trip Assistant. Provider-independent: talks to `ai` (integrations/ai aiService), never to
  * a specific provider. Read-only: it writes nothing and changes no trip, itinerary or place.
  *
- * Failures: 400 invalid request, 401/404 from the owning services, and 503 AI_UNAVAILABLE
- * (reason DISABLED | TIMEOUT | UNAVAILABLE) for anything the AI could not deliver, including
- * empty or malformed replies. Never a 200 for an unsuccessful AI request.
+ * Failures: 400 invalid request, 401/404 from the owning services, 422 when the context cannot
+ * fit the model's window, and 503 AI_UNAVAILABLE (reason DISABLED | TIMEOUT | UNAVAILABLE) for
+ * anything the AI could not deliver, including empty or malformed replies and a busy instance.
+ * Never a 200 for an unsuccessful AI request.
+ *
+ * promptBudgetChars: from the model's context window (budget.js promptBudgetChars).
+ * maxConcurrent: AI calls this instance runs at once. Instance-local on purpose: it protects
+ * the AI host's capacity; the cross-instance limit is the assistantGlobal rate limit.
  */
-export function createAssistantService({ contextLoader, ai, timeoutMs, config }) {
+export function createAssistantService({ contextLoader, ai, timeoutMs, promptBudgetChars, maxConcurrent, config }) {
+  let inFlight = 0;
+
   // Backstop: the provider enforces timeoutMs itself; this stops waiting even if a provider
   // ignores cancellation, and cancels it.
   async function generateWithin(request, callerSignal) {
@@ -51,7 +59,19 @@ export function createAssistantService({ contextLoader, ai, timeoutMs, config })
     const request = parsed.data;
     // No point loading data for an assistant that is switched off.
     if (!ai.enabled) throw aiUnavailableError('DISABLED');
+    if (inFlight >= maxConcurrent) {
+      getLogger().warn({ task: request.task, maxConcurrent }, 'Assistant busy; request refused');
+      throw aiUnavailableError('UNAVAILABLE');
+    }
+    inFlight += 1;
+    try {
+      return await answerWithinCapacity(loadContext, request, signal);
+    } finally {
+      inFlight -= 1;
+    }
+  }
 
+  async function answerWithinCapacity(loadContext, request, signal) {
     // 2–3. Authorised data (404 for other users' trips/itineraries) → bounded context.
     const { context, refs, itineraryId } = await loadContext();
 
@@ -61,13 +81,31 @@ export function createAssistantService({ contextLoader, ai, timeoutMs, config })
       throw invalid('dayNumber', `This itinerary has no day ${request.dayNumber}`);
     }
 
-    // 4–7. Prompt → provider (timeout and failures become 503 AI_UNAVAILABLE).
-    const prompt = buildPrompt(context, { ...request, placeRef });
+    // 4. Fit the model's context window (and keep community text out unless asked about).
+    const promptFor = (ctx) => buildPrompt(ctx, { ...request, placeRef });
+    const fitted = fitContext(context, {
+      placeRef,
+      dayNumber: request.dayNumber,
+      budgetChars: promptBudgetChars,
+      measure: (ctx) => {
+        const { system, messages } = promptFor(ctx);
+        return system.length + messages.reduce((total, m) => total + m.content.length, 0);
+      },
+    });
+    if (!fitted) {
+      throw new UnprocessableError(
+        'ASSISTANT_CONTEXT_TOO_LARGE',
+        'This itinerary is too large to discuss at once; ask about one day (dayNumber) or one place (placeId)',
+      );
+    }
+
+    // 5–7. Prompt → provider (timeout and failures become 503 AI_UNAVAILABLE).
+    const prompt = promptFor(fitted.context);
     const result = await generateWithin({ ...prompt, outputSchema: OUTPUT_SCHEMA, temperature: config.temperature }, signal);
 
-    // 8. Untrusted reply → bounded, grounded response.
+    // 8. Untrusted reply → bounded, grounded response (checked against what the model saw).
     const output = parseAssistantOutput(result.output, {
-      context,
+      context: fitted.context,
       refs,
       allowSuggestions: request.task === 'suggest_adjustments' && context.itinerary.isCurrent,
       config,
@@ -77,7 +115,7 @@ export function createAssistantService({ contextLoader, ai, timeoutMs, config })
       getLogger().warn(log, 'AI reply unusable (empty or malformed)');
       throw aiUnavailableError('UNAVAILABLE');
     }
-    getLogger().info({ ...log, truncated: output.truncated, dropped: output.dropped }, 'Assistant answered');
+    getLogger().info({ ...log, contextReduced: fitted.reduced, truncated: output.truncated, dropped: output.dropped }, 'Assistant answered');
 
     // Provider and model stay internal (logged above), never part of the API response.
     return {

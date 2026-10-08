@@ -4,13 +4,41 @@ import { AI_ERROR, AiProviderError } from '../errors.js';
 // knows its URLs and request/response shapes. Local and free: no API key.
 
 // Non-streaming responses are bounded by num_predict; anything far larger is not ours to parse.
-const MAX_RESPONSE_CHARS = 1_000_000;
+// Enforced while reading, so an oversized body is never held in memory.
+const MAX_RESPONSE_BYTES = 1_000_000;
 // Health checks must answer quickly even when AI_TIMEOUT_MS is long.
 const HEALTH_TIMEOUT_MS = 3_000;
 // Provider error text is logged, never sent to clients; keep it short.
 const MAX_DETAIL_CHARS = 200;
 
 const ROLES = new Set(['user', 'assistant']);
+
+const tooLarge = (status) => new AiProviderError(AI_ERROR.INVALID_RESPONSE, 'Response too large', { status });
+
+// Reads the body up to MAX_RESPONSE_BYTES. Test doubles without a stream use text().
+async function readBody(response) {
+  const declared = Number(response.headers?.get?.('content-length'));
+  if (declared > MAX_RESPONSE_BYTES) throw tooLarge(response.status);
+  if (!response.body?.getReader) {
+    const text = await response.text();
+    if (text.length > MAX_RESPONSE_BYTES) throw tooLarge(response.status);
+    return text;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_RESPONSE_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw tooLarge(response.status);
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 function assertRequest({ system, messages }) {
   const valid =
@@ -22,10 +50,13 @@ function assertRequest({ system, messages }) {
   if (!valid) throw new Error('AI request needs a system prompt and [{ role: "user" | "assistant", content }] messages');
 }
 
-export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputTokens, fetchImpl = fetch }) {
+// contextWindowTokens → num_ctx: without it Ollama uses its small default window and silently
+// truncates longer prompts.
+export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputTokens, contextWindowTokens, fetchImpl = fetch }) {
   async function request(path, { method = 'GET', body, signal, timeout = timeoutMs } = {}) {
     const combined = AbortSignal.any(signal ? [AbortSignal.timeout(timeout), signal] : [AbortSignal.timeout(timeout)]);
     const failure = (err) => {
+      if (err instanceof AiProviderError) return err;
       if (signal?.aborted) return new AiProviderError(AI_ERROR.ABORTED, 'Request cancelled by the caller');
       if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
         return new AiProviderError(AI_ERROR.TIMEOUT, `No complete response within ${timeout}ms`);
@@ -43,14 +74,11 @@ export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputToken
         signal: combined,
       });
       // The timeout also covers reading the body: a model can stall mid-response.
-      text = await response.text();
+      text = await readBody(response);
     } catch (err) {
       throw failure(err);
     }
 
-    if (text.length > MAX_RESPONSE_CHARS) {
-      throw new AiProviderError(AI_ERROR.INVALID_RESPONSE, 'Response too large', { status: response.status });
-    }
     let payload = null;
     try {
       payload = JSON.parse(text);
@@ -88,7 +116,11 @@ export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputToken
           messages: [{ role: 'system', content: system }, ...messages],
           // JSON schema → Ollama structured output.
           ...(outputSchema && { format: outputSchema }),
-          options: { temperature, num_predict: Math.min(requested ?? maxOutputTokens, maxOutputTokens) },
+          options: {
+            temperature,
+            num_predict: Math.min(requested ?? maxOutputTokens, maxOutputTokens),
+            ...(contextWindowTokens && { num_ctx: contextWindowTokens }),
+          },
         },
       });
 

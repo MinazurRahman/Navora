@@ -4,6 +4,34 @@
 import { SUGGESTION_TYPES } from './prompt.js';
 
 const REF = /\bP\d+\b/g;
+
+// Navora's data has no links, email addresses or phone numbers, so any in a reply come from
+// the model or from injected community text (e.g. a place description pointing to a phishing
+// site). Best-effort heuristic, not a guarantee: it catches URLs, www./common-TLD domains,
+// emails, "+"-prefixed numbers and runs of 10+ digits, but misses e.g. local numbers with
+// separators ("01712-345678") or obfuscated links ("evil[.]com"). Patterns avoid Navora-style
+// values (times, dates, prices, distances, ratings). Order matters: emails before bare domains.
+const CONTACT_PATTERNS = [
+  [/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[contact removed]'],
+  // Links stop before trailing punctuation, so the sentence around them stays intact.
+  [/\b(?:https?:\/\/|www\.)[^\s<>"'`)\]]*[^\s<>"'`)\].,;:!?]/gi, '[link removed]'],
+  [/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|info|biz|io|co|xyz|top|bd|me|app|link|online|site|shop|ru|cn)\b(?:\/[^\s<>"'`)\]]*[^\s<>"'`)\].,;:!?])?/gi, '[link removed]'],
+  [/(?<![\w+])\+\d[\d -]{7,}\d\b/g, '[contact removed]'],
+  [/\b\d{10,}\b/g, '[contact removed]'],
+];
+
+function redactContacts(text) {
+  let count = 0;
+  const redacted = CONTACT_PATTERNS.reduce(
+    (current, [pattern, replacement]) =>
+      current.replace(pattern, () => {
+        count += 1;
+        return replacement;
+      }),
+    text,
+  );
+  return { text: redacted, count };
+}
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 // Cuts at a word boundary when one is close, and marks the cut.
@@ -70,23 +98,29 @@ export function parseAssistantOutput(raw, { context, refs, allowSuggestions, con
   // Names instead of reference codes in the text the traveller reads.
   const named = raw.answer.replace(REF, (ref) => cat.names.get(ref) ?? ref).trim();
   if (named === '') return null;
-  const answer = truncate(named, config.maxAnswerChars);
+  const cleaned = redactContacts(named);
+  const answer = truncate(cleaned.text, config.maxAnswerChars);
+  let contactsRemoved = cleaned.count;
 
   const rawSuggestions = Array.isArray(raw.suggestions) ? raw.suggestions : [];
   const valid = allowSuggestions ? rawSuggestions.filter((s) => validSuggestion(s, cat)).slice(0, config.maxSuggestions) : [];
-  const suggestions = valid.map((s) => ({
-    type: s.type,
-    ...(s.place !== undefined && { placeId: refs[s.place], placeName: cat.names.get(s.place) }),
-    ...(s.dayNumber !== undefined && { dayNumber: s.dayNumber }),
-    ...(s.type === 'MOVE_STOP' && { targetDayNumber: s.targetDayNumber }),
-    rationale: truncate(s.rationale.replace(REF, (ref) => cat.names.get(ref) ?? ref).trim(), config.maxRationaleChars).text,
-  }));
+  const suggestions = valid.map((s) => {
+    const rationale = redactContacts(s.rationale.replace(REF, (ref) => cat.names.get(ref) ?? ref).trim());
+    contactsRemoved += rationale.count;
+    return {
+      type: s.type,
+      ...(s.place !== undefined && { placeId: refs[s.place], placeName: cat.names.get(s.place) }),
+      ...(s.dayNumber !== undefined && { dayNumber: s.dayNumber }),
+      ...(s.type === 'MOVE_STOP' && { targetDayNumber: s.targetDayNumber }),
+      rationale: truncate(rationale.text, config.maxRationaleChars).text,
+    };
+  });
 
   return {
     answer: answer.text,
     truncated: answer.truncated,
     places: placeRefs.map((ref) => ({ id: refs[ref], name: cat.names.get(ref) })),
     suggestions,
-    dropped: { unknownPlaces: unknownRefs, suggestions: rawSuggestions.length - suggestions.length },
+    dropped: { unknownPlaces: unknownRefs, suggestions: rawSuggestions.length - suggestions.length, contacts: contactsRemoved },
   };
 }

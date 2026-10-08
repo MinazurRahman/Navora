@@ -97,7 +97,7 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache,
     placesService: placesModule.placesService,
     recommendationsService: recommendationsModule.recommendationsService,
     aiService,
-    aiTimeoutMs: config.ai.timeoutMs,
+    aiConfig: config.ai,
     authenticate,
     rateLimit,
   });

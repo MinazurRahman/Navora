@@ -164,7 +164,8 @@ Response envelopes (`shared/http/response.js`, `middleware/error.middleware.js`)
 - All policies live in `config/rateLimits.js`: sliding window, `failOpen` per policy.
   `general` 600/15m (open) · `authIp` 100/15m (closed) · `authAccount` 10/15m per IP+email
   (closed) · `submissions` 20/day (open) · `reviews` 30/day (open) · `recommendations` 20/min
-  (open) · `routing` 10/min (closed) · `assistant` 10/min (closed) · `assistantDaily` 100/day (closed).
+  (open) · `routing` 10/min (closed) · `assistant` 10/min (closed) · `assistantDaily` 100/day (closed) ·
+  `assistantGlobal` 60/min, one bucket for all users (closed).
 - Use `rateLimit('<policy>', identify?)`; default identity is the user (valid token) else IP.
 - **Costly or paid-API endpoints must use a fail-closed policy** (503 `RATE_LIMIT_UNAVAILABLE`).
 - Our own 1 s timeout is used; Upstash's built-in timeout is disabled on purpose (it fails open).
@@ -323,11 +324,16 @@ the model sees, `prompt.js` holds the system prompt, `output.js` grounds and bou
   summarise their output (grounded in the structured `reasons`, `warnings`, `breakdown`), not
   re-rank, re-order, drop or add results.
 - **Secrets are never hardcoded**: keys/URLs/model names via `config/env.js` + `.env.example`.
-- **AI requests must be validated**: zod-validated endpoint input; bounded prompt size; only
-  approved, public data in prompts unless explicitly approved; community text treated as
-  untrusted (prompt-injection risk).
-- **AI responses must be bounded**: request timeout, max output tokens/length, schema-validated
-  structured output where applicable.
+- **AI requests must be validated**: zod-validated endpoint input; prompt size within the
+  model's context window (`AI_CONTEXT_WINDOW_TOKENS`, sent as `num_ctx`; trim like
+  `assistant/budget.js`, refuse when it cannot fit); only approved, public data in prompts unless
+  explicitly approved; community text treated as untrusted (prompt-injection risk) and included
+  only where the task needs it.
+- **AI responses must be bounded and sanitised**: request timeout, max output tokens/length,
+  response body size limit, schema-validated structured output where applicable; links, emails
+  and phone numbers removed from AI text on a best-effort, heuristic basis (Navora data has none).
+- **AI load must be bounded**: per-user and global fail-closed rate limits plus a per-instance
+  concurrency cap (`AI_MAX_CONCURRENT`).
 - **AI failures must degrade gracefully**: core features keep working without AI; failures are
   logged (without prompts containing personal data or locations) and surface as a flagged
   fallback or a 503 with a stable error code, never a 500.

@@ -186,3 +186,55 @@ describe('Ollama provider: checkHealth', () => {
     expect((await failure(ollama(hanging, { timeoutMs: 30 }).checkHealth())).kind).toBe(AI_ERROR.TIMEOUT);
   });
 });
+
+describe('Ollama provider: context window and response size', () => {
+  // A streamed body like real fetch: chunks of the given sizes, then done.
+  function streamed(chunkSizes, { contentLength } = {}) {
+    let cancelled = false;
+    const chunks = chunkSizes.map((size) => new Uint8Array(size).fill(0x20));
+    return {
+      response: {
+        ok: true,
+        status: 200,
+        headers: { get: (name) => (name === 'content-length' && contentLength !== undefined ? String(contentLength) : null) },
+        body: {
+          getReader: () => ({
+            read: async () => (chunks.length > 0 ? { done: false, value: chunks.shift() } : { done: true, value: undefined }),
+            cancel: async () => { cancelled = true; },
+          }),
+        },
+        text: async () => { throw new Error('text() must not be used when a stream is available'); },
+      },
+      wasCancelled: () => cancelled,
+    };
+  }
+
+  it('sends the configured context window as num_ctx, so Ollama does not silently truncate prompts', async () => {
+    const fetchImpl = vi.fn(async () => chat('ok'));
+    await ollama(fetchImpl, { contextWindowTokens: 8_192 }).generate(request);
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body).options).toEqual({ temperature: 0.2, num_predict: 600, num_ctx: 8_192 });
+  });
+
+  it('reads a normal streamed body', async () => {
+    const body = new TextEncoder().encode(JSON.stringify({ message: { content: 'Streamed answer' }, done: true }));
+    const response = { ok: true, status: 200, headers: { get: () => null }, body: { getReader: () => {
+      let sent = false;
+      return { read: async () => (sent ? { done: true } : ((sent = true), { done: false, value: body })), cancel: async () => {} };
+    } } };
+    expect((await ollama(vi.fn(async () => response)).generate(request)).output).toBe('Streamed answer');
+  });
+
+  it('stops reading as soon as the body exceeds 1 MB, without buffering the rest', async () => {
+    const { response, wasCancelled } = streamed([600_000, 600_000, 600_000]);
+    const err = await failure(ollama(vi.fn(async () => response)).generate(request));
+    expect(err).toMatchObject({ kind: AI_ERROR.INVALID_RESPONSE, message: 'Response too large' });
+    expect(wasCancelled()).toBe(true);
+  });
+
+  it('refuses a declared Content-Length above 1 MB before reading', async () => {
+    const { response } = streamed([10], { contentLength: 5_000_000 });
+    const read = vi.spyOn(response.body, 'getReader');
+    expect((await failure(ollama(vi.fn(async () => response)).generate(request))).kind).toBe(AI_ERROR.INVALID_RESPONSE);
+    expect(read).not.toHaveBeenCalled();
+  });
+});

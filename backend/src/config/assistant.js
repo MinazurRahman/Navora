@@ -14,6 +14,11 @@ export const ASSISTANT_CONFIG = Object.freeze({
   maxSuggestions: 5,
   maxRationaleChars: 300,
 
+  // Prompt budget = (context window − answer tokens − reserve) × charsPerToken. Conservative:
+  // JSON with numbers and short words averages above 3 characters per token.
+  charsPerToken: 3,
+  promptReserveTokens: 256,
+
   // Low: answers should restate Navora's data, not be creative.
   temperature: 0.2,
   // The provider enforces AI_TIMEOUT_MS itself; the service stops waiting this much later

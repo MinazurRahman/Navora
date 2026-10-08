@@ -66,6 +66,20 @@ describe('POST /api/v1/ai/trip-assistant: rate limiting', () => {
     expect(rateLimiter.calls).toContainEqual({ policyName: 'assistant', identifier: `user:${USER_ID}` });
   });
 
+  it('429 once the limit shared by all users is reached, counted in one bucket', async () => {
+    const rateLimiter = createInMemoryRateLimiter({ assistantGlobal: 0 });
+    const res = await ask(buildTestApp({ rateLimiter }), valid);
+    expect(res.status).toBe(429);
+    expect(res.body.error.code).toBe('RATE_LIMITED');
+    expect(rateLimiter.calls).toContainEqual({ policyName: 'assistantGlobal', identifier: 'all' });
+  });
+
+  it('checks the per-user limits before the shared one, so one user cannot use up everyone else\'s budget', async () => {
+    const rateLimiter = createInMemoryRateLimiter({ assistant: 0 });
+    await ask(buildTestApp({ rateLimiter }), valid);
+    expect(rateLimiter.calls.map((c) => c.policyName)).not.toContain('assistantGlobal');
+  });
+
   it('429 once the daily limit is reached', async () => {
     const rateLimiter = createInMemoryRateLimiter({ assistantDaily: 0 });
     const res = await ask(buildTestApp({ rateLimiter }), valid);

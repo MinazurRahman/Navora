@@ -17,6 +17,7 @@ export function createAiServiceFromConfig(config, { cache }) {
       model: ai.ollama.model,
       timeoutMs: ai.timeoutMs,
       maxOutputTokens: ai.maxOutputTokens,
+      contextWindowTokens: ai.contextWindowTokens,
     });
   }
   return createAiService({ provider, cache, statusTtlSeconds: CACHE_TTL.aiStatus });

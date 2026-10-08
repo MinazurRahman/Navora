@@ -222,14 +222,24 @@ advice the user can apply with `PATCH /itineraries/:id` (checked there like any 
 
 - Off by default (`AI_ENABLED=false`). Runs on a local/self-hosted
   [Ollama](https://ollama.com) — free, no API key: `ollama pull llama3.2:3b`, then set
-  `AI_ENABLED=true` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `AI_TIMEOUT_MS`, `AI_MAX_OUTPUT_TOKENS`
-  in `.env.example`). Ollama has no authentication: keep it on localhost or a private network.
+  `AI_ENABLED=true` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `AI_TIMEOUT_MS`, `AI_MAX_OUTPUT_TOKENS`,
+  `AI_CONTEXT_WINDOW_TOKENS`, `AI_MAX_CONCURRENT` in `.env.example`). Ollama has no
+  authentication: keep it on localhost or a private network, ideally not on the API host
+  (production logs a warning for plain `http` to a non-private host).
 - The model only sees a small context built through the owning services (other users'
-  trips/itineraries are 404): no IDs, start location, address or user data. Place references
-  in the reply are checked against that context; answers are capped at 2000 characters.
-- AI disabled, unreachable, too slow or unusable reply → 503 `AI_UNAVAILABLE`
+  trips/itineraries are 404): no IDs, start location, address or user data. It is trimmed to
+  fit `AI_CONTEXT_WINDOW_TOKENS` (sent to Ollama as `num_ctx`); place descriptions are only
+  included for the place asked about. Place references in the reply are checked against that
+  context; links, emails and phone numbers are removed on a best-effort basis (a heuristic, see
+  `output.js`); answers are capped at 2000 characters.
+- **Moderators**: approved place names and descriptions are shown to the AI (as data); reject
+  submissions that contain instructions, links or contact details.
+- Load: per-user limits, a shared `assistantGlobal` limit, and at most `AI_MAX_CONCURRENT` AI
+  calls per instance (more → 503).
+- AI disabled, busy, unreachable, too slow or unusable reply → 503 `AI_UNAVAILABLE`
   (`details.reason`: `DISABLED`, `TIMEOUT`, `UNAVAILABLE`); trip without an itinerary → 422
-  `ITINERARY_NOT_GENERATED`. Nothing else in Navora depends on it.
+  `ITINERARY_NOT_GENERATED`; itinerary too large even when trimmed → 422
+  `ASSISTANT_CONTEXT_TOO_LARGE` (ask about one day or place). Nothing else in Navora depends on it.
 - Code: `src/integrations/ai` (provider abstraction: `disabled`, `ollama`),
   `src/modules/assistant` (context, prompt, output checks, service, routes). Tests use a fake
   provider; Ollama is never needed to run them.
@@ -260,6 +270,7 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `routing` | itinerary generate/edit/regenerate, `POST /routing/optimize`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 | `assistant` | `POST /ai/trip-assistant`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 | `assistantDaily` | `POST /ai/trip-assistant`, per user | 100 / day | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistantGlobal` | `POST /ai/trip-assistant`, all users together | 60 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).

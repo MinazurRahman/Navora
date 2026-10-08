@@ -1261,9 +1261,15 @@ paths:
         Requires sign-in. Only your own trips and itineraries can be asked about: anyone else's
         answer 404 (never 403), exactly like `GET /trips/{id}` and `GET /itineraries/{id}`.
 
-        Rate limited per user (`assistant` 10/min and `assistantDaily` 100/day, on top of the
-        general limit); both refuse with 503 `RATE_LIMIT_UNAVAILABLE` when rate limiting is
-        unavailable. When the AI is disabled, unreachable, too slow or returns an unusable reply:
+        Rate limited per user (`assistant` 10/min and `assistantDaily` 100/day) and across all
+        users (`assistantGlobal` 60/min), on top of the general limit; all refuse with 503
+        `RATE_LIMIT_UNAVAILABLE` when rate limiting is unavailable.
+
+        Large itineraries are summarised to fit the model: some detail may be left out (the
+        assistant then says the information is unavailable). If even that does not fit, the
+        request is refused with 422 `ASSISTANT_CONTEXT_TOO_LARGE`: ask about one day
+        (`dayNumber`) or one place (`placeId`). Links, email addresses and phone numbers are
+        removed from answers on a best-effort basis (not guaranteed). When the AI is disabled, unreachable, too slow or returns an unusable reply:
         503 `AI_UNAVAILABLE` with `details.reason` `DISABLED`, `TIMEOUT` or `UNAVAILABLE`
         (never a 200 for a failed answer). `GET /ai/trip-assistant/status` tells whether the
         assistant is available.
@@ -1346,7 +1352,10 @@ paths:
                 success: false
                 error: { code: TRIP_NOT_FOUND, message: Trip not found, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 }
         '422':
-          description: '`ITINERARY_NOT_GENERATED` — the trip has no itinerary yet; generate one first.'
+          description: |
+            - `ITINERARY_NOT_GENERATED` — the trip has no itinerary yet; generate one first.
+            - `ASSISTANT_CONTEXT_TOO_LARGE` — the itinerary is too large to discuss at once; ask
+              about one day (`dayNumber`) or one place (`placeId`).
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1357,8 +1366,8 @@ paths:
         '503':
           description: |
             Retry later.
-            - `AI_UNAVAILABLE` — the assistant is disabled, unreachable, too slow or gave an unusable
-              reply. `details.reason`: `DISABLED`, `TIMEOUT` or `UNAVAILABLE`. No provider, model,
+            - `AI_UNAVAILABLE` — the assistant is disabled, busy, unreachable, too slow or gave an
+              unusable reply. `details.reason`: `DISABLED`, `TIMEOUT` or `UNAVAILABLE`. No provider, model,
               host or error details are ever included.
             - `RATE_LIMIT_UNAVAILABLE` — rate limiting is unavailable; this endpoint refuses to run without it.
           content:
