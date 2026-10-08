@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { validate } from '../../middleware/validate.middleware.js';
+import { privateNoStoreMiddleware } from '../../middleware/security.middleware.js';
 import { sendCreated, sendSuccess } from '../../shared/http/response.js';
 import { idParamSchema, paginationQuerySchema } from '../../shared/validation/common.schemas.js';
 import { PLANNING_CONFIG } from '../../config/planning.js';
@@ -44,7 +45,7 @@ export function createItinerariesModule({ itinerariesRepository, tripsService, p
     planningConfig: PLANNING_CONFIG,
   });
   const router = Router();
-  router.use(authenticate); // itineraries are private
+  router.use(privateNoStoreMiddleware(), authenticate); // itineraries are private
 
   // Generating again for the same trip creates a new version and makes it current.
   router.post('/generate', rateLimit('routing'), validate({ body: generateSchema }), async (req, res) => {

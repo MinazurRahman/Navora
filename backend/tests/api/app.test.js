@@ -15,6 +15,24 @@ describe('GET /health', () => {
   });
 });
 
+describe('Cache-Control on private routers', () => {
+  it.each(['/api/v1/trips', '/api/v1/itineraries', `/api/v1/trips/${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}`, '/api/v1/itineraries/no-such/route'])(
+    'GET %s is never stored, even when unauthenticated',
+    async (path) => {
+      const res = await request(buildTestApp()).get(path);
+      expect(res.status).toBe(401);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    },
+  );
+
+  it('leaves public and unrelated responses alone', async () => {
+    const app = buildTestApp();
+    for (const path of ['/health', '/ready', '/api/v1', '/api/v1/no-such-route']) {
+      expect((await request(app).get(path)).headers).not.toHaveProperty('cache-control');
+    }
+  });
+});
+
 describe('GET /ready', () => {
   it('returns 200 when the database responds', async () => {
     const res = await request(buildTestApp()).get('/ready');

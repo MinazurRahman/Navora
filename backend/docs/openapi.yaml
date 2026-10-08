@@ -36,8 +36,8 @@ tags:
   - { name: Moderation }
   - { name: Reviews }
   - { name: Recommendations }
-  - { name: Trips }
-  - { name: Itineraries }
+  - { name: Trips, description: 'Your own saved trips. Every response is sent with `Cache-Control: private, no-store`.' }
+  - { name: Itineraries, description: 'Your own itineraries. Every response is sent with `Cache-Control: private, no-store`.' }
   - { name: Routing }
   - { name: AI, description: 'AI Trip Assistant: read-only explanations of your own itineraries, generated from Navora data.' }
 

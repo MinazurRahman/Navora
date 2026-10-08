@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate.middleware.js';
+import { privateNoStoreMiddleware } from '../../middleware/security.middleware.js';
 import { sendCreated, sendSuccess } from '../../shared/http/response.js';
 import { idParamSchema, paginationQuerySchema } from '../../shared/validation/common.schemas.js';
 import { createTripSchema, updateTripSchema } from './trips.schemas.js';
@@ -10,7 +11,7 @@ export { createTripsRepository } from './trips.repository.js';
 export function createTripsModule({ tripsRepository, categoriesService, placesService, transaction, authenticate }) {
   const tripsService = createTripsService({ tripsRepository, categoriesService, placesService, transaction });
   const router = Router();
-  router.use(authenticate); // trips are always private
+  router.use(privateNoStoreMiddleware(), authenticate); // trips are always private
 
   router.post('/', validate({ body: createTripSchema }), async (req, res) => {
     sendCreated(res, await tripsService.create(req.validated.body, req.user));
