@@ -8,21 +8,28 @@ import { PLANNING_CONFIG } from '../../src/config/planning.js';
 const MONDAY = '2026-10-05';
 const START = { latitude: 23.75, longitude: 90.39 };
 const estimate = createEstimateProvider(PLANNING_CONFIG);
+// Routing-provider time one request may spend (MAP_REQUEST_BUDGET_MS); small so tests stay fast.
+const ROUTING_BUDGET_MS = 1_000;
 
 // A stand-in road provider: travel takes `factor` × the estimate; behaviour is switchable.
 const provider = {
   name: 'fake-roads',
-  mode: 'ok', // 'ok' | 'down'
+  mode: 'ok', // 'ok' | 'down' (fails at once) | 'hang' (answers only when cut off by the request budget)
   factor: 1,
   calls: 0,
+  routeCalls: 0,
   supportsMode: (mode) => mode !== 'public_transport',
-  async getDistanceMatrix(points, mode) {
+  async getDistanceMatrix(points, mode, { signal } = {}) {
     this.calls += 1;
     if (this.mode === 'down') throw new MapProviderError(MAP_ERROR.TIMEOUT, 'no answer');
+    if (this.mode === 'hang') {
+      return new Promise((_, reject) => signal.addEventListener('abort', () => reject(new MapProviderError(MAP_ERROR.TIMEOUT, 'cut off')), { once: true }));
+    }
     const m = await estimate.getDistanceMatrix(points, mode);
     return { durations: m.durations.map((row) => row.map((v) => Math.round(v * this.factor))), distances: m.distances };
   },
   async getRoute(points, mode) {
+    this.routeCalls += 1;
     if (this.mode === 'down') throw new MapProviderError(MAP_ERROR.UNAVAILABLE, 'down');
     return { ...(await estimate.getRoute(points, mode)), geometry: 'encoded-road-polyline' };
   },
@@ -40,12 +47,12 @@ describe.skipIf(!testDatabaseUrl)('Itinerary generation through the map provider
   const generate = (tripId) => api().post('/api/v1/itineraries/generate').set(owner.headers).send({ tripId });
 
   beforeAll(async () => {
-    ctx = await createIntegrationApp({ mapProvider: provider });
+    ctx = await createIntegrationApp({ mapProvider: provider, mapRequestBudgetMs: ROUTING_BUDGET_MS });
   });
 
   beforeEach(async () => {
     await ctx.reset();
-    Object.assign(provider, { mode: 'ok', factor: 1, calls: 0 });
+    Object.assign(provider, { mode: 'ok', factor: 1, calls: 0, routeCalls: 0 });
     owner = await ctx.signUp('owner');
     const moderator = await ctx.signUp('moderator', 'moderator');
     const sites = [[23.7536, 90.3994], [23.7375, 90.3950], [23.7450, 90.3800], [23.7600, 90.3850]];
@@ -100,6 +107,74 @@ describe.skipIf(!testDatabaseUrl)('Itinerary generation through the map provider
     expect(tight.days[0].stops.length).toBeLessThan(plannedStops);
     expect(tight.days[0].endTime <= '14:00').toBe(true);
     expect(tight.warnings.map((w) => w.code)).toContain('STOP_REMOVED_AFTER_ROUTING');
+  });
+
+  describe('routing budget per request', () => {
+    const MULTI_DAY = { durationDays: 2, dailyStartTime: '09:00', dailyEndTime: '12:00' };
+    const daysWithStops = (itinerary) => itinerary.days.filter((d) => d.stops.length > 0).length;
+
+    it('provider working: every day still gets real times and a road polyline', async () => {
+      const itinerary = (await generate((await tripWith(MULTI_DAY)).id)).body.data;
+
+      expect(daysWithStops(itinerary)).toBe(2);
+      expect(itinerary.routing).toMatchObject({ provider: 'fake-roads', travelTimesEstimated: false });
+      expect(itinerary.days.map((d) => d.routePolyline)).toEqual(['encoded-road-polyline', 'encoded-road-polyline']);
+      // At least one matrix per day (more when real times force a stop out); nothing skipped.
+      expect(provider.calls).toBeGreaterThanOrEqual(2);
+      expect(provider.routeCalls).toBe(2);
+      expect(itinerary.warnings.map((w) => w.code)).not.toContain('TRAVEL_TIMES_ESTIMATED');
+    });
+
+    it('provider down: asked once per generation, every day estimated with the real reason', async () => {
+      provider.mode = 'down';
+      const res = await generate((await tripWith(MULTI_DAY)).id);
+
+      expect(res.status).toBe(201);
+      expect(daysWithStops(res.body.data)).toBe(2);
+      expect(provider.calls).toBe(1);
+      expect(provider.routeCalls).toBe(0);
+      expect(res.body.data.routing).toMatchObject({ provider: 'estimate', travelTimesEstimated: true });
+      expect(res.body.data.warnings.find((w) => w.code === 'TRAVEL_TIMES_ESTIMATED').message).toContain(MAP_ERROR.TIMEOUT);
+    });
+
+    it('provider never answers: generation finishes within the budget, with flagged estimates', async () => {
+      provider.mode = 'hang';
+      const started = Date.now();
+      const res = await generate((await tripWith(MULTI_DAY)).id);
+      const elapsed = Date.now() - started;
+
+      expect(res.status).toBe(201);
+      expect(elapsed).toBeLessThan(ROUTING_BUDGET_MS + 4_000); // the budget, not "forever"
+      expect(provider.calls).toBe(1); // cut off at the deadline, then skipped
+      expect(res.body.data.routing.travelTimesEstimated).toBe(true);
+      expect(res.body.data.days.map((d) => d.routePolyline)).toEqual([null, null]);
+      expect(res.body.data.warnings.find((w) => w.code === 'TRAVEL_TIMES_ESTIMATED').message).toContain(MAP_ERROR.TIMEOUT);
+    });
+
+    it('editing several days with the provider down asks it only once', async () => {
+      const itinerary = (await generate((await tripWith(MULTI_DAY)).id)).body.data;
+      provider.mode = 'down';
+      provider.calls = 0;
+      ctx.redis.store.clear(); // otherwise the same days come from the routing cache
+
+      const days = itinerary.days.map((d) => ({ dayNumber: d.dayNumber, placeIds: d.stops.map((s) => s.place.id).reverse() }));
+      const res = await api().patch(`/api/v1/itineraries/${itinerary.id}`).set(owner.headers).send({ days });
+
+      expect(res.status).toBe(200);
+      expect(provider.calls).toBe(1);
+      expect(res.body.data.routing.travelTimesEstimated).toBe(true);
+    });
+
+    it('route optimisation over several days with the provider down asks it only once', async () => {
+      provider.mode = 'down';
+      const ids = (await api().get('/api/v1/places').query({ limit: 50 })).body.data.map((p) => p.id);
+      const res = await api().post('/api/v1/routing/optimize').set(owner.headers)
+        .send({ start: START, days: [{ placeIds: ids.slice(0, 2) }, { placeIds: ids.slice(2, 4) }] });
+
+      expect(res.status).toBe(200);
+      expect(provider.calls).toBe(1);
+      expect(res.body.data.days.map((d) => d.metadata.fallbackReason)).toEqual([MAP_ERROR.TIMEOUT, MAP_ERROR.TIMEOUT]);
+    });
   });
 
   describe('POST /api/v1/routing/optimize', () => {

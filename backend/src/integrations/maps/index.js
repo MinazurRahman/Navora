@@ -22,5 +22,6 @@ export function createMapServiceFromConfig(config, { cache }) {
     cache,
     ttlSeconds: CACHE_TTL.routing,
     fallbackToEstimate: config.maps.fallbackToEstimate,
+    requestBudgetMs: config.maps.requestBudgetMs,
   });
 }

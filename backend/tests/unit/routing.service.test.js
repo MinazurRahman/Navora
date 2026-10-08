@@ -164,4 +164,25 @@ describe('route metadata', () => {
     expect(result.days[0].metadata).toMatchObject({ provider: 'estimate', travelTimesEstimated: true, fallbackReason: MAP_ERROR.RATE_LIMITED });
     expect(result.days[0].routePolyline).toBeNull();
   });
+
+  it('a provider timeout costs one call per request: later days use flagged estimates', async () => {
+    let calls = 0;
+    const timingOut = {
+      ...gridProvider,
+      getDistanceMatrix: async () => {
+        calls += 1;
+        throw new MapProviderError(MAP_ERROR.TIMEOUT, 'no answer');
+      },
+    };
+    const days = Array.from({ length: 14 }, () => day([east1, east3]));
+    const result = await optimize(days, { provider: timingOut });
+
+    expect(calls).toBe(1);
+    expect(result.days).toHaveLength(14);
+    for (const d of result.days) {
+      expect(d.feasible).toBe(true);
+      expect(d.metadata).toMatchObject({ provider: 'estimate', travelTimesEstimated: true, fallbackReason: MAP_ERROR.TIMEOUT });
+    }
+    expect(result.metadata.travelTimesEstimated).toBe(true);
+  });
 });

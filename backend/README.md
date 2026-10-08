@@ -196,6 +196,13 @@ ORS) fall back to estimates marked `travelTimesEstimated: true` with the reason 
 `TRAVEL_TIMES_ESTIMATED` warning — or a 503 `ROUTING_UNAVAILABLE` with
 `MAP_FALLBACK_TO_ESTIMATE=false`. Adding a provider = one adapter in `providers/`.
 
+Each request that makes several provider calls (generation, edits, route optimisation: up to
+one matrix and one route call per day) shares one routing budget: at most
+`MAP_REQUEST_BUDGET_MS` (default 15 s) of provider time, and after a timeout, outage or
+provider rate limit the provider is not asked again for the rest of that request. Remaining
+days use the same flagged estimates, with the first failure's reason; the next request asks
+the provider again. Keep the budget well below the load balancer's request timeout.
+
 Each day: `startTime` (when to leave: just in time for the first visit), `endTime` (back at
 the start), ordered `stops` (`plannedStart`/`plannedEnd`, `visitMinutes`, travel from the
 previous stop), and `totals` (`distanceMeters`, `travelMinutes`, `visitMinutes`,

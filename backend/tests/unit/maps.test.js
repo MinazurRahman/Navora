@@ -72,6 +72,26 @@ describe('OpenRouteService adapter', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(calls);
   });
 
+  it("stops when the caller's signal aborts (request budget used up), without retrying", async () => {
+    const hanging = vi.fn((url, { signal }) => new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason))));
+    const controller = new AbortController();
+    const pending = ors(hanging, 10_000).getDistanceMatrix([A, B], 'car', { signal: controller.signal });
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ kind: MAP_ERROR.TIMEOUT, message: 'Routing time budget for this request used up' });
+    expect(hanging).toHaveBeenCalledTimes(1);
+  });
+
+  it('a response body cut off by the timeout is a TIMEOUT, not a retried UNAVAILABLE', async () => {
+    const stalledBody = vi.fn((url, { signal }) => ({
+      ok: true,
+      status: 200,
+      json: () => new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason))),
+    }));
+    await expect(ors(stalledBody, 30).getDistanceMatrix([A, B], 'car')).rejects.toMatchObject({ kind: MAP_ERROR.TIMEOUT });
+    expect(stalledBody).toHaveBeenCalledTimes(1);
+  });
+
   it('times out instead of hanging', async () => {
     const hanging = (url, { signal }) => new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
     await expect(ors(hanging, 30).getDistanceMatrix([A, B], 'car')).rejects.toMatchObject({ kind: MAP_ERROR.TIMEOUT });
@@ -197,6 +217,142 @@ describe('map service', () => {
     expect(maskCoordinates('coordinate 1: -23.8103 90.4125, radius 350.0')).toBe('coordinate 1: <coord> <coord>, radius 350.0');
   });
 
+  describe('per-request routing budget (forRequest)', () => {
+    const D = { latitude: 23.745, longitude: 90.38 };
+    const timeoutError = () => new MapProviderError(MAP_ERROR.TIMEOUT, 'no answer');
+    // A provider that never answers: it settles only when the caller's signal aborts.
+    const hangUntilAborted = (points, mode, { signal }) =>
+      new Promise((_, reject) => signal.addEventListener('abort', () => reject(new MapProviderError(MAP_ERROR.TIMEOUT, 'cut off')), { once: true }));
+
+    it('uses the provider normally, passing it the remaining budget as an abort signal', async () => {
+      const provider = fakeProvider();
+      const maps = service(provider, { requestBudgetMs: 10_000 }).forRequest();
+      const results = [await maps.getDistanceMatrix([A, B], 'car'), await maps.getDistanceMatrix([A, C], 'car'), await maps.getRoute([A, B, C], 'car')];
+
+      for (const result of results) expect(result).toMatchObject({ provider: 'fake', estimated: false });
+      expect(results[0].durations).toEqual([[0, 600], [600, 0]]);
+      expect(results[2].geometry).toBe('poly');
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(2);
+      const [, , options] = provider.getDistanceMatrix.mock.calls[0];
+      expect(options.signal).toBeInstanceOf(AbortSignal);
+      expect(options.signal.aborted).toBe(false);
+    });
+
+    it.each([MAP_ERROR.INVALID_ROUTE, MAP_ERROR.MISSING_DATA])('%s affects only that call: the provider is asked again next time', async (kind) => {
+      const provider = fakeProvider({
+        getDistanceMatrix: vi.fn().mockRejectedValueOnce(new MapProviderError(kind, 'bad point')).mockImplementation(async (points) => matrixOf(points, 600)),
+      });
+      const maps = service(provider).forRequest();
+
+      expect(await maps.getDistanceMatrix([A, B], 'car')).toMatchObject({ estimated: true, fallbackReason: kind });
+      expect(await maps.getDistanceMatrix([A, C], 'car')).toMatchObject({ provider: 'fake', estimated: false });
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([MAP_ERROR.TIMEOUT, MAP_ERROR.UNAVAILABLE, MAP_ERROR.RATE_LIMITED])(
+      'after %s, the rest of the request gets flagged estimates without asking the provider again',
+      async (kind) => {
+        const provider = fakeProvider({ getDistanceMatrix: vi.fn(async () => { throw new MapProviderError(kind, 'down'); }) });
+        const maps = service(provider).forRequest();
+        const results = [
+          await maps.getDistanceMatrix([A, B], 'car'),
+          await maps.getDistanceMatrix([A, C], 'car'),
+          await maps.getDistanceMatrix([B, C, D], 'car'),
+          await maps.getRoute([A, B, C], 'car'),
+        ];
+
+        for (const result of results) expect(result).toMatchObject({ provider: 'estimate', estimated: true, fallbackReason: kind });
+        // The designed estimates, not made-up numbers.
+        expect(results[1].durations).toEqual((await estimate.getDistanceMatrix([A, C], 'car')).durations);
+        expect(results[3].geometry).toBeNull();
+        expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(1);
+        expect(provider.getRoute).not.toHaveBeenCalled();
+      },
+    );
+
+    it('logs the real failure once as a warning; skipped calls are not reported as new failures', async () => {
+      const warn = vi.spyOn(logger, 'warn');
+      const provider = fakeProvider({ getDistanceMatrix: vi.fn(async () => { throw new MapProviderError(MAP_ERROR.UNAVAILABLE, 'HTTP 502'); }) });
+      const maps = service(provider).forRequest();
+      for (const points of [[A, B], [A, C], [B, C]]) await maps.getDistanceMatrix(points, 'car');
+
+      const failures = warn.mock.calls.filter(([, message]) => message === 'Routing provider failed; using estimates');
+      warn.mockRestore();
+      expect(failures).toHaveLength(1);
+      expect(failures[0][0]).toMatchObject({ kind: MAP_ERROR.UNAVAILABLE, detail: 'matrix: HTTP 502' });
+    });
+
+    it('cuts off a provider that never answers when the budget runs out, then skips it', async () => {
+      const provider = fakeProvider({ getDistanceMatrix: vi.fn(hangUntilAborted) });
+      const maps = service(provider, { requestBudgetMs: 50 }).forRequest();
+
+      const started = Date.now();
+      const first = await maps.getDistanceMatrix([A, B], 'car');
+      const second = await maps.getDistanceMatrix([A, C], 'car');
+      expect(Date.now() - started).toBeLessThan(2_000); // bounded by the budget, not by the provider
+
+      expect(first).toMatchObject({ estimated: true, fallbackReason: MAP_ERROR.TIMEOUT });
+      expect(second).toMatchObject({ estimated: true, fallbackReason: MAP_ERROR.TIMEOUT });
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops asking a slow but working provider once the budget is used up', async () => {
+      let clock = 0;
+      const provider = fakeProvider({
+        getDistanceMatrix: vi.fn(async (points) => {
+          clock += 4_000; // each answer takes 4 s
+          return matrixOf(points, 600);
+        }),
+      });
+      const maps = service(provider, { requestBudgetMs: 10_000, now: () => clock }).forRequest();
+
+      const results = [];
+      for (const points of [[A, B], [A, C], [B, C], [A, D], [B, D]]) results.push(await maps.getDistanceMatrix(points, 'car'));
+      expect(results.map((r) => r.fallbackReason ?? r.provider)).toEqual(['fake', 'fake', 'fake', MAP_ERROR.TIMEOUT, MAP_ERROR.TIMEOUT]);
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(3); // started at 0 s, 4 s and 8 s
+    });
+
+    it('is per request: the next request and unbudgeted calls ask the provider again', async () => {
+      const provider = fakeProvider({
+        getDistanceMatrix: vi.fn().mockRejectedValueOnce(timeoutError()).mockImplementation(async (points) => matrixOf(points, 600)),
+      });
+      const maps = service(provider);
+      const first = maps.forRequest();
+      await first.getDistanceMatrix([A, B], 'car');
+      expect((await first.getDistanceMatrix([A, C], 'car')).fallbackReason).toBe(MAP_ERROR.TIMEOUT);
+
+      expect(await maps.forRequest().getDistanceMatrix([A, C], 'car')).toMatchObject({ provider: 'fake', estimated: false });
+      expect(await maps.getDistanceMatrix([B, C], 'car')).toMatchObject({ provider: 'fake', estimated: false });
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(3);
+    });
+
+    it('still serves cached real results after the provider was skipped', async () => {
+      const provider = fakeProvider({
+        getDistanceMatrix: vi.fn().mockImplementationOnce(async (points) => matrixOf(points, 600)).mockRejectedValue(timeoutError()),
+      });
+      const maps = service(provider);
+      await maps.getDistanceMatrix([A, B], 'car');
+      await new Promise((resolve) => setImmediate(resolve)); // the cache write is fire-and-forget
+
+      const request = maps.forRequest();
+      expect((await request.getDistanceMatrix([A, C], 'car')).fallbackReason).toBe(MAP_ERROR.TIMEOUT);
+      expect(await request.getDistanceMatrix([A, B], 'car')).toMatchObject({ provider: 'fake', estimated: false });
+    });
+
+    it('with fallback disabled, a skipped provider is an immediate 503, not another wait', async () => {
+      const provider = fakeProvider({ getDistanceMatrix: vi.fn(async () => { throw timeoutError(); }) });
+      const maps = service(provider, { fallbackToEstimate: false }).forRequest();
+
+      await expect(maps.getDistanceMatrix([A, B], 'car')).rejects.toMatchObject({ status: 503, code: 'ROUTING_UNAVAILABLE' });
+      await expect(maps.getDistanceMatrix([A, C], 'car')).rejects.toMatchObject({
+        status: 503,
+        code: 'ROUTING_UNAVAILABLE',
+        details: { reason: MAP_ERROR.TIMEOUT },
+      });
+      expect(provider.getDistanceMatrix).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('rejects invalid input from callers', async () => {
     const maps = service(fakeProvider());
     await expect(maps.getRoute([A], 'car')).rejects.toThrow(/2–50/);
@@ -209,7 +365,13 @@ describe('configuration', () => {
   const base = { DATABASE_URL: 'postgres://u:p@localhost/db', JWT_SECRET: 'x'.repeat(32), UPSTASH_REDIS_REST_URL: 'https://x.upstash.io', UPSTASH_REDIS_REST_TOKEN: 't' };
 
   it('defaults to the estimate provider with fallback enabled', () => {
-    expect(parseEnv(base).maps).toEqual({ provider: 'estimate', apiKey: undefined, timeoutMs: 5000, fallbackToEstimate: true });
+    expect(parseEnv(base).maps).toEqual({ provider: 'estimate', apiKey: undefined, timeoutMs: 5000, requestBudgetMs: 15000, fallbackToEstimate: true });
+  });
+
+  it('bounds the per-request routing budget', () => {
+    expect(parseEnv({ ...base, MAP_REQUEST_BUDGET_MS: '20000' }).maps.requestBudgetMs).toBe(20000);
+    expect(() => parseEnv({ ...base, MAP_REQUEST_BUDGET_MS: '500' })).toThrow(/MAP_REQUEST_BUDGET_MS/);
+    expect(() => parseEnv({ ...base, MAP_REQUEST_BUDGET_MS: '600000' })).toThrow(/MAP_REQUEST_BUDGET_MS/);
   });
 
   it('requires MAP_API_KEY for a real provider', () => {

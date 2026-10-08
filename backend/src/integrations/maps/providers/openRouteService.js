@@ -6,23 +6,29 @@ const PROFILES = Object.freeze({ car: 'driving-car', walking: 'foot-walking', cy
 const toLngLat = ({ latitude, longitude }) => [longitude, latitude];
 
 export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'https://api.openrouteservice.org', fetchImpl = fetch }) {
-  async function post(path, body) {
+  // signal (optional): the caller's own limit, e.g. the request's routing budget (mapService).
+  async function post(path, body, signal) {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const combined = signal ? AbortSignal.any([timeout, signal]) : timeout;
+    const timedOut = () =>
+      new MapProviderError(MAP_ERROR.TIMEOUT, timeout.aborted ? `No response within ${timeoutMs}ms` : 'Routing time budget for this request used up');
+
     let response;
     try {
       response = await fetchImpl(`${baseUrl}${path}`, {
         method: 'POST',
         headers: { Authorization: apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: combined,
       });
     } catch (err) {
-      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-        throw new MapProviderError(MAP_ERROR.TIMEOUT, `No response within ${timeoutMs}ms`);
-      }
+      if (combined.aborted || err.name === 'TimeoutError' || err.name === 'AbortError') throw timedOut();
       throw new MapProviderError(MAP_ERROR.UNAVAILABLE, `Network error: ${err.message}`);
     }
 
     const payload = await response.json().catch(() => null);
+    // Cut off while reading the body: a timeout, not an unparseable (retryable) response.
+    if (combined.aborted) throw timedOut();
     if (response.ok) {
       if (payload === null) throw new MapProviderError(MAP_ERROR.UNAVAILABLE, 'Unparseable response', { status: response.status });
       return payload;
@@ -41,12 +47,12 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
 
   // One retry for transient failures (timeouts and rate limits are not retried: that
   // would only make the caller wait longer or burn more quota; neither is a rejected key).
-  async function postWithRetry(path, body) {
+  async function postWithRetry(path, body, signal) {
     try {
-      return await post(path, body);
+      return await post(path, body, signal);
     } catch (err) {
       if (err.kind !== MAP_ERROR.UNAVAILABLE || err.status === 401 || err.status === 403) throw err;
-      return post(path, body);
+      return post(path, body, signal);
     }
   }
 
@@ -61,12 +67,12 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
     supportsMode: (mode) => mode in PROFILES,
 
     // durations (s) / distances (m) as [from][to]; null where the provider has no route.
-    async getDistanceMatrix(points, mode) {
+    async getDistanceMatrix(points, mode, { signal } = {}) {
       const data = await postWithRetry(`/v2/matrix/${profileFor(mode)}`, {
         locations: points.map(toLngLat),
         metrics: ['duration', 'distance'],
         units: 'm',
-      });
+      }, signal);
       if (!Array.isArray(data.durations) || !Array.isArray(data.distances)) {
         throw new MapProviderError(MAP_ERROR.MISSING_DATA, 'Matrix response has no durations/distances');
       }
@@ -75,11 +81,11 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
       return { durations: whole(data.durations), distances: whole(data.distances) };
     },
 
-    async getRoute(points, mode) {
+    async getRoute(points, mode, { signal } = {}) {
       const data = await postWithRetry(`/v2/directions/${profileFor(mode)}`, {
         coordinates: points.map(toLngLat),
         instructions: false,
-      });
+      }, signal);
       const route = data.routes?.[0];
       if (!route?.summary) {
         throw new MapProviderError(MAP_ERROR.MISSING_DATA, 'Directions response has no route');

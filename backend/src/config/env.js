@@ -64,6 +64,10 @@ const envSchema = z.object({
   MAP_PROVIDER: z.enum(['estimate', 'openrouteservice']).default('estimate'),
   MAP_API_KEY: z.string().min(1).optional(),
   MAP_TIMEOUT_MS: intInRange(500, 30_000).default(5_000),
+  // Total provider time one request may spend (a 14-day itinerary makes 28+ calls). Once used
+  // up, or once the provider times out / is down / rate-limits us, the rest of that request
+  // uses flagged estimates. Keep well below the load balancer's request timeout.
+  MAP_REQUEST_BUDGET_MS: intInRange(1_000, 120_000).default(15_000),
   // On provider failure: "true" = use flagged estimates; "false" = fail with 503.
   MAP_FALLBACK_TO_ESTIMATE: z.enum(['true', 'false']).default('true'),
 
@@ -141,6 +145,7 @@ export function parseEnv(source) {
       provider: e.MAP_PROVIDER,
       apiKey: e.MAP_API_KEY,
       timeoutMs: e.MAP_TIMEOUT_MS,
+      requestBudgetMs: e.MAP_REQUEST_BUDGET_MS,
       fallbackToEstimate: e.MAP_FALLBACK_TO_ESTIMATE === 'true',
     }),
     ai: Object.freeze({

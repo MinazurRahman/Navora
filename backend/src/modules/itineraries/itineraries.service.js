@@ -190,13 +190,13 @@ export function createItinerariesService({
   // Re-checks a planned day with the map service's travel times (one small matrix request)
   // and re-orders it. If real times make the day infeasible, drops the lowest-ranked stop
   // the user did not select, until it fits.
-  async function refineDay(day, { trip, ctx, rankOf, selectedIds }) {
+  async function refineDay(day, { trip, ctx, rankOf, selectedIds, maps }) {
     let stops = day.schedule.stops.map((s) => s.place);
     const dropped = [];
 
     while (stops.length > 0) {
       const points = [trip.startLocation, ...stops.map((p) => p.location)];
-      const matrix = await mapService.getDistanceMatrix(points, trip.travelMode);
+      const matrix = await maps.getDistanceMatrix(points, trip.travelMode);
       const travel = createMatrixTravel(points, matrix, trip.travelMode, planningConfig);
 
       const schedule = scheduleDay({
@@ -225,11 +225,11 @@ export function createItinerariesService({
   }
 
   // Road geometry for drawing the day on a map; skipped when only estimates are available.
-  async function routePolyline(schedule, trip, matrix) {
+  async function routePolyline(schedule, trip, matrix, maps) {
     if (!matrix || matrix.estimated || schedule.stops.length === 0) return null;
     const points = [trip.startLocation, ...schedule.stops.map((s) => s.place.location)];
     if (planningConfig.returnToStart) points.push(trip.startLocation);
-    const route = await mapService.getRoute(points, trip.travelMode);
+    const route = await maps.getRoute(points, trip.travelMode);
     return route.estimated ? null : route.geometry;
   }
 
@@ -282,12 +282,14 @@ export function createItinerariesService({
       }
 
       // 10b. Re-check and re-order each planned day with the map service's travel times.
+      // One routing budget for the whole request (see mapService.forRequest).
+      const maps = mapService.forRequest();
       const rankIndex = new Map(ranked.map((place, i) => [place.id, i]));
       const rankOf = (id) => rankIndex.get(id) ?? -1;
       const routing = { provider: 'estimate', estimated: false, fallbackReasons: [], dropped: [] };
       for (const day of plan.days) {
         if (day.schedule.stops.length === 0) continue;
-        const refined = await refineDay(day, { trip, ctx, rankOf, selectedIds });
+        const refined = await refineDay(day, { trip, ctx, rankOf, selectedIds, maps });
         day.schedule = refined.schedule;
         routing.dropped.push(...refined.dropped);
         if (!refined.matrix) continue;
@@ -298,7 +300,7 @@ export function createItinerariesService({
         }
         // Provider of record: the real one if it served at least partially, else "estimate".
         if (refined.matrix.provider !== 'estimate') routing.provider = refined.matrix.provider;
-        day.routePolyline = await routePolyline(day.schedule, trip, refined.matrix);
+        day.routePolyline = await routePolyline(day.schedule, trip, refined.matrix, maps);
       }
 
       // Every day needs at least one stop; requirements are never relaxed to get there.
@@ -414,6 +416,7 @@ export function createItinerariesService({
       }
 
       // Re-schedule each edited day with the map service's travel times.
+      const maps = mapService.forRequest();
       const days = [];
       const infeasible = [];
       let estimated = false;
@@ -427,7 +430,7 @@ export function createItinerariesService({
           day.schedule = { stops: [], totals: { distanceMeters: 0, travelSeconds: 0, visitMinutes: 0 } };
         } else {
           const points = [trip.startLocation, ...stops.map((p) => p.location)];
-          const matrix = await mapService.getDistanceMatrix(points, trip.travelMode);
+          const matrix = await maps.getDistanceMatrix(points, trip.travelMode);
           estimated ||= matrix.estimated;
           const travel = createMatrixTravel(points, matrix, trip.travelMode, planningConfig);
           const args = { start: trip.startLocation, dayOfWeek, windowStart: ctx.windowStart, windowEnd: ctx.windowEnd, travel, mode: trip.travelMode, config: planningConfig };
@@ -436,7 +439,7 @@ export function createItinerariesService({
             infeasible.push({ dayNumber: edit.dayNumber, reason: day.schedule.reason, placeId: day.schedule.placeId ?? null });
             continue;
           }
-          day.routePolyline = await routePolyline(day.schedule, trip, matrix);
+          day.routePolyline = await routePolyline(day.schedule, trip, matrix, maps);
         }
         day.departure = departureFor(day, ctx.windowStart);
         days.push(day);

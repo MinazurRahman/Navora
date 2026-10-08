@@ -15,8 +15,9 @@ export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 // The full app on the real (disposable) PostGIS test database, with caching ON (in-memory
 // Redis), so every integration test also proves cache invalidation is correct.
 // mapProvider: optional fake routing provider (default: the distance estimate).
+// mapRequestBudgetMs: routing budget per request with the fake provider (default: none).
 // aiProvider: optional fake AI provider (default: AI disabled). Tests never need Ollama.
-export async function createIntegrationApp({ mapProvider, aiProvider } = {}) {
+export async function createIntegrationApp({ mapProvider, mapRequestBudgetMs, aiProvider } = {}) {
   // Same connection setup as production (incl. pg type parsers), pointed at the test DB.
   const db = createDb(buildTestConfig({ DATABASE_URL: testDatabaseUrl }));
   await db.migrate.latest();
@@ -26,7 +27,7 @@ export async function createIntegrationApp({ mapProvider, aiProvider } = {}) {
   const redis = createInMemoryRedis();
   const cache = createCache(redis);
   const mapService = mapProvider
-    ? createMapService({ provider: mapProvider, fallback: createEstimateProvider(PLANNING_CONFIG), cache, ttlSeconds: 60 })
+    ? createMapService({ provider: mapProvider, fallback: createEstimateProvider(PLANNING_CONFIG), cache, ttlSeconds: 60, requestBudgetMs: mapRequestBudgetMs })
     : createMapServiceFromConfig(config, { cache });
   const app = createApp({
     config,

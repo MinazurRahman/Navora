@@ -20,12 +20,12 @@ export const ROUTE_METADATA = Object.freeze({
  *              places: place DTOs (location, openingHours, typicalVisitMinutes, category)
  */
 export function createRoutingService({ mapService, config = PLANNING_CONFIG }) {
-  async function optimizeDay(day, { start, travelMode, returnToStart }) {
+  async function optimizeDay(day, { start, travelMode, returnToStart, maps }) {
     const dayConfig = { ...config, returnToStart };
     const points = [start, ...day.places.map((p) => p.location)];
 
     // 2. Travel distances/times (provider or flagged estimate).
-    const matrix = await mapService.getDistanceMatrix(points, travelMode);
+    const matrix = await maps.getDistanceMatrix(points, travelMode);
     const travel = createMatrixTravel(points, matrix, travelMode, config);
     const legSeconds = (a, b) => travel(a.location ?? a, b.location ?? b).durationSeconds;
 
@@ -68,7 +68,7 @@ export function createRoutingService({ mapService, config = PLANNING_CONFIG }) {
     const legs = [...stops.map((s) => s.travelFromPrevious), ...(back ? [{ minutes: minutes(back.durationSeconds), distanceMeters: back.distanceMeters }] : [])];
 
     const route = !matrix.estimated
-      ? await mapService.getRoute([start, ...order.map((p) => p.location), ...(returnToStart ? [start] : [])], travelMode)
+      ? await maps.getRoute([start, ...order.map((p) => p.location), ...(returnToStart ? [start] : [])], travelMode)
       : null;
 
     return {
@@ -100,11 +100,13 @@ export function createRoutingService({ mapService, config = PLANNING_CONFIG }) {
     async optimize({ start, travelMode, returnToStart, startDate, days }) {
       const calendar = tripDays(startDate, days.length);
       const results = [];
-      // 7. Each day separately (sequential: keeps provider request rate low).
+      // 7. Each day separately (sequential: keeps provider request rate low), all within one
+      //    routing budget (see mapService.forRequest).
+      const maps = mapService.forRequest();
       for (const [i, day] of days.entries()) {
         const date = day.date ?? calendar[i].date;
         const [{ dayOfWeek }] = tripDays(date, 1);
-        results.push(await optimizeDay({ ...day, dayNumber: i + 1, date, dayOfWeek }, { start, travelMode, returnToStart }));
+        results.push(await optimizeDay({ ...day, dayNumber: i + 1, date, dayOfWeek }, { start, travelMode, returnToStart, maps }));
       }
 
       return {
