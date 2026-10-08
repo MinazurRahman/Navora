@@ -240,6 +240,15 @@ advice the user can apply with `PATCH /itineraries/:id` (checked there like any 
   (`details.reason`: `DISABLED`, `TIMEOUT`, `UNAVAILABLE`); trip without an itinerary → 422
   `ITINERARY_NOT_GENERATED`; itinerary too large even when trimmed → 422
   `ASSISTANT_CONTEXT_TOO_LARGE` (ask about one day or place). Nothing else in Navora depends on it.
+- **Deployment (Ollama)**: `status.available` means the configured Ollama is reachable and the
+  configured model is installed — not that the model is loaded in memory or that an answer will
+  finish within `AI_TIMEOUT_MS`. On slower hosts the first model load alone can take longer than
+  that timeout, and the cancelled request also cancels the load, so the assistant keeps answering
+  503 `TIMEOUT`. Keep the model loaded on the Ollama host (`OLLAMA_KEEP_ALIVE=-1`) or warm it up
+  once after Ollama starts; do not raise Navora's HTTP/AI timeouts to cover model loading. Size
+  `AI_MAX_CONCURRENT` (per instance) and the shared `assistantGlobal` limit to the Ollama host's
+  measured throughput and memory. For interactive answers, use a GPU or stronger host, or a
+  smaller model (`OLLAMA_MODEL`).
 - Code: `src/integrations/ai` (provider abstraction: `disabled`, `ollama`),
   `src/modules/assistant` (context, prompt, output checks, service, routes). Tests use a fake
   provider; Ollama is never needed to run them.
