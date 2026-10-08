@@ -29,8 +29,8 @@ Optional routing provider: OpenRouteService (`fetch`, no SDK).
 - **Modular monolith**, manual dependency injection with factory functions (`createXModule`,
   `createXService`, `createXRepository`). No DI container, no classes except errors.
 - **Composition root**: `backend/src/server.js` builds real dependencies (db, redis, cache,
-  rate limiter, map service) and calls `createApp(deps)`.
-- `backend/src/app.js` `createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService })`
+  rate limiter, map service, AI service) and calls `createApp(deps)`.
+- `backend/src/app.js` `createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService })`
   wires modules and middleware **without listening** — tests build it with fakes.
 - `backend/src/repositories.js` is the **only** code that receives the Knex instance.
 - **Stateless**: no shared per-user state in process memory; the app runs as N instances

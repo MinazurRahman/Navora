@@ -1258,9 +1258,15 @@ paths:
         `explain_warnings`, `suggest_adjustments`, `question` (needs `question`, 3–500 chars).
         `placeId` must belong to the itinerary or its recommendations; `dayNumber` must exist.
 
-        Rate limited per user (10/min and 100/day); refuses with 503 when rate limiting is
+        Requires sign-in. Only your own trips and itineraries can be asked about: anyone else's
+        answer 404 (never 403), exactly like `GET /trips/{id}` and `GET /itineraries/{id}`.
+
+        Rate limited per user (`assistant` 10/min and `assistantDaily` 100/day, on top of the
+        general limit); both refuse with 503 `RATE_LIMIT_UNAVAILABLE` when rate limiting is
         unavailable. When the AI is disabled, unreachable, too slow or returns an unusable reply:
-        503 `AI_UNAVAILABLE` with `details.reason` `DISABLED`, `TIMEOUT` or `UNAVAILABLE`.
+        503 `AI_UNAVAILABLE` with `details.reason` `DISABLED`, `TIMEOUT` or `UNAVAILABLE`
+        (never a 200 for a failed answer). `GET /ai/trip-assistant/status` tells whether the
+        assistant is available.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -1270,13 +1276,23 @@ paths:
               type: object
               required: [task]
               additionalProperties: false
+              # Exactly one target.
+              oneOf:
+                - { required: [itineraryId] }
+                - { required: [tripId] }
+              # Task-specific required fields.
+              allOf:
+                - if: { required: [task], properties: { task: { const: question } } }
+                  then: { required: [question] }
+                - if: { required: [task], properties: { task: { const: explain_place } } }
+                  then: { required: [placeId] }
               properties:
                 itineraryId: { type: string, format: uuid, description: One itinerary version. Give this or `tripId`. }
                 tripId: { type: string, format: uuid, description: The trip's current itinerary. Give this or `itineraryId`. }
                 task: { $ref: '#/components/schemas/AssistantTask' }
-                question: { type: string, minLength: 3, maxLength: 500, description: Required for task `question`. }
-                placeId: { type: string, format: uuid, description: Focus place; required for task `explain_place`. }
-                dayNumber: { type: integer, minimum: 1, maximum: 14, description: Focus day. }
+                question: { type: string, minLength: 3, maxLength: 500, description: Required for task `question`. Whitespace is collapsed and control characters removed before the length check. }
+                placeId: { type: string, format: uuid, description: Focus place; required for task `explain_place`. Must be a place of the itinerary or of its recommendations. }
+                dayNumber: { type: integer, minimum: 1, maximum: 14, description: Focus day; must exist in the itinerary. }
             example: { tripId: 0b6b7c1e-2f4a-4c55-9d8e-3a1f2b4c5d6e, task: question, question: Why is the National Museum on day 1? }
       responses:
         '200':
@@ -1301,9 +1317,34 @@ paths:
                   suggestions: []
                   source: { generatedBy: ai }
                   disclaimer: "AI-generated explanation of Navora's plan. The itinerary, times, prices and requirements shown by Navora are authoritative; suggestions are not checked until you apply them."
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '400':
+          description: |
+            `VALIDATION_ERROR` — `details`: [{ location: "body", path, message }]. Besides the schema
+            rules (exactly one of `itineraryId` / `tripId`, task-specific fields, lengths), the
+            `placeId` must belong to the itinerary or its recommendations and the `dayNumber` must
+            exist in the itinerary. Also `INVALID_JSON` (malformed body).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error:
+                  code: VALIDATION_ERROR
+                  message: Invalid request data
+                  details:
+                    - { location: body, path: placeId, message: This place is not part of the itinerary or its recommendations }
+                  requestId: 9c06be7a-2622-4a2d-a343-4bfd6041b1c9
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '404':
+          description: |
+            `TRIP_NOT_FOUND` (by `tripId`) or `ITINERARY_NOT_FOUND` (by `itineraryId`): it does not
+            exist **or is not yours**. Other users' trips and itineraries always answer 404, never 403.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: { code: TRIP_NOT_FOUND, message: Trip not found, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 }
         '422':
           description: '`ITINERARY_NOT_GENERATED` — the trip has no itinerary yet; generate one first.'
           content:
@@ -1313,14 +1354,28 @@ paths:
                 success: false
                 error: { code: ITINERARY_NOT_GENERATED, message: 'This trip has no itinerary yet; generate one first', requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+        '503':
+          description: |
+            Retry later.
+            - `AI_UNAVAILABLE` — the assistant is disabled, unreachable, too slow or gave an unusable
+              reply. `details.reason`: `DISABLED`, `TIMEOUT` or `UNAVAILABLE`. No provider, model,
+              host or error details are ever included.
+            - `RATE_LIMIT_UNAVAILABLE` — rate limiting is unavailable; this endpoint refuses to run without it.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                success: false
+                error: { code: AI_UNAVAILABLE, message: The AI assistant is temporarily unavailable, details: { reason: TIMEOUT }, requestId: 1d8062e6-e8af-42e6-9d95-bcfc7e4d53f7 }
   /api/v1/ai/trip-assistant/status:
     get:
       tags: [AI]
       summary: 'Is the AI Trip Assistant available?'
       description: |
         Lets the app show or hide the assistant. Checks that the AI service is reachable and ready;
-        never exposes provider, model, host or error details.
+        never exposes provider, model, host or error details. Cheap to poll: the result is shared by
+        all users and cached for up to 15 seconds, so a change can take that long to show.
+        Only the general rate limit applies.
       security: [{ bearerAuth: [] }]
       responses:
         '200':
@@ -1340,7 +1395,7 @@ paths:
                     properties:
                       enabled: { type: boolean, description: Switched on by configuration. }
                       available: { type: boolean, description: Enabled and currently able to answer. }
-                      reason: { type: string, enum: [DISABLED, TIMEOUT, UNAVAILABLE], description: Why it is not available. }
+                      reason: { type: string, enum: [DISABLED, TIMEOUT, UNAVAILABLE], description: Why it is not available; present only when `available` is false. }
               example: { success: true, data: { enabled: true, available: true } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/RateLimited' }
