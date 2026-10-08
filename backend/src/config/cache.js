@@ -9,4 +9,7 @@ export const CACHE_TTL = Object.freeze({
   recommendations: 120,
   // Road travel times do not depend on our data; only real provider results are cached.
   routing: 24 * 60 * 60,
+  // AI availability (not per user): polling the status endpoint reaches the AI provider at
+  // most once per TTL across all instances. Short, so a restarted or stopped provider shows quickly.
+  aiStatus: 15,
 });

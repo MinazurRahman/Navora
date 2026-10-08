@@ -5,7 +5,9 @@ import { createDisabledProvider } from '../../src/integrations/ai/providers/disa
 import { AI_ERROR, AiProviderError } from '../../src/integrations/ai/errors.js';
 import { ServiceUnavailableError } from '../../src/shared/errors/AppError.js';
 import { logger } from '../../src/shared/logger.js';
-import { buildTestConfig } from '../helpers/testApp.js';
+import { createCache } from '../../src/integrations/redis/cache.js';
+import { CACHE_TTL } from '../../src/config/cache.js';
+import { buildTestConfig, createInMemoryRedis } from '../helpers/testApp.js';
 
 // Fake provider: no Ollama needed.
 function fakeProvider({ generate, checkHealth } = {}) {
@@ -116,6 +118,62 @@ describe('AI service: status', () => {
   });
 });
 
+describe('AI service: cached status', () => {
+  const cached = (provider, redis = createInMemoryRedis()) =>
+    createAiService({ provider, cache: createCache(redis), statusTtlSeconds: CACHE_TTL.aiStatus });
+
+  it('checks the provider once per TTL however often status is polled', async () => {
+    const provider = fakeProvider();
+    const ai = cached(provider);
+    for (let i = 0; i < 5; i += 1) expect(await ai.status()).toEqual({ enabled: true, available: true });
+    expect(provider.checkHealth).toHaveBeenCalledOnce();
+  });
+
+  it('caches an unavailable result too, so a down provider is not probed on every poll', async () => {
+    vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const provider = fakeProvider({
+      checkHealth: async () => {
+        throw new AiProviderError(AI_ERROR.UNAVAILABLE, 'Network error: ECONNREFUSED 10.0.0.5:11434');
+      },
+    });
+    const ai = cached(provider);
+    await ai.status();
+    expect(await ai.status()).toEqual({ enabled: true, available: false, reason: 'UNAVAILABLE' });
+    expect(provider.checkHealth).toHaveBeenCalledOnce();
+  });
+
+  it('stores only the coarse result, with the short status TTL, shared across instances', async () => {
+    const redis = createInMemoryRedis();
+    const set = vi.spyOn(redis, 'set');
+    const first = fakeProvider();
+    const second = fakeProvider();
+    await cached(first, redis).status();
+    await cached(second, redis).status(); // another instance, same Redis
+
+    expect(second.checkHealth).not.toHaveBeenCalled();
+    const [[key, value, options]] = set.mock.calls;
+    expect(key).toMatch(/ai:status:fake:fake-model:1b$/);
+    expect(value).toEqual({ enabled: true, available: true });
+    expect(options).toEqual({ ex: CACHE_TTL.aiStatus });
+    expect(CACHE_TTL.aiStatus).toBeLessThanOrEqual(60);
+  });
+
+  it('still answers when Redis is down, by checking the provider directly', async () => {
+    vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const broken = { get: async () => { throw new Error('fetch failed'); }, set: async () => { throw new Error('fetch failed'); }, incr: async () => 1, del: async () => 0 };
+    const provider = fakeProvider();
+    expect(await cached(provider, broken).status()).toEqual({ enabled: true, available: true });
+    expect(provider.checkHealth).toHaveBeenCalledOnce();
+  });
+
+  it('never touches the cache when AI is disabled', async () => {
+    const redis = createInMemoryRedis();
+    const get = vi.spyOn(redis, 'get');
+    expect(await cached(createDisabledProvider(), redis).status()).toEqual({ enabled: false, available: false, reason: 'DISABLED' });
+    expect(get).not.toHaveBeenCalled();
+  });
+});
+
 describe('AI disabled', () => {
   it('refuses generation with reason DISABLED and makes no calls', async () => {
     vi.spyOn(logger, 'info').mockImplementation(() => {});
@@ -128,11 +186,11 @@ describe('AI disabled', () => {
 
 describe('createAiServiceFromConfig', () => {
   it('is disabled by default', () => {
-    expect(createAiServiceFromConfig(buildTestConfig())).toMatchObject({ enabled: false, providerName: 'disabled' });
+    expect(createAiServiceFromConfig(buildTestConfig(), { cache: createCache(createInMemoryRedis()) })).toMatchObject({ enabled: false, providerName: 'disabled' });
   });
 
   it('uses Ollama with the configured model when enabled', () => {
-    const ai = createAiServiceFromConfig(buildTestConfig({ AI_ENABLED: 'true', OLLAMA_MODEL: 'qwen2.5:7b' }));
+    const ai = createAiServiceFromConfig(buildTestConfig({ AI_ENABLED: 'true', OLLAMA_MODEL: 'qwen2.5:7b' }), { cache: createCache(createInMemoryRedis()) });
     expect(ai).toMatchObject({ enabled: true, providerName: 'ollama', model: 'qwen2.5:7b' });
   });
 });

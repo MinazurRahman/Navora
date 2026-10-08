@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { buildTestApp, buildTestConfig, createInMemoryRateLimiter } from '../helpers/testApp.js';
+import { buildTestApp, buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from '../helpers/testApp.js';
+import { createCache } from '../../src/integrations/redis/cache.js';
+import { CACHE_TTL } from '../../src/config/cache.js';
 import { createTokenService } from '../../src/modules/auth/token.service.js';
 import { createAiService } from '../../src/integrations/ai/index.js';
 
@@ -128,5 +130,20 @@ describe('GET /api/v1/ai/trip-assistant/status', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ enabled: true, available: false, reason: 'UNAVAILABLE' });
     expect(JSON.stringify(res.body)).not.toMatch(/ollama|llama|11434|10\.0\.0\.5|ECONNREFUSED/i);
+  });
+
+  it('frequent polling reaches the AI provider once per cache TTL, and keeps the general limit', async () => {
+    let checks = 0;
+    const provider = { name: 'ollama', model: 'llama3.2:3b', generate: async () => ({}), checkHealth: async () => { checks += 1; } };
+    const cache = createCache(createInMemoryRedis());
+    const rateLimiter = createInMemoryRateLimiter();
+    const app = buildTestApp({ cache, rateLimiter, aiService: createAiService({ provider, cache, statusTtlSeconds: CACHE_TTL.aiStatus }) });
+
+    for (let i = 0; i < 10; i += 1) {
+      const res = await status(app);
+      expect(res.body.data).toEqual({ enabled: true, available: true });
+    }
+    expect(checks).toBe(1);
+    expect(rateLimiter.calls.filter((c) => c.policyName === 'general')).toHaveLength(10);
   });
 });

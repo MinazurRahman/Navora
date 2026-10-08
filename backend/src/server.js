@@ -27,7 +27,7 @@ const app = createApp({
   rateLimiter: createUpstashRateLimiter(redis, RATE_LIMIT_POLICIES),
   cache,
   mapService: createMapServiceFromConfig(env, { cache }),
-  aiService: createAiServiceFromConfig(env),
+  aiService: createAiServiceFromConfig(env, { cache }),
 });
 
 const server = http.createServer(app);

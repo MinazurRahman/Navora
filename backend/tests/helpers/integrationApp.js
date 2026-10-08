@@ -6,6 +6,7 @@ import { createLifecycle } from '../../src/shared/lifecycle.js';
 import { createCache } from '../../src/integrations/redis/cache.js';
 import { createEstimateProvider, createMapService, createMapServiceFromConfig } from '../../src/integrations/maps/index.js';
 import { createAiService, createAiServiceFromConfig } from '../../src/integrations/ai/index.js';
+import { CACHE_TTL } from '../../src/config/cache.js';
 import { PLANNING_CONFIG } from '../../src/config/planning.js';
 import { buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
@@ -34,7 +35,9 @@ export async function createIntegrationApp({ mapProvider, aiProvider } = {}) {
     rateLimiter: createInMemoryRateLimiter(),
     cache,
     mapService,
-    aiService: aiProvider ? createAiService({ provider: aiProvider }) : createAiServiceFromConfig(config),
+    aiService: aiProvider
+      ? createAiService({ provider: aiProvider, cache, statusTtlSeconds: CACHE_TTL.aiStatus })
+      : createAiServiceFromConfig(config, { cache }),
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.

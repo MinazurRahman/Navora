@@ -29,7 +29,9 @@ export function aiUnavailableError(reason = 'UNAVAILABLE') {
   return new ServiceUnavailableError('The AI assistant is temporarily unavailable', { reason }, 'AI_UNAVAILABLE');
 }
 
-export function createAiService({ provider }) {
+// cache (optional): shared cache-aside (integrations/redis/cache.js). When given, health checks
+// are cached for statusTtlSeconds, so a polled status endpoint does not hit the provider each time.
+export function createAiService({ provider, cache, statusTtlSeconds }) {
   const enabled = provider.name !== 'disabled';
 
   function logFailure(err, operation) {
@@ -44,6 +46,17 @@ export function createAiService({ provider }) {
   }
 
   const kindOf = (err) => (err instanceof AiProviderError ? err.kind : AI_ERROR.UNAVAILABLE);
+
+  // Never throws. Coarse result only, so it is safe to cache and share between users.
+  async function checkHealth(signal) {
+    try {
+      await provider.checkHealth({ signal });
+      return { enabled: true, available: true };
+    } catch (err) {
+      logFailure(err, 'health');
+      return { enabled: true, available: false, reason: publicReason(kindOf(err)) };
+    }
+  }
 
   return {
     enabled,
@@ -64,16 +77,13 @@ export function createAiService({ provider }) {
       }
     },
 
-    // Never throws: { enabled, available, reason? } with a coarse reason only.
+    // Never throws: { enabled, available, reason? } with a coarse reason only. Unavailable
+    // results are cached too: a down provider must not be probed on every poll. If Redis is
+    // unreachable, getOrSet falls back to a direct check (bounded by the provider's health timeout).
     async status({ signal } = {}) {
       if (!enabled) return { enabled: false, available: false, reason: 'DISABLED' };
-      try {
-        await provider.checkHealth({ signal });
-        return { enabled: true, available: true };
-      } catch (err) {
-        logFailure(err, 'health');
-        return { enabled: true, available: false, reason: publicReason(kindOf(err)) };
-      }
+      if (!cache) return checkHealth(signal);
+      return cache.getOrSet(`ai:status:${provider.name}:${provider.model}`, statusTtlSeconds, () => checkHealth(signal));
     },
   };
 }

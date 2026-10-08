@@ -158,7 +158,7 @@ export function buildTestApp({
   rateLimiter = createInMemoryRateLimiter(),
   cache = createCache(createInMemoryRedis()),
   mapService = createMapServiceFromConfig(config, { cache }),
-  aiService = createAiServiceFromConfig(config), // disabled unless config enables it
+  aiService = createAiServiceFromConfig(config, { cache }), // disabled unless config enables it
 } = {}) {
   return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService });
 }
