@@ -20,6 +20,12 @@ export const RATE_LIMIT_POLICIES = Object.freeze({
   // Itinerary generation/regeneration and route optimization: calls a paid routing API,
   // so it fails closed (decision confirmed 2026-10-01).
   routing: { limit: 10, window: '1 m', failOpen: false },
+  // AI Trip Assistant, per user. A local model is CPU-heavy and shared by every instance,
+  // so both limits fail closed.
+  assistant: { limit: 10, window: '1 m', failOpen: false },
+  assistantDaily: { limit: 100, window: '1 d', failOpen: false },
+  // Shared by all users (one bucket): caps total AI load whatever the number of accounts.
+  assistantGlobal: { limit: 60, window: '1 m', failOpen: false },
 });
 
 // Our own timeout. Upstash's built-in one ALLOWS the request on timeout, which would

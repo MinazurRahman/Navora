@@ -208,6 +208,51 @@ Failures return **422**: `INSUFFICIENT_MATCHING_PLACES` (`emptyDays`, `excludedB
 Requirements are never relaxed automatically. Warnings in the itinerary:
 `TRAVEL_TIMES_ESTIMATED`, `START_DATE_ASSUMED`, `OPENING_HOURS_UNVERIFIED`, `ENTRY_FEE_UNKNOWN`.
 
+### AI Trip Assistant (optional)
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/ai/trip-assistant` | Bearer | `{ itineraryId \| tripId, task, question?, placeId?, dayNumber? }` → AI answer about **your** itinerary |
+| GET | `/api/v1/ai/trip-assistant/status` | Bearer | `{ enabled, available, reason? }`: provider reachable and model installed (cached 15 s); does **not** run the model, so it cannot promise an answer within `AI_TIMEOUT_MS` |
+
+Tasks: `summarize`, `explain_itinerary`, `explain_place`, `explain_warnings`,
+`suggest_adjustments`, `question`. Read-only: it explains Navora's own data and changes
+nothing; recommendation, itinerary and routing results stay authoritative. Suggestions are
+advice the user can apply with `PATCH /itineraries/:id` (checked there like any edit).
+
+- Off by default (`AI_ENABLED=false`). Runs on a local/self-hosted
+  [Ollama](https://ollama.com) — free, no API key: `ollama pull llama3.2:3b`, then set
+  `AI_ENABLED=true` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `AI_TIMEOUT_MS`, `AI_MAX_OUTPUT_TOKENS`,
+  `AI_CONTEXT_WINDOW_TOKENS`, `AI_MAX_CONCURRENT` in `.env.example`). Ollama has no
+  authentication: keep it on localhost or a private network, ideally not on the API host
+  (production logs a warning for plain `http` to a non-private host).
+- The model only sees a small context built through the owning services (other users'
+  trips/itineraries are 404): no IDs, start location, address or user data. It is trimmed to
+  fit `AI_CONTEXT_WINDOW_TOKENS` (sent to Ollama as `num_ctx`); place descriptions are only
+  included for the place asked about. Place references in the reply are checked against that
+  context; links, emails and phone numbers are removed on a best-effort basis (a heuristic, see
+  `output.js`); answers are capped at 2000 characters.
+- **Moderators**: approved place names and descriptions are shown to the AI (as data); reject
+  submissions that contain instructions, links or contact details.
+- Load: per-user limits, a shared `assistantGlobal` limit, and at most `AI_MAX_CONCURRENT` AI
+  calls per instance (more → 503).
+- AI disabled, busy, unreachable, too slow or unusable reply → 503 `AI_UNAVAILABLE`
+  (`details.reason`: `DISABLED`, `TIMEOUT`, `UNAVAILABLE`); trip without an itinerary → 422
+  `ITINERARY_NOT_GENERATED`; itinerary too large even when trimmed → 422
+  `ASSISTANT_CONTEXT_TOO_LARGE` (ask about one day or place). Nothing else in Navora depends on it.
+- **Deployment (Ollama)**: `status.available` means the configured Ollama is reachable and the
+  configured model is installed — not that the model is loaded in memory or that an answer will
+  finish within `AI_TIMEOUT_MS`. On slower hosts the first model load alone can take longer than
+  that timeout, and the cancelled request also cancels the load, so the assistant keeps answering
+  503 `TIMEOUT`. Keep the model loaded on the Ollama host (`OLLAMA_KEEP_ALIVE=-1`) or warm it up
+  once after Ollama starts; do not raise Navora's HTTP/AI timeouts to cover model loading. Size
+  `AI_MAX_CONCURRENT` (per instance) and the shared `assistantGlobal` limit to the Ollama host's
+  measured throughput and memory. For interactive answers, use a GPU or stronger host, or a
+  smaller model (`OLLAMA_MODEL`).
+- Code: `src/integrations/ai` (provider abstraction: `disabled`, `ollama`),
+  `src/modules/assistant` (context, prompt, output checks, service, routes). Tests use a fake
+  provider; Ollama is never needed to run them.
+
 ### Authentication
 
 - Send `Authorization: Bearer <accessToken>`. Access tokens are JWTs valid for 15 minutes.
@@ -232,6 +277,9 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `reviews` | `POST /places/:id/reviews`, per user | 30 / day | allow |
 | `recommendations` | `POST /recommendations`, per user or IP | 20 / min | allow |
 | `routing` | itinerary generate/edit/regenerate, `POST /routing/optimize`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistant` | `POST /ai/trip-assistant`, per user | 10 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistantDaily` | `POST /ai/trip-assistant`, per user | 100 / day | 503 `RATE_LIMIT_UNAVAILABLE` |
+| `assistantGlobal` | `POST /ai/trip-assistant`, all users together | 60 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).

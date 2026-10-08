@@ -66,6 +66,24 @@ const envSchema = z.object({
   MAP_TIMEOUT_MS: intInRange(500, 30_000).default(5_000),
   // On provider failure: "true" = use flagged estimates; "false" = fail with 503.
   MAP_FALLBACK_TO_ESTIMATE: z.enum(['true', 'false']).default('true'),
+
+  // AI assistant. Off by default: the app and CI run without any AI service.
+  AI_ENABLED: z.enum(['true', 'false']).default('false'),
+  AI_PROVIDER: z.enum(['ollama']).default('ollama'),
+  // Local/self-hosted Ollama. It has no authentication: never point this at a public host.
+  OLLAMA_BASE_URL: z
+    .string()
+    .regex(/^https?:\/\/[^/\s]+$/, 'must be a base URL like http://localhost:11434 (no path or trailing slash)')
+    .default('http://localhost:11434'),
+  OLLAMA_MODEL: z.string().regex(/^[A-Za-z0-9._:/-]{1,100}$/, 'must be an Ollama model tag like llama3.2:3b').default('llama3.2:3b'),
+  // Upper bound for one AI call; keep below HTTP_KEEP_ALIVE_TIMEOUT_MS and the load balancer's timeout.
+  AI_TIMEOUT_MS: intInRange(1_000, 60_000).default(30_000),
+  AI_MAX_OUTPUT_TOKENS: intInRange(64, 2_048).default(600),
+  // Model context window (prompt + answer). Prompts are trimmed to fit; a provider would
+  // otherwise silently cut them, dropping the data the answer must be grounded in.
+  AI_CONTEXT_WINDOW_TOKENS: intInRange(2_048, 131_072).default(8_192),
+  // AI calls one instance runs at once; more are refused with 503. Match the AI host's capacity.
+  AI_MAX_CONCURRENT: intInRange(1, 32).default(2),
 });
 
 export function parseEnv(source) {
@@ -81,6 +99,9 @@ export function parseEnv(source) {
   }
   if (e.MAP_PROVIDER !== 'estimate' && !e.MAP_API_KEY) {
     throw new Error(`Invalid environment configuration:\n  - MAP_API_KEY: required when MAP_PROVIDER=${e.MAP_PROVIDER}`);
+  }
+  if (e.AI_MAX_OUTPUT_TOKENS * 2 > e.AI_CONTEXT_WINDOW_TOKENS) {
+    throw new Error('Invalid environment configuration:\n  - AI_MAX_OUTPUT_TOKENS: must be at most half of AI_CONTEXT_WINDOW_TOKENS (the rest is for the prompt)');
   }
 
   return Object.freeze({
@@ -122,7 +143,27 @@ export function parseEnv(source) {
       timeoutMs: e.MAP_TIMEOUT_MS,
       fallbackToEstimate: e.MAP_FALLBACK_TO_ESTIMATE === 'true',
     }),
+    ai: Object.freeze({
+      enabled: e.AI_ENABLED === 'true',
+      provider: e.AI_PROVIDER,
+      timeoutMs: e.AI_TIMEOUT_MS,
+      maxOutputTokens: e.AI_MAX_OUTPUT_TOKENS,
+      contextWindowTokens: e.AI_CONTEXT_WINDOW_TOKENS,
+      maxConcurrent: e.AI_MAX_CONCURRENT,
+      ollama: Object.freeze({ baseUrl: e.OLLAMA_BASE_URL, model: e.OLLAMA_MODEL }),
+    }),
   });
+}
+
+// Loopback, private-network and single-label (e.g. Docker service) host names.
+function isPrivateHost(hostname) {
+  const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '::1') return true;
+  if (!host.includes('.') && !host.includes(':')) return true;
+  if (/\.(internal|local|lan)$/.test(host)) return true;
+  const ip = host.split('.').map(Number);
+  if (ip.length !== 4 || ip.some((n) => !Number.isInteger(n))) return false;
+  return ip[0] === 127 || ip[0] === 10 || (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) || (ip[0] === 192 && ip[1] === 168);
 }
 
 // Settings that are valid but almost certainly wrong in production. Warnings, not errors:
@@ -141,6 +182,12 @@ export function productionWarnings(config) {
   }
   if (config.maps.provider === 'estimate') {
     warnings.push('MAP_PROVIDER=estimate: itineraries use distance-based travel-time estimates, not road routing.');
+  }
+  if (config.ai.enabled) {
+    const { protocol, hostname } = new URL(config.ai.ollama.baseUrl);
+    if (protocol === 'http:' && !isPrivateHost(hostname)) {
+      warnings.push(`OLLAMA_BASE_URL=${config.ai.ollama.baseUrl}: plain http to a non-private host. Ollama has no authentication and trip details would travel unencrypted; keep it on localhost or a private network.`);
+    }
   }
   if (config.logLevel === 'debug' || config.logLevel === 'trace') {
     warnings.push(`LOG_LEVEL=${config.logLevel}: very verbose logging in production.`);

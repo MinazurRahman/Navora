@@ -4,6 +4,7 @@ import { createApp } from '../../src/app.js';
 import { createLifecycle } from '../../src/shared/lifecycle.js';
 import { createCache } from '../../src/integrations/redis/cache.js';
 import { createMapServiceFromConfig } from '../../src/integrations/maps/index.js';
+import { createAiServiceFromConfig } from '../../src/integrations/ai/index.js';
 
 // Stand-in for the Upstash client (get/set/del/incr). Values round-trip through JSON like
 // the real client, so tests see the same shapes (Dates become strings, no shared objects).
@@ -157,6 +158,7 @@ export function buildTestApp({
   rateLimiter = createInMemoryRateLimiter(),
   cache = createCache(createInMemoryRedis()),
   mapService = createMapServiceFromConfig(config, { cache }),
+  aiService = createAiServiceFromConfig(config, { cache }), // disabled unless config enables it
 } = {}) {
-  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService });
+  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService });
 }

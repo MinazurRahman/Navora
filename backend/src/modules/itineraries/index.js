@@ -75,5 +75,5 @@ export function createItinerariesModule({ itinerariesRepository, tripsService, p
     sendSuccess(res, await service.delete(req.validated.params.id, req.user));
   });
 
-  return { router };
+  return { router, itinerariesService: service };
 }

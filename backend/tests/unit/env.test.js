@@ -95,6 +95,63 @@ describe('parseEnv', () => {
     expect(productionWarnings(good)).toEqual([]);
   });
 
+  it('disables AI by default, with local Ollama defaults', () => {
+    expect(parseEnv(base).ai).toEqual({
+      enabled: false,
+      provider: 'ollama',
+      timeoutMs: 30_000,
+      maxOutputTokens: 600,
+      contextWindowTokens: 8_192,
+      maxConcurrent: 2,
+      ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2:3b' },
+    });
+  });
+
+  it('parses the AI settings', () => {
+    const { ai } = parseEnv({
+      ...base,
+      AI_ENABLED: 'true',
+      OLLAMA_BASE_URL: 'http://10.0.0.5:11434',
+      OLLAMA_MODEL: 'qwen2.5:7b',
+      AI_TIMEOUT_MS: '45000',
+      AI_MAX_OUTPUT_TOKENS: '800',
+    });
+    expect(ai).toMatchObject({ enabled: true, timeoutMs: 45_000, maxOutputTokens: 800, ollama: { baseUrl: 'http://10.0.0.5:11434', model: 'qwen2.5:7b' } });
+  });
+
+  it('rejects invalid AI settings', () => {
+    expect(() => parseEnv({ ...base, AI_ENABLED: 'yes' })).toThrow(/AI_ENABLED/);
+    expect(() => parseEnv({ ...base, AI_PROVIDER: 'openai' })).toThrow(/AI_PROVIDER/);
+    expect(() => parseEnv({ ...base, OLLAMA_BASE_URL: 'http://localhost:11434/' })).toThrow(/OLLAMA_BASE_URL/);
+    expect(() => parseEnv({ ...base, OLLAMA_BASE_URL: 'localhost:11434' })).toThrow(/OLLAMA_BASE_URL/);
+    expect(() => parseEnv({ ...base, OLLAMA_MODEL: 'bad model; rm -rf' })).toThrow(/OLLAMA_MODEL/);
+    // Above the HTTP keep-alive timeout an AI call could outlive its connection.
+    expect(() => parseEnv({ ...base, AI_TIMEOUT_MS: '120000' })).toThrow(/AI_TIMEOUT_MS/);
+    expect(() => parseEnv({ ...base, AI_MAX_OUTPUT_TOKENS: '100000' })).toThrow(/AI_MAX_OUTPUT_TOKENS/);
+  });
+
+  it('parses the AI context window and concurrency limits', () => {
+    expect(parseEnv({ ...base, AI_CONTEXT_WINDOW_TOKENS: '16384', AI_MAX_CONCURRENT: '4' }).ai).toMatchObject({ contextWindowTokens: 16_384, maxConcurrent: 4 });
+    expect(() => parseEnv({ ...base, AI_CONTEXT_WINDOW_TOKENS: '1024' })).toThrow(/AI_CONTEXT_WINDOW_TOKENS/);
+    expect(() => parseEnv({ ...base, AI_MAX_CONCURRENT: '0' })).toThrow(/AI_MAX_CONCURRENT/);
+    expect(() => parseEnv({ ...base, AI_MAX_CONCURRENT: '100' })).toThrow(/AI_MAX_CONCURRENT/);
+  });
+
+  it('requires room for the prompt: answer tokens at most half the context window', () => {
+    expect(() => parseEnv({ ...base, AI_CONTEXT_WINDOW_TOKENS: '2048', AI_MAX_OUTPUT_TOKENS: '1500' })).toThrow(/AI_MAX_OUTPUT_TOKENS/);
+    expect(parseEnv({ ...base, AI_CONTEXT_WINDOW_TOKENS: '2048', AI_MAX_OUTPUT_TOKENS: '1024' }).ai.maxOutputTokens).toBe(1_024);
+  });
+
+  it('warns in production when AI talks plain http to a non-private Ollama host', () => {
+    const prod = (url, enabled = 'true') => productionWarnings(parseEnv({ ...base, NODE_ENV: 'production', AI_ENABLED: enabled, OLLAMA_BASE_URL: url })).join('\n');
+    expect(prod('http://203.0.113.7:11434')).toContain('OLLAMA_BASE_URL=http://203.0.113.7:11434: plain http to a non-private host');
+    expect(prod('http://ollama.example.com:11434')).toMatch(/OLLAMA_BASE_URL/);
+    for (const safe of ['http://localhost:11434', 'http://127.0.0.1:11434', 'http://[::1]:11434', 'http://10.0.0.5:11434', 'http://172.20.1.2:11434', 'http://192.168.1.9:11434', 'http://ollama:11434', 'http://ai.internal:11434', 'https://ollama.example.com']) {
+      expect(prod(safe), safe).not.toMatch(/OLLAMA_BASE_URL/);
+    }
+    expect(prod('http://203.0.113.7:11434', 'false')).not.toMatch(/OLLAMA_BASE_URL/);
+  });
+
   it('returns a frozen config object', () => {
     const config = parseEnv(base);
     expect(Object.isFrozen(config)).toBe(true);

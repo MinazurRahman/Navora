@@ -17,11 +17,12 @@ import { createRecommendationsModule } from './modules/recommendations/index.js'
 import { createTripsModule } from './modules/trips/index.js';
 import { createItinerariesModule } from './modules/itineraries/index.js';
 import { createRoutingModule } from './modules/routing/index.js';
+import { createAssistantModule } from './modules/assistant/index.js';
 import { createV1Router } from './routes/v1.js';
 
 // Builds the Express app from its dependencies without listening on a port,
 // so tests can create it with fakes. Holds no per-user state: safe to run N copies.
-export function createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService }) {
+export function createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService }) {
   // Services and modules
   const tokenService = createTokenService(config.auth);
   const { authenticate, optionalAuth, requireRole } = createAuthMiddleware({ tokenService });
@@ -90,6 +91,17 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache,
     rateLimit,
   });
 
+  const assistantModule = createAssistantModule({
+    itinerariesService: itinerariesModule.itinerariesService,
+    tripsService: tripsModule.tripsService,
+    placesService: placesModule.placesService,
+    recommendationsService: recommendationsModule.recommendationsService,
+    aiService,
+    aiConfig: config.ai,
+    authenticate,
+    rateLimit,
+  });
+
   const app = express();
 
   app.set('trust proxy', config.trustProxy);
@@ -118,6 +130,7 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache,
       tripsRouter: tripsModule.router,
       itinerariesRouter: itinerariesModule.router,
       routingRouter: routingModule.router,
+      aiRouter: assistantModule.router,
     }),
   );
 
