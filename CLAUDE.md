@@ -129,7 +129,8 @@ Response envelopes (`shared/http/response.js`, `middleware/error.middleware.js`)
 - Every input (params, query, body) is validated with zod via `validate({ params, query, body })`;
   parsed values land on `req.validated`.
 - Reuse `shared/validation/common.schemas.js` (`idParamSchema`, `paginationQuerySchema`,
-  `queryNumber`, coordinate schemas). Page ≤ 1000, limit ≤ 50.
+  `queryNumber`, coordinate schemas, `maxDecimals` for numbers stored in `numeric(p, s)`
+  columns). Page ≤ 1000, limit ≤ 50.
 - PATCH schemas have **no defaults** (a default would overwrite saved data).
 - Cross-entity checks (slugs exist, places approved and visible) happen in services and
   throw `ValidationError` with `details: [{ location, path, message }]`.
@@ -181,7 +182,11 @@ Response envelopes (`shared/http/response.js`, `middleware/error.middleware.js`)
   Provider failures (timeout, rate limit, outage, invalid route, missing data, unsupported
   mode) fall back to **flagged estimates**, or 503 `ROUTING_UNAVAILABLE` when
   `MAP_FALLBACK_TO_ESTIMATE=false`.
-- Adapter rules: `AbortSignal.timeout`, one retry only for `UNAVAILABLE`, max 50 points per call.
+- Adapter rules: `AbortSignal.timeout`, one retry only for `UNAVAILABLE`, max 50 points per call;
+  honour the optional `{ signal }` passed by `mapService` (the request's routing budget).
+- A request making several provider calls uses `mapService.forRequest()`: one budget of
+  `MAP_REQUEST_BUDGET_MS` provider time, and no further provider calls in that request after a
+  `TIMEOUT`, `UNAVAILABLE` or `RATE_LIMITED` (flagged estimates with that reason instead).
 - Never log coordinates: provider error text goes through `maskCoordinates`.
 - Route ordering is a heuristic (nearest neighbour + 2-opt); `globallyOptimal` is always `false`.
   `POST /routing/optimize` never drops user-chosen places; infeasible days return `feasible: false`.
