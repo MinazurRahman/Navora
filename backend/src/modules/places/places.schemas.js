@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   latitudeSchema,
   longitudeSchema,
+  maxDecimals,
   paginationQuerySchema,
   queryNumber,
 } from '../../shared/validation/common.schemas.js';
@@ -52,8 +53,8 @@ const placeFields = {
   location: locationSchema,
   address: optionalText(300),
   city: optionalText(100),
-  // null = unknown, 0 = free
-  entryFee: z.number().min(0).max(1_000_000).nullable().optional(),
+  // null = unknown, 0 = free. numeric(10, 2) column.
+  entryFee: z.number().min(0).max(1_000_000).refine(...maxDecimals(2)).nullable().optional(),
   typicalVisitMinutes: z.number().int().min(5).max(720).nullable().optional(),
   parkingAvailable: facilityStatus.optional(),
   petFriendly: facilityStatus.optional(),

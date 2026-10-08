@@ -19,11 +19,18 @@ describe.skipIf(!configured)('Upstash Redis (real service)', () => {
   });
 
   it('enforces a sliding-window limit shared through Redis', async () => {
+    const windowMs = 30_000;
     const policies = { itest: { limit: 2, window: '30 s', failOpen: false } };
     // Two separate limiter instances = two app instances behind a load balancer.
     const instanceA = createUpstashRateLimiter(redis, policies);
     const instanceB = createUpstashRateLimiter(redis, policies);
     const id = `ip:test-${runId}`;
+
+    // The sliding window rounds the previous window's weighted count down, so requests that
+    // straddle a window boundary may legitimately let a third one through. Start well inside
+    // a window so all three land in the same one.
+    const msLeft = windowMs - (Date.now() % windowMs);
+    if (msLeft < 5_000) await new Promise((resolve) => setTimeout(resolve, msLeft + 100));
 
     expect((await instanceA.limit('itest', id)).success).toBe(true);
     expect((await instanceB.limit('itest', id)).success).toBe(true);
@@ -32,7 +39,7 @@ describe.skipIf(!configured)('Upstash Redis (real service)', () => {
     expect(third.success).toBe(false);
     expect(third.limit).toBe(2);
     expect(third.reset).toBeGreaterThan(Date.now());
-  });
+  }, 15_000);
 
   it('caches objects and invalidates a namespace', async () => {
     const cache = createCache(redis);

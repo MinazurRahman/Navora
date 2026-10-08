@@ -60,6 +60,8 @@ describe('OpenRouteService adapter', () => {
     ['429', () => json(429, { error: { message: 'Quota exceeded' } }), MAP_ERROR.RATE_LIMITED, 1],
     ['404 (no route)', () => json(404, { error: { code: 2010, message: 'Could not find routable point' } }), MAP_ERROR.INVALID_ROUTE, 1],
     ['400 (bad request)', () => json(400, { error: { message: 'Invalid coordinates' } }), MAP_ERROR.INVALID_ROUTE, 1],
+    ['401 (bad API key, not retried)', () => json(401, { error: 'Access to this API has been disallowed' }), MAP_ERROR.UNAVAILABLE, 1],
+    ['403 (key blocked, not retried)', () => json(403, { error: 'Access to this API has been disallowed' }), MAP_ERROR.UNAVAILABLE, 1],
     ['503 (retried once)', () => json(503, {}), MAP_ERROR.UNAVAILABLE, 2],
     ['a network error (retried once)', () => { throw new TypeError('fetch failed'); }, MAP_ERROR.UNAVAILABLE, 2],
     ['a non-JSON success', () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('bad json'); } }), MAP_ERROR.UNAVAILABLE, 2],

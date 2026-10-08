@@ -1,10 +1,12 @@
 const hhmm = (time) => time.slice(0, 5); // pg returns "HH:MM:SS"
 const toMinutes = (seconds) => Math.round(seconds / 60);
 const clockMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
-// Departure to return: travel + visits + buffers + any waiting for opening time.
-const plannedMinutes = (day) => clockMinutes(day.end_time) - clockMinutes(day.start_time);
+// Departure to return: travel + visits + buffers + any waiting for opening time. A day the
+// user emptied is stored as a 1-minute span (the table requires start < end): 0 planned.
+const plannedMinutes = (day, dayStops) => (dayStops.length === 0 ? 0 : clockMinutes(day.end_time) - clockMinutes(day.start_time));
 
 export function toItineraryDto({ itinerary, days, stops }) {
+  const stopsOf = (day) => stops.filter((stop) => stop.day_id === day.id);
   return {
     id: itinerary.id,
     tripId: itinerary.trip_id,
@@ -20,7 +22,7 @@ export function toItineraryDto({ itinerary, days, stops }) {
       distanceMeters: itinerary.total_distance_m,
       travelMinutes: toMinutes(itinerary.total_travel_seconds),
       visitMinutes: itinerary.total_visit_minutes,
-      plannedMinutes: days.reduce((sum, day) => sum + plannedMinutes(day), 0),
+      plannedMinutes: days.reduce((sum, day) => sum + plannedMinutes(day, stopsOf(day)), 0),
       // Known entry fees × party size; places with unknown fees are listed in warnings.
       estimatedCost: itinerary.estimated_cost === null ? null : Number(itinerary.estimated_cost),
       currency: itinerary.currency,
@@ -34,12 +36,11 @@ export function toItineraryDto({ itinerary, days, stops }) {
         distanceMeters: day.total_distance_m,
         travelMinutes: toMinutes(day.total_travel_seconds),
         visitMinutes: day.total_visit_minutes,
-        plannedMinutes: plannedMinutes(day),
+        plannedMinutes: plannedMinutes(day, stopsOf(day)),
       },
       // Encoded polyline (precision 5) of the road route; null when only estimates exist.
       routePolyline: day.route_polyline,
-      stops: stops
-        .filter((stop) => stop.day_id === day.id)
+      stops: stopsOf(day)
         .map((stop) => ({
           order: stop.visit_order,
           place: {

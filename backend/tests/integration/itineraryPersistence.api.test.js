@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createIntegrationApp, testDatabaseUrl } from '../helpers/integrationApp.js';
+import { createItinerariesRepository } from '../../src/modules/itineraries/index.js';
 
 const MONDAY = '2026-10-05';
 const START = { latitude: 23.75, longitude: 90.39 };
@@ -134,6 +135,16 @@ describe.skipIf(!testDatabaseUrl)('Itinerary persistence (PostGIS)', () => {
       expect(after.totals.estimatedCost).toBe(after.days.flatMap((d) => d.stops).reduce((sum, s) => sum + s.estimatedCost, 0));
     });
 
+    it('an emptied day plans no time and adds none to the total', async () => {
+      const { itinerary } = await newItinerary();
+      const res = await as(owner).patch(`/api/v1/itineraries/${itinerary.id}`, { days: [{ dayNumber: 2, placeIds: [] }] });
+      expect(res.status).toBe(200);
+      const [day1, day2] = res.body.data.days;
+      expect(day2).toMatchObject({ stops: [], totals: { plannedMinutes: 0, travelMinutes: 0, visitMinutes: 0 } });
+      expect(day1.totals.plannedMinutes).toBeGreaterThan(0);
+      expect(res.body.data.totals.plannedMinutes).toBe(day1.totals.plannedMinutes);
+    });
+
     it('adds a new place and can re-optimise the order on request', async () => {
       const { itinerary } = await newItinerary({ durationDays: 1 });
       const extra = await addPlace('Added later', 23.7520, 90.3900); // created after generation
@@ -214,6 +225,38 @@ describe.skipIf(!testDatabaseUrl)('Itinerary persistence (PostGIS)', () => {
       expect((await as(owner).get(`/api/v1/itineraries/${v2.id}`)).status).toBe(404);
       expect((await as(owner).get(`/api/v1/itineraries/${v1.id}`)).body.data.isCurrent).toBe(true);
       expect((await as(owner).get(`/api/v1/trips/${trip.id}`)).body.data.currentItineraryId).toBe(v1.id);
+    });
+
+    it('deleting the current version while a new one is generated leaves exactly one current version', async () => {
+      const { trip, itinerary: v1 } = await newItinerary();
+      const v2 = (await as(owner).post(`/api/v1/itineraries/${v1.id}/regenerate`)).body.data;
+      const repository = createItinerariesRepository(ctx.db);
+
+      // The delete's transaction stays open until the generation is blocked behind it.
+      let release;
+      const held = new Promise((resolve) => {
+        release = resolve;
+      });
+      const deleting = ctx.db.transaction(async (trx) => {
+        await repository.delete(v2.id, trx);
+        await held;
+      });
+      const generating = as(owner).post('/api/v1/itineraries/generate', { tripId: trip.id }).then((res) => res);
+
+      const deadline = Date.now() + 5_000;
+      while (Date.now() < deadline) {
+        const [{ waiting }] = (await ctx.db.raw('SELECT count(*)::int AS waiting FROM pg_locks WHERE NOT granted')).rows;
+        if (waiting > 0) break;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      release();
+      await deleting;
+
+      const res = await generating;
+      expect(res.status).toBe(201);
+      const current = await ctx.db('itineraries').where({ trip_id: trip.id, is_current: true }).select('id');
+      expect(current).toEqual([{ id: res.body.data.id }]);
+      expect((await as(owner).get(`/api/v1/itineraries/${v1.id}`)).body.data.isCurrent).toBe(false);
     });
 
     it('deleting the only version leaves the trip without an itinerary', async () => {

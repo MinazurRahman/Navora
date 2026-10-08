@@ -22,6 +22,16 @@ export const queryNumber = () => z.preprocess((v) => (v === '' ? undefined : v),
 export const latitudeSchema = queryNumber().pipe(z.number().min(-90).max(90));
 export const longitudeSchema = queryNumber().pipe(z.number().min(-180).max(180));
 
+// For numbers stored in numeric(p, s) columns: PostgreSQL silently rounds extra decimals, so
+// an entry fee of 0.004 would be saved as 0.00 ("free"). The tolerance absorbs float noise.
+export const maxDecimals = (decimals) => [
+  (value) => {
+    const scaled = value * 10 ** decimals;
+    return Math.abs(scaled - Math.round(scaled)) < 1e-6;
+  },
+  `must have at most ${decimals} decimal place${decimals === 1 ? '' : 's'}`,
+];
+
 export const coordinatesSchema = z.object({
   latitude: latitudeSchema,
   longitude: longitudeSchema,

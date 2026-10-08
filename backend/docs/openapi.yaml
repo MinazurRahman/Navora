@@ -1764,7 +1764,7 @@ components:
         location: { $ref: '#/components/schemas/Location' }
         address: { type: [string, 'null'], maxLength: 300 }
         city: { type: [string, 'null'], maxLength: 100 }
-        entryFee: { type: [number, 'null'], minimum: 0, maximum: 1000000 }
+        entryFee: { type: [number, 'null'], minimum: 0, maximum: 1000000, description: 'null = unknown, 0 = free. At most 2 decimal places (400 otherwise).' }
         typicalVisitMinutes: { type: [integer, 'null'], minimum: 5, maximum: 720 }
         parkingAvailable: { $ref: '#/components/schemas/FacilityStatus' }
         petFriendly: { $ref: '#/components/schemas/FacilityStatus' }
@@ -1920,7 +1920,7 @@ components:
         parkingRequired: { type: boolean }
         wheelchairAccessRequired: { type: boolean }
         partySize: { type: integer, minimum: 1, maximum: 50 }
-        minimumRating: { type: [number, 'null'], minimum: 1, maximum: 5 }
+        minimumRating: { type: [number, 'null'], minimum: 1, maximum: 5, description: 'At most 1 decimal place (400 otherwise).' }
         interests: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' } }
         preferredCategories: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Slug' } }
         selectedPlaceIds: { type: array, maxItems: 30, items: { type: string, format: uuid }, description: Approved places that must be included. }

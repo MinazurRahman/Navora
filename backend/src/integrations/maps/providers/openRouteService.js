@@ -30,18 +30,22 @@ export function createOpenRouteServiceProvider({ apiKey, timeoutMs, baseUrl = 'h
 
     const detail = payload?.error?.message ?? `HTTP ${response.status}`;
     if (response.status === 429) throw new MapProviderError(MAP_ERROR.RATE_LIMITED, detail, { status: 429 });
+    // A wrong, expired or blocked MAP_API_KEY: the provider is unusable, the route is not invalid.
+    if (response.status === 401 || response.status === 403) {
+      throw new MapProviderError(MAP_ERROR.UNAVAILABLE, `API key rejected (HTTP ${response.status}): ${detail}`, { status: response.status });
+    }
     if (response.status >= 500) throw new MapProviderError(MAP_ERROR.UNAVAILABLE, detail, { status: response.status });
     // 400/404: unroutable points, no route between them, invalid coordinates.
     throw new MapProviderError(MAP_ERROR.INVALID_ROUTE, detail, { status: response.status });
   }
 
   // One retry for transient failures (timeouts and rate limits are not retried: that
-  // would only make the caller wait longer or burn more quota).
+  // would only make the caller wait longer or burn more quota; neither is a rejected key).
   async function postWithRetry(path, body) {
     try {
       return await post(path, body);
     } catch (err) {
-      if (err.kind !== MAP_ERROR.UNAVAILABLE) throw err;
+      if (err.kind !== MAP_ERROR.UNAVAILABLE || err.status === 401 || err.status === 403) throw err;
       return post(path, body);
     }
   }

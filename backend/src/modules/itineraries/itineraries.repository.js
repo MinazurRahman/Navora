@@ -52,8 +52,14 @@ export function createItinerariesRepository(db) {
     },
 
     // Deletes one version; if it was current, the newest remaining version becomes current.
+    // Locks the trip first, like createVersion: otherwise a generation running concurrently
+    // misses the version promoted here and fails on the one-current-per-trip index.
     async delete(id, trx) {
+      const target = await trx('itineraries').select('trip_id').where({ id }).first();
+      if (!target) return; // already deleted by a concurrent request
+      await trx('trips').where({ id: target.trip_id }).forUpdate().first();
       const itinerary = await trx('itineraries').where({ id }).forUpdate().first();
+      if (!itinerary) return;
       await trx('itineraries').where({ id }).delete();
       if (itinerary.is_current) {
         const newest = await trx('itineraries').where({ trip_id: itinerary.trip_id }).orderBy('version', 'desc').first();

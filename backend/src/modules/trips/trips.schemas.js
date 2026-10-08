@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { maxDecimals } from '../../shared/validation/common.schemas.js';
 import { timeOfDaySchema } from '../places/places.schemas.js';
 
 const slug = z.string().trim().toLowerCase().regex(/^[a-z0-9_]{1,50}$/, 'must be a slug like "history"');
@@ -30,7 +31,8 @@ const tripFields = {
   parkingRequired: z.boolean(),
   wheelchairAccessRequired: z.boolean(),
   partySize: z.number().int().min(1).max(50),
-  minimumRating: z.number().min(1).max(5).nullable(),
+  // numeric(2, 1) column: 4.25 would silently become a stricter 4.3.
+  minimumRating: z.number().min(1).max(5).refine(...maxDecimals(1)).nullable(),
   interests: uniqueSlugs,
   preferredCategories: uniqueSlugs,
   // Places the user picked: the planner must include them or explain why it cannot.
