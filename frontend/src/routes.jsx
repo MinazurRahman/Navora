@@ -1,4 +1,5 @@
 import { AppShell } from './components/AppShell.jsx';
+import { LoginPage, RegisterPage } from './features/auth/AuthPages.jsx';
 import { RequireAuth } from './features/auth/RequireAuth.jsx';
 import { NotFoundPage, PlaceholderPage, RouteErrorPage } from './pages/StatusPages.jsx';
 import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
@@ -15,8 +16,8 @@ export const routes = [
       { path: 'explore', element: soon('Explore', 'Search and filter approved places in Dhaka.') },
       { path: 'places/:placeId', element: soon('Place details', 'Details, opening hours and reviews.') },
       { path: 'community', element: soon('Community', 'Recently added places from the community.') },
-      { path: 'login', element: soon('Sign in', 'Sign-in is being built.') },
-      { path: 'register', element: soon('Create account', 'Registration is being built.') },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
       {
         element: <RequireAuth />,
         children: [
