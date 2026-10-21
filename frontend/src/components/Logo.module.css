@@ -1,0 +1,43 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-navy);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+.inline {
+  gap: var(--space-2);
+}
+
+.inline .mark {
+  width: 2.25rem;
+  height: auto;
+}
+
+.inline .wordmark {
+  font-size: var(--text-xl);
+  letter-spacing: 0.04em;
+}
+
+.stacked {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stacked .mark {
+  width: 6rem;
+  height: auto;
+}
+
+.stacked .wordmark {
+  font-size: var(--text-2xl);
+  letter-spacing: 0.06em;
+}
+
+.accent {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
