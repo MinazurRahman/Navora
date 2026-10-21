@@ -27,3 +27,9 @@ export function formatMinutes(minutes) {
   if (!h) return `${m} min`;
   return m ? `${h} h ${m} min` : `${h} h`;
 }
+
+// "YYYY-MM-DD" (a calendar date, no timezone) -> "Wednesday 21 October".
+const dayDate = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+export function formatDayDate(isoDate) {
+  return dayDate.format(new Date(`${isoDate}T00:00:00Z`));
+}

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, LocateFixed, Pencil, Sparkles } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -11,13 +11,15 @@ import { formatEntryFee } from '../../lib/format.js';
 import { useCategories, useTags } from '../catalogue/api.js';
 import { generateItinerary } from '../itineraries/api.js';
 import { useSavedPlaces } from '../saved/api.js';
-import { createTrip, updateTrip } from './api.js';
+import { ErrorState } from '../../components/ErrorState.jsx';
+import { createTrip, getTrip, updateTrip } from './api.js';
 import {
   MAX_DAYS,
   STEPS,
   TRAVEL_MODES,
   buildTripPayload,
   firstStepWithError,
+  formFromTrip,
   initialForm,
   toFormErrors,
   todayInDhaka,
@@ -35,6 +37,10 @@ const RATING_OPTIONS = [
   ['4', '4 stars and above'],
   ['4.5', '4.5 stars and above'],
 ];
+// Adds a saved value that is not one of the presets (e.g. a rating of 4.2 set elsewhere).
+const withCurrent = (options, value) =>
+  options.some(([v]) => v === value) ? options : [...options, [value, `${value} stars and above`]];
+
 const REQUIREMENTS = [
   ['travelingWithPet', 'Travelling with a pet', 'pet-friendly'],
   ['parkingRequired', 'Parking required', 'to have parking'],
@@ -281,7 +287,7 @@ function TravelStep({ form, errors, update }) {
         <Field label="Search distance" hint="How far from the start point to look for places." error={errors.searchRadiusKm}>
           {(props) => (
             <Select {...props} value={form.searchRadiusKm} onChange={(e) => update('searchRadiusKm', e.target.value)}>
-              {RADIUS_OPTIONS.map((km) => (
+              {[...new Set([...RADIUS_OPTIONS, Number(form.searchRadiusKm)])].sort((a, b) => a - b).map((km) => (
                 <option key={km} value={String(km)}>
                   Within {km} km
                 </option>
@@ -313,7 +319,7 @@ function TravelStep({ form, errors, update }) {
       <Field label="Minimum rating" hint="Places without reviews are left out when you set this." error={errors.minimumRating}>
         {(props) => (
           <Select {...props} value={form.minimumRating} onChange={(e) => update('minimumRating', e.target.value)}>
-            {RATING_OPTIONS.map(([value, label]) => (
+            {withCurrent(RATING_OPTIONS, form.minimumRating).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -352,6 +358,13 @@ function RequirementsStep({ form, update }) {
 
 // ---------- Step 6: review ----------
 
+function mustVisitText(ids, savedPlaces) {
+  if (!ids.length) return 'None';
+  const known = savedPlaces.filter((p) => ids.includes(p.id)).map((p) => p.name);
+  const others = ids.length - known.length;
+  return [...known, ...(others ? [`${others} other place${others === 1 ? '' : 's'}`] : [])].join(', ');
+}
+
 function Summary({ form, goTo }) {
   const tags = useTags();
   const categories = useCategories();
@@ -379,7 +392,7 @@ function Summary({ form, goTo }) {
       title: 'Categories and places',
       rows: [
         ['Preferred categories', names(form.preferredCategories, categories)],
-        ['Must visit', form.selectedPlaceIds.length ? names(form.selectedPlaceIds, { data: saved.data?.data }, 'id') : 'None'],
+        ['Must visit', mustVisitText(form.selectedPlaceIds, saved.data?.data ?? [])],
       ],
     },
     {
@@ -473,15 +486,16 @@ function GenerationFailure({ error, form, goTo }) {
 
 // ---------- The wizard ----------
 
-export function PlanTripPage() {
+function TripWizard({ initial, existingTripId }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => initial ?? initialForm());
   const [stepIndex, setStepIndex] = useState(0);
   const [errors, setErrors] = useState({});
   // Set once the trip is saved: a retry after a failed generation updates it instead of
   // creating a second trip.
-  const [tripId, setTripId] = useState(null);
+  const [tripId, setTripId] = useState(existingTripId ?? null);
+  const editing = Boolean(existingTripId);
   const panelRef = useRef(null);
   const headingRef = useRef(null);
   const firstRender = useRef(true);
@@ -548,10 +562,14 @@ export function PlanTripPage() {
 
   return (
     <main className={`container ${styles.page}`}>
-      <title>Plan a trip | NAVORA</title>
+      <title>{editing ? 'Change trip settings | NAVORA' : 'Plan a trip | NAVORA'}</title>
       <header className={styles.header}>
-        <h1>Plan a trip</h1>
-        <p className="muted">Tell NAVORA how you like to travel. It builds a day-by-day plan from approved places.</p>
+        <h1>{editing ? 'Change trip settings' : 'Plan a trip'}</h1>
+        <p className="muted">
+          {editing
+            ? 'Saving creates a new version of the itinerary from these settings. Earlier versions are kept.'
+            : 'Tell NAVORA how you like to travel. It builds a day-by-day plan from approved places.'}
+        </p>
       </header>
 
       <div className={styles.layout}>
@@ -622,7 +640,7 @@ export function PlanTripPage() {
               )}
               {step.id === 'review' ? (
                 <Button type="submit" icon={Sparkles} loading={generate.isPending}>
-                  {generate.isPending ? 'Generating' : tripId ? 'Update and try again' : 'Generate itinerary'}
+                  {generate.isPending ? 'Generating' : editing ? 'Save and regenerate' : tripId ? 'Update and try again' : 'Generate itinerary'}
                 </Button>
               ) : (
                 <Button type="submit">
@@ -636,4 +654,33 @@ export function PlanTripPage() {
       </div>
     </main>
   );
+}
+
+// /plan starts a new trip; /plan?trip=<id> changes an existing trip's settings.
+export function PlanTripPage() {
+  const [params] = useSearchParams();
+  const tripId = params.get('trip');
+  const trip = useQuery({
+    queryKey: ['trips', tripId],
+    queryFn: ({ signal }) => getTrip(tripId, { signal }),
+    enabled: Boolean(tripId),
+  });
+
+  if (!tripId) return <TripWizard />;
+  if (trip.isPending) {
+    return (
+      <main className={`container ${styles.page}`} aria-busy="true" aria-label="Loading trip">
+        <Skeleton width="40%" height="2.25rem" />
+        <Skeleton height="24rem" />
+      </main>
+    );
+  }
+  if (trip.isError) {
+    return (
+      <main className={`container ${styles.page}`}>
+        <ErrorState error={trip.error} onRetry={trip.refetch} title="This trip could not be loaded" />
+      </main>
+    );
+  }
+  return <TripWizard key={trip.data.id} initial={formFromTrip(trip.data)} existingTripId={trip.data.id} />;
 }

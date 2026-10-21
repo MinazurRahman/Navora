@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTripPayload, firstStepWithError, initialForm, toFormErrors, todayInDhaka, validateStep } from './tripForm.js';
+import { buildTripPayload, firstStepWithError, formFromTrip, initialForm, toFormErrors, todayInDhaka, validateStep } from './tripForm.js';
 
 const filled = (overrides = {}) => ({
   ...initialForm(),
@@ -113,5 +113,15 @@ describe('server errors', () => {
 describe('todayInDhaka', () => {
   it('uses the Dhaka date', () => {
     expect(todayInDhaka(new Date('2026-10-21T19:00:00Z'))).toBe('2026-10-22'); // 01:00 next day in Dhaka
+  });
+});
+
+describe('formFromTrip', () => {
+  it('turns a saved trip back into the same request body', () => {
+    const body = buildTripPayload(
+      filled({ startDate: '2026-11-02', budgetAmount: '3000', minimumRating: '4.5', interests: ['history'], parkingRequired: true }),
+    );
+    const trip = { id: 't1', ...body, budget: { ...body.budget, currency: 'BDT' }, currentItineraryId: null };
+    expect(buildTripPayload(formFromTrip(trip))).toEqual(body);
   });
 });

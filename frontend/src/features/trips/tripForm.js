@@ -51,6 +51,31 @@ export function initialForm() {
   };
 }
 
+// A saved trip (GET /trips/:id) as wizard form values, for changing its settings.
+export function formFromTrip(trip) {
+  return {
+    title: trip.title,
+    location: trip.startLocation,
+    startAddress: trip.startAddress ?? '',
+    startDate: trip.startDate ?? '',
+    durationDays: String(trip.durationDays),
+    dailyStartTime: trip.dailyStartTime,
+    dailyEndTime: trip.dailyEndTime,
+    interests: trip.interests,
+    preferredCategories: trip.preferredCategories,
+    selectedPlaceIds: trip.selectedPlaceIds,
+    travelMode: trip.travelMode,
+    searchRadiusKm: String(trip.searchRadiusKm),
+    budgetAmount: trip.budget ? String(trip.budget.amount) : '',
+    budgetType: trip.budget?.type ?? 'total',
+    partySize: String(trip.partySize),
+    minimumRating: trip.minimumRating === null ? '' : String(trip.minimumRating),
+    travelingWithPet: trip.travelingWithPet,
+    parkingRequired: trip.parkingRequired,
+    wheelchairAccessRequired: trip.wheelchairAccessRequired,
+  };
+}
+
 const isWholeNumber = (value, min, max) => /^\d+$/.test(String(value)) && Number(value) >= min && Number(value) <= max;
 
 // Errors for one step, keyed by form field. Empty object = the step is complete.

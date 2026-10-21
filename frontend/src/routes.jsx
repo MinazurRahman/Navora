@@ -5,6 +5,7 @@ import { ExplorePage } from './features/places/ExplorePage.jsx';
 import { PlaceDetailPage } from './features/places/PlaceDetailPage.jsx';
 import { SavedPlacesPage } from './features/saved/SavedPlacesPage.jsx';
 import { PlanTripPage } from './features/trips/PlanTripPage.jsx';
+import { TripPage } from './features/itineraries/TripPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { NotFoundPage, PlaceholderPage, RouteErrorPage } from './pages/StatusPages.jsx';
 import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
@@ -29,7 +30,7 @@ export const routes = [
           { path: 'plan', element: <PlanTripPage /> },
           { path: 'saved', element: <SavedPlacesPage /> },
           { path: 'trips', element: soon('My trips', 'Your saved trips and itineraries.') },
-          { path: 'trips/:tripId', element: soon('Itinerary', 'Day-by-day stops, route and AI assistant.') },
+          { path: 'trips/:tripId', element: <TripPage /> },
           { path: 'community/submit', element: soon('Submit a place', 'Suggest a place for moderators to review.') },
           { path: 'community/mine', element: soon('My submissions', 'Places you submitted and their status.') },
           { path: 'community/:placeId/edit', element: soon('Edit submission', 'Edit a pending or rejected place.') },
