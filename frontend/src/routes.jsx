@@ -2,6 +2,8 @@ import { AppShell } from './components/AppShell.jsx';
 import { LoginPage, RegisterPage } from './features/auth/AuthPages.jsx';
 import { RequireAuth } from './features/auth/RequireAuth.jsx';
 import { ExplorePage } from './features/places/ExplorePage.jsx';
+import { PlaceDetailPage } from './features/places/PlaceDetailPage.jsx';
+import { SavedPlacesPage } from './features/saved/SavedPlacesPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { NotFoundPage, PlaceholderPage, RouteErrorPage } from './pages/StatusPages.jsx';
 import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
@@ -16,7 +18,7 @@ export const routes = [
     children: [
       { index: true, element: <HomePage /> },
       { path: 'explore', element: <ExplorePage /> },
-      { path: 'places/:placeId', element: soon('Place details', 'Details, opening hours and reviews.') },
+      { path: 'places/:placeId', element: <PlaceDetailPage /> },
       { path: 'community', element: soon('Community', 'Recently added places from the community.') },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
@@ -24,6 +26,7 @@ export const routes = [
         element: <RequireAuth />,
         children: [
           { path: 'plan', element: soon('Plan a trip', 'Set your preferences and generate an itinerary.') },
+          { path: 'saved', element: <SavedPlacesPage /> },
           { path: 'trips', element: soon('My trips', 'Your saved trips and itineraries.') },
           { path: 'trips/:tripId', element: soon('Itinerary', 'Day-by-day stops, route and AI assistant.') },
           { path: 'community/submit', element: soon('Submit a place', 'Suggest a place for moderators to review.') },

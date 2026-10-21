@@ -1,0 +1,240 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-6);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  min-height: var(--control-height-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.where {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-8);
+  padding-top: var(--space-2);
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-areas: 'main aside';
+    align-items: start;
+  }
+
+  .main {
+    grid-area: main;
+  }
+
+  .aside {
+    grid-area: aside;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section h2 {
+  font-size: var(--text-xl);
+}
+
+/* Community text: plain text with the author's line breaks. */
+.description {
+  max-width: 42rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hours {
+  width: 100%;
+  max-width: 28rem;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.hours th,
+.hours td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.hours th {
+  font-weight: var(--weight-regular);
+}
+
+.hours td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.today th,
+.today td {
+  font-weight: var(--weight-semibold);
+  color: var(--text-heading);
+}
+
+.todayLabel {
+  color: var(--text-muted);
+  font-weight: var(--weight-regular);
+}
+
+.facilities {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .facilities {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.facility {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.facility dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.facility dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+.yes {
+  color: var(--color-success);
+}
+
+.no {
+  color: var(--text-body);
+}
+
+.unknown {
+  color: var(--text-muted);
+}
+
+.note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .aside {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
+  }
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--color-border);
+}
+
+.fact dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--weight-medium);
+  text-align: right;
+}
+
+.map {
+  height: 20rem; /* PlacesMap's own minimum; smaller would overflow onto the next section */
+}

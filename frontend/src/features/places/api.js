@@ -43,6 +43,10 @@ export async function getPlace(id, { signal } = {}) {
   return (await request(`/places/${encodeURIComponent(id)}`, { signal })).data;
 }
 
+export function usePlace(id) {
+  return useQuery({ queryKey: ['places', 'detail', id], queryFn: ({ signal }) => getPlace(id, { signal }) });
+}
+
 // --- Community submissions ---
 
 export function listMyPlaces({ status, page, limit } = {}, { signal } = {}) {
@@ -85,6 +89,11 @@ export async function rejectPlace(id, { reason }) {
 
 export function listReviews(placeId, { page, limit } = {}, { signal } = {}) {
   return request(`/places/${encodeURIComponent(placeId)}/reviews`, { query: { page, limit }, signal });
+}
+
+// The caller's own review of the place, or null.
+export async function getMyReview(placeId, { signal } = {}) {
+  return (await request(`/places/${encodeURIComponent(placeId)}/reviews/mine`, { signal })).data;
 }
 
 export async function createReview(placeId, { rating, comment }) {

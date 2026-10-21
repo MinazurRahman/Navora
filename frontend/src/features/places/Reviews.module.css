@@ -1,0 +1,138 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.count {
+  color: var(--text-muted);
+  font-weight: var(--weight-regular);
+}
+
+.stars {
+  display: inline-flex;
+  gap: 0.125rem;
+}
+
+/* Amber is a sparse brand accent; the rating is always also given as text. */
+.starOn {
+  color: var(--color-amber);
+  fill: var(--color-amber);
+}
+
+.starOff {
+  color: var(--color-border-input);
+}
+
+.mine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.mineTitle {
+  font-size: var(--text-base);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.ratingField {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ratingOptions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ratingOption {
+  display: grid;
+  place-items: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.ratingOption:hover {
+  background: var(--color-surface-muted);
+}
+
+.ratingOption:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+.ratingText {
+  margin-left: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.fieldError {
+  margin-top: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-block: var(--space-4);
+}
+
+.mine .review {
+  padding-block: 0;
+}
+
+.reviewHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.author {
+  font-weight: var(--weight-semibold);
+}
+
+.date {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Community text: shown as plain text, keeping the author's line breaks. */
+.comment {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

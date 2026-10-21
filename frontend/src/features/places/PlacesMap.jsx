@@ -118,7 +118,7 @@ export default function PlacesMap({ places, selectedId, onSelect, center, radius
         <FocusSelected selectedId={selectedId} markers={markers} />
         <TrackSize />
       </MapContainer>
-      {map && (
+      {map && onSearchArea && (
         <div className={styles.overlay}>
           <Button
             variant="secondary"

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/plan', label: 'Plan a trip' },
   { to: '/community', label: 'Community' },
   { to: '/trips', label: 'My trips' },
+  { to: '/saved', label: 'Saved' },
 ];
 
 const isModerator = (user) => user?.role === 'moderator' || user?.role === 'admin';
