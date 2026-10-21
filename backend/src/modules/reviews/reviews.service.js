@@ -30,6 +30,13 @@ export function createReviewsService({ reviewsRepository, placesService }) {
       return { reviews: reviews.map(toReviewDto), meta: buildPaginationMeta(pagination, total) };
     },
 
+    // The caller's own review of a place, or null (one review per user and place).
+    async findMine(placeId, user) {
+      await placesService.getById(placeId, user);
+      const review = await reviewsRepository.findByUserAndPlace(user.id, placeId);
+      return review ? toReviewDto(review) : null;
+    },
+
     async create(placeId, input, user) {
       const place = await placesService.getById(placeId, user);
       if (place.status !== 'APPROVED') {

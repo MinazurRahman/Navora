@@ -90,8 +90,13 @@ the spec. Change an endpoint → update the spec, or the tests fail.
 | POST | `/api/v1/places/:id/reject` | Moderator | `{ reason }` — PENDING → REJECTED (submitter can then edit → PENDING) |
 | GET | `/api/v1/places/:id/reviews` | – | Reviews, newest first, paginated |
 | POST | `/api/v1/places/:id/reviews` | Bearer | `{ rating: 1–5 integer, comment? }`; one per user per approved place |
+| GET | `/api/v1/places/:id/reviews/mine` | Bearer | My review of this place, or `null` |
 | PATCH | `/api/v1/reviews/:id` | Bearer | Author only |
 | DELETE | `/api/v1/reviews/:id` | Bearer | Author, or a moderator |
+| GET | `/api/v1/saved-places` | Bearer | My saved places (approved only), most recently saved first, paginated |
+| POST | `/api/v1/saved-places` | Bearer | `{ placeId }` → save an approved place (idempotent; at most 500) |
+| GET | `/api/v1/saved-places/:placeId` | Bearer | `{ placeId, saved }` |
+| DELETE | `/api/v1/saved-places/:placeId` | Bearer | Remove from saved places (idempotent) |
 
 A place's `rating: { average, count }` is maintained by a database trigger on every review
 change, so reading or filtering by it needs no extra query.

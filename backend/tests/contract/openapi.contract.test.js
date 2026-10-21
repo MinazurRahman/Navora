@@ -86,6 +86,7 @@ describe('route parity (code ⇄ spec)', () => {
     'src/modules/categories/index.js': { router: '/api/v1/categories', tagsRouter: '/api/v1/tags' },
     'src/modules/places/index.js': { router: '/api/v1/places' },
     'src/modules/reviews/index.js': { router: '/api/v1' },
+    'src/modules/savedPlaces/index.js': { router: '/api/v1/saved-places' },
     'src/modules/recommendations/index.js': { router: '/api/v1/recommendations' },
     'src/modules/trips/index.js': { router: '/api/v1/trips' },
     'src/modules/itineraries/index.js': { router: '/api/v1/itineraries' },
@@ -115,7 +116,7 @@ describe('route parity (code ⇄ spec)', () => {
 
     expect([...inCode].filter((r) => !inSpec.has(r)), 'routes missing from the spec').toEqual([]);
     expect([...inSpec].filter((r) => !inCode.has(r)), 'documented routes that do not exist').toEqual([]);
-    expect(inCode.size).toBe(41);
+    expect(inCode.size).toBe(46);
   });
 });
 
@@ -244,6 +245,20 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     await call('patch', '/api/v1/reviews/{id}', { as: user, params: { id: review.id }, body: { rating: 5 } });
     await call('patch', '/api/v1/reviews/{id}', { as: other, params: { id: review.id }, body: { rating: 1 } }); // 403
     await call('get', '/api/v1/places/{id}', { params: { id: approved[0].id } }); // rated place shape
+    await call('get', '/api/v1/places/{placeId}/reviews/mine', { as: user, params: { placeId: approved[0].id } });
+    await call('get', '/api/v1/places/{placeId}/reviews/mine', { as: other, params: { placeId: approved[0].id } }); // null
+    await call('get', '/api/v1/places/{placeId}/reviews/mine', { params: { placeId: approved[0].id } }); // 401
+
+    // --- saved places ---
+    await call('post', '/api/v1/saved-places', { as: user, body: { placeId: approved[1].id } });
+    await call('post', '/api/v1/saved-places', { as: user, body: { placeId: approved[1].id } }); // idempotent
+    await call('post', '/api/v1/saved-places', { as: user, body: { placeId: toReject.id } }); // 409 archived
+    await call('post', '/api/v1/saved-places', { as: other, body: { placeId: toReject.id } }); // 404 not visible
+    await call('post', '/api/v1/saved-places', { as: user, body: { placeId: 'not-a-uuid' } }); // 400
+    await call('get', '/api/v1/saved-places', { as: user });
+    await call('get', '/api/v1/saved-places'); // 401
+    await call('get', '/api/v1/saved-places/{placeId}', { as: user, params: { placeId: approved[1].id } });
+    await call('delete', '/api/v1/saved-places/{placeId}', { as: user, params: { placeId: approved[1].id } });
 
     // --- recommendations ---
     await call('post', '/api/v1/recommendations', {

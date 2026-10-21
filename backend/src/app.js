@@ -13,6 +13,7 @@ import { createAuthModule, createTokenService } from './modules/auth/index.js';
 import { createCategoriesModule } from './modules/categories/index.js';
 import { createPlacesModule } from './modules/places/index.js';
 import { createReviewsModule } from './modules/reviews/index.js';
+import { createSavedPlacesModule } from './modules/savedPlaces/index.js';
 import { createRecommendationsModule } from './modules/recommendations/index.js';
 import { createTripsModule } from './modules/trips/index.js';
 import { createItinerariesModule } from './modules/itineraries/index.js';
@@ -58,6 +59,11 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache,
     authenticate,
     optionalAuth,
     rateLimit,
+  });
+  const savedPlacesModule = createSavedPlacesModule({
+    savedPlacesRepository: repositories.savedPlaces,
+    placesService: placesModule.placesService,
+    authenticate,
   });
 
   const recommendationsModule = createRecommendationsModule({
@@ -125,6 +131,7 @@ export function createApp({ config, lifecycle, repositories, rateLimiter, cache,
       categoriesRouter: categoriesModule.router,
       placesRouter: placesModule.router,
       reviewsRouter: reviewsModule.router,
+      savedPlacesRouter: savedPlacesModule.router,
       tagsRouter: categoriesModule.tagsRouter,
       recommendationsRouter: recommendationsModule.router,
       tripsRouter: tripsModule.router,

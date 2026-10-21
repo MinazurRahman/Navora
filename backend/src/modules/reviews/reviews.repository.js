@@ -18,6 +18,11 @@ export function createReviewsRepository(db) {
       return selectReviews(db).where('r.id', id).first();
     },
 
+    // Uses the reviews_user_place_key unique index.
+    findByUserAndPlace(userId, placeId) {
+      return selectReviews(db).where({ 'r.user_id': userId, 'r.place_id': placeId }).first();
+    },
+
     // Uses reviews_place_created_idx (place_id, created_at DESC).
     async listByPlace(placeId, { page, limit }) {
       const [reviews, [{ total }]] = await Promise.all([

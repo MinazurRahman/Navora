@@ -56,7 +56,7 @@ backend/src/
 backend/migrations/  backend/seeds/  backend/scripts/  backend/tests/  backend/docs/
 ```
 
-Modules: health, auth, users, categories (+ tags), places, reviews, recommendations,
+Modules: health, auth, users, categories (+ tags), places, reviews, savedPlaces, recommendations,
 trips, itineraries, routing.
 
 ## 6. Request lifecycle (order in `app.js` matters)
@@ -78,7 +78,7 @@ Response envelopes (`shared/http/response.js`, `middleware/error.middleware.js`)
 - PostgreSQL 15+ with PostGIS; extensions `postgis`, `pg_trgm`, `citext`.
   Local: `docker compose up -d` in `backend/` (PostGIS 17, host port 5433).
 - Tables: users, refresh_tokens, categories, tags, places, place_tags, place_opening_hours,
-  place_moderation_events, reviews, trips, trip_interests, trip_preferred_categories,
+  place_moderation_events, reviews, saved_places, trips, trip_interests, trip_preferred_categories,
   trip_selected_places, itineraries, itinerary_days, itinerary_stops.
 - Locations are `geography` points; distance/radius/ordering is done in PostGIS, not JS.
 - `places.avg_rating` / `review_count` are maintained by a DB trigger on review changes.

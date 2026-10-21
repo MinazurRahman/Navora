@@ -33,6 +33,10 @@ export function createReviewsModule({ reviewsRepository, placesService, authenti
     },
   );
 
+  router.get('/places/:placeId/reviews/mine', authenticate, validate({ params: placeParamSchema }), async (req, res) => {
+    sendSuccess(res, await reviewsService.findMine(req.validated.params.placeId, req.user));
+  });
+
   router.post(
     '/places/:placeId/reviews',
     authenticate,

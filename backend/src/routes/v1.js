@@ -8,6 +8,7 @@ export function createV1Router({
   categoriesRouter,
   placesRouter,
   reviewsRouter,
+  savedPlacesRouter,
   tagsRouter,
   recommendationsRouter,
   tripsRouter,
@@ -29,6 +30,7 @@ export function createV1Router({
   router.use('/itineraries', itinerariesRouter);
   router.use('/routing', routingRouter);
   router.use('/ai', aiRouter);
+  router.use('/saved-places', savedPlacesRouter);
   router.use('/places', placesRouter);
   // Defines /places/:placeId/reviews and /reviews/:id itself.
   router.use(reviewsRouter);

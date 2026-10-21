@@ -36,6 +36,7 @@ tags:
   - { name: Moderation }
   - { name: Reviews }
   - { name: Recommendations }
+  - { name: Saved places, description: 'Your own bookmarked places. Every response is sent with `Cache-Control: private, no-store`.' }
   - { name: Trips, description: 'Your own saved trips. Every response is sent with `Cache-Control: private, no-store`.' }
   - { name: Itineraries, description: 'Your own itineraries. Every response is sent with `Cache-Control: private, no-store`.' }
   - { name: Routing }
@@ -682,6 +683,31 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
               example: { success: false, error: { code: REVIEW_ALREADY_EXISTS, message: You have already reviewed this place; edit your review instead, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
         '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/places/{placeId}/reviews/mine:
+    parameters:
+      - $ref: '#/components/parameters/PlaceId'
+    get:
+      tags: [Reviews]
+      summary: 'My review of a place'
+      description: 'Your review of this place, or `null` if you have not reviewed it (one review per user and place). 404 if the place is not visible to you.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 'Your review, or null.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { oneOf: [{ $ref: '#/components/schemas/Review' }, { type: 'null' }] }
+              example: { success: true, data: null }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /api/v1/reviews/{id}:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -731,6 +757,94 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  # ============================== Saved places ==============================
+  /api/v1/saved-places:
+    get:
+      tags: [Saved places]
+      summary: 'My saved places'
+      description: 'Approved places you saved, most recently saved first. Places archived after you saved them are not listed.'
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: 'A page of places.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Place' } }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Saved places]
+      summary: 'Save a place'
+      description: 'Idempotent: saving an already saved place succeeds and changes nothing. Only approved places can be saved; at most 500 per user. Places you may not see answer 404.'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placeId]
+              additionalProperties: false
+              properties:
+                placeId: { type: string, format: uuid }
+            example: { placeId: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10 }
+      responses:
+        '200': &savedStatus
+          description: 'Whether the place is saved.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data: { $ref: '#/components/schemas/SavedPlaceStatus' }
+              example: { success: true, data: { placeId: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, saved: true } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: '`PLACE_NOT_SAVEABLE` (not approved) or `SAVED_PLACES_LIMIT_REACHED`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: PLACE_NOT_SAVEABLE, message: Only approved places can be saved, requestId: 5c79a168-e6b1-4c5f-b704-efe699cec482 } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/saved-places/{placeId}:
+    parameters:
+      - $ref: '#/components/parameters/PlaceId'
+    get:
+      tags: [Saved places]
+      summary: 'Is this place saved?'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *savedStatus
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    delete:
+      tags: [Saved places]
+      summary: 'Remove a saved place'
+      description: 'Idempotent: removing a place that is not saved succeeds.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': *savedStatus
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/RateLimited' }
 
   # ============================== Recommendations ==============================
@@ -1816,6 +1930,14 @@ components:
         author: { id: ff57e577-6935-46cd-8b17-e2e81d72f3cf, name: Ayesha Rahman }
         createdAt: '2026-10-01T10:00:00.000Z'
         updatedAt: '2026-10-01T10:00:00.000Z'
+
+    SavedPlaceStatus:
+      type: object
+      required: [placeId, saved]
+      additionalProperties: false
+      properties:
+        placeId: { type: string, format: uuid }
+        saved: { type: boolean }
 
     # ---------- recommendations ----------
     Recommendation:
