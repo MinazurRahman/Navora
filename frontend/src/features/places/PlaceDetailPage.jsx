@@ -11,15 +11,10 @@ import { SaveButton } from '../saved/SaveButton.jsx';
 import { usePlace } from './api.js';
 import { dhakaWeekday, weeklySchedule } from './openingHours.js';
 import { ReviewsSection } from './Reviews.jsx';
+import { PlaceStatusBadge } from './PlaceStatusBadge.jsx';
 import styles from './PlaceDetailPage.module.css';
 
 const PlacesMap = lazy(() => import('./PlacesMap.jsx'));
-
-const STATUS_BADGES = {
-  PENDING: { tone: 'warning', label: 'Pending review' },
-  REJECTED: { tone: 'danger', label: 'Rejected' },
-  ARCHIVED: { tone: 'neutral', label: 'Archived' },
-};
 
 // Facility values are YES / NO / UNKNOWN. UNKNOWN is shown as "Not verified", never as yes.
 const FACILITY = {
@@ -118,7 +113,6 @@ export function PlaceDetailPage() {
   }
 
   const approved = place.status === 'APPROVED';
-  const statusBadge = STATUS_BADGES[place.status];
   const where = [place.address, place.city].filter(Boolean).join(', ');
   const tagNames = new Map(tags.data?.map((t) => [t.slug, t.name]) ?? []);
   const { facilities } = place;
@@ -136,7 +130,7 @@ export function PlaceDetailPage() {
         <div className={styles.titleBlock}>
           <div className="cluster">
             <Badge>{place.category.name}</Badge>
-            {statusBadge && <Badge tone={statusBadge.tone}>{statusBadge.label}</Badge>}
+            <PlaceStatusBadge status={place.status} hideApproved />
           </div>
           <h1>{place.name}</h1>
           {where && (

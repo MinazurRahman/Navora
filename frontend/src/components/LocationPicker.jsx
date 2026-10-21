@@ -4,8 +4,8 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 import 'leaflet/dist/leaflet.css';
 import styles from './LocationPicker.module.css';
 
-// Click the map (or drag the pin) to choose a point. Keyboard users have the coordinate
-// fields and "Use my location" next to it. Loaded lazily with Leaflet.
+// Click the map (or drag the pin) to choose a point. Callers give keyboard users coordinate
+// fields next to it. Load it lazily: it pulls in Leaflet.
 const DHAKA = [23.8103, 90.4125];
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -32,13 +32,13 @@ function FollowValue({ value }) {
   return null;
 }
 
-export default function LocationPicker({ value, onChange }) {
+export default function LocationPicker({ value, onChange, label = 'Map: click to choose a point' }) {
   return (
     <MapContainer
       center={value ? [value.latitude, value.longitude] : DHAKA}
       zoom={value ? 14 : 12}
       className={styles.map}
-      aria-label="Map: click to choose the start point"
+      aria-label={label}
     >
       <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
       <ClickToPick onChange={onChange} />
@@ -48,8 +48,8 @@ export default function LocationPicker({ value, onChange }) {
           position={[value.latitude, value.longitude]}
           icon={PIN}
           draggable
-          title="Start point"
-          alt="Start point"
+          title="Chosen point"
+          alt="Chosen point"
           eventHandlers={{
             dragend: (event) => {
               const { lat, lng } = event.target.getLatLng();

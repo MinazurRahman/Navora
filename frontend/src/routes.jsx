@@ -6,6 +6,10 @@ import { PlaceDetailPage } from './features/places/PlaceDetailPage.jsx';
 import { SavedPlacesPage } from './features/saved/SavedPlacesPage.jsx';
 import { PlanTripPage } from './features/trips/PlanTripPage.jsx';
 import { TripPage } from './features/itineraries/TripPage.jsx';
+import { CommunityPage } from './features/community/CommunityPage.jsx';
+import { ModerationPage } from './features/community/ModerationPage.jsx';
+import { MySubmissionsPage } from './features/community/MySubmissionsPage.jsx';
+import { EditPlacePage, SubmitPlacePage } from './features/community/PlaceFormPages.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { NotFoundPage, PlaceholderPage, RouteErrorPage } from './pages/StatusPages.jsx';
 import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
@@ -21,7 +25,7 @@ export const routes = [
       { index: true, element: <HomePage /> },
       { path: 'explore', element: <ExplorePage /> },
       { path: 'places/:placeId', element: <PlaceDetailPage /> },
-      { path: 'community', element: soon('Community', 'Recently added places from the community.') },
+      { path: 'community', element: <CommunityPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       {
@@ -31,15 +35,15 @@ export const routes = [
           { path: 'saved', element: <SavedPlacesPage /> },
           { path: 'trips', element: soon('My trips', 'Your saved trips and itineraries.') },
           { path: 'trips/:tripId', element: <TripPage /> },
-          { path: 'community/submit', element: soon('Submit a place', 'Suggest a place for moderators to review.') },
-          { path: 'community/mine', element: soon('My submissions', 'Places you submitted and their status.') },
-          { path: 'community/:placeId/edit', element: soon('Edit submission', 'Edit a pending or rejected place.') },
+          { path: 'community/submit', element: <SubmitPlacePage /> },
+          { path: 'community/mine', element: <MySubmissionsPage /> },
+          { path: 'community/:placeId/edit', element: <EditPlacePage /> },
           { path: 'profile', element: soon('Profile', 'Your account details.') },
         ],
       },
       {
         element: <RequireAuth roles={['moderator', 'admin']} />,
-        children: [{ path: 'moderation', element: soon('Moderation', 'Review submitted places.') }],
+        children: [{ path: 'moderation', element: <ModerationPage /> }],
       },
       ...(import.meta.env.DEV ? [{ path: 'style-guide', element: <StyleGuidePage /> }] : []),
       { path: '*', element: <NotFoundPage /> },

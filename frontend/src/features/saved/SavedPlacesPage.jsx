@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Bookmark, BookmarkX, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
+import { Bookmark, BookmarkX, Compass } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { ErrorState } from '../../components/ErrorState.jsx';
 import { EmptyState } from '../../components/Feedback.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import { useToast } from '../../components/useToast.js';
 import { errorMessage } from '../../lib/errors.js';
 import { PlaceCard, PlaceCardSkeleton } from '../places/PlaceCard.jsx';
@@ -82,20 +83,7 @@ export function SavedPlacesPage() {
         </>
       )}
 
-      {meta && meta.totalPages > 1 && (
-        <nav className={styles.pagination} aria-label="Pages">
-          <Button variant="secondary" size="sm" icon={ChevronLeft} disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Previous
-          </Button>
-          <span className="muted">
-            Page {meta.page} of {meta.totalPages}
-          </span>
-          <Button variant="secondary" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>
-            Next
-            <ChevronRight size={16} aria-hidden="true" />
-          </Button>
-        </nav>
-      )}
+      {meta && <Pagination page={meta.page} totalPages={meta.totalPages} onPage={setPage} />}
     </main>
   );
 }

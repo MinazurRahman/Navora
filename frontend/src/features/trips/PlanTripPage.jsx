@@ -27,7 +27,7 @@ import {
 } from './tripForm.js';
 import styles from './PlanTripPage.module.css';
 
-const LocationPicker = lazy(() => import('./LocationPicker.jsx'));
+const LocationPicker = lazy(() => import('../../components/LocationPicker.jsx'));
 
 const RADIUS_OPTIONS = [2, 5, 10, 20, 50];
 const RATING_OPTIONS = [
@@ -122,7 +122,7 @@ function StartPoint({ value, error, onChange }) {
       </div>
       {locateError && <Alert tone="warning">{locateError}</Alert>}
       <Suspense fallback={<Skeleton height="18rem" />}>
-        <LocationPicker value={value} onChange={onChange} />
+        <LocationPicker value={value} onChange={onChange} label="Map: click to choose the start point" />
       </Suspense>
       <div className={styles.twoColumns}>
         <Field label="Latitude">

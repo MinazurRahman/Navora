@@ -10,7 +10,7 @@ import { routes } from '../../routes.jsx';
 import { fail, mockFetch, ok, place, user } from '../../test/fetchMock.js';
 
 // Stand-in for the Leaflet picker: one button that picks a point.
-vi.mock('./LocationPicker.jsx', () => ({
+vi.mock('../../components/LocationPicker.jsx', () => ({
   default: ({ onChange }) => (
     <button type="button" onClick={() => onChange({ latitude: 23.7104, longitude: 90.4074 })}>
       Pick a point on the map

@@ -11,7 +11,7 @@ import { routes } from '../../routes.jsx';
 import { fail, mockFetch, ok, user } from '../../test/fetchMock.js';
 
 vi.mock('./ItineraryMap.jsx', () => ({ default: ({ day }) => <div>Map of day {day.dayNumber}</div> }));
-vi.mock('../trips/LocationPicker.jsx', () => ({ default: () => <div>Location picker</div> }));
+vi.mock('../../components/LocationPicker.jsx', () => ({ default: () => <div>Location picker</div> }));
 
 const stopPlace = (id, name) => ({ id, name, category: { slug: 'museum', name: 'Museum' }, location: { latitude: 23.72, longitude: 90.4 } });
 const stop = (order, place, extra = {}) => ({

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { clearSession, getSession, setSession } from './api/session.js';
+import { ToastProvider } from './components/Toast.jsx';
 import { AuthProvider } from './features/auth/AuthProvider.jsx';
 import { createQueryClient } from './lib/queryClient.js';
 import { routes } from './routes.jsx';
@@ -14,7 +15,9 @@ function renderAt(path) {
   render(
     <QueryClientProvider client={createQueryClient()}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>,
   );
@@ -111,7 +114,7 @@ describe('private routes', () => {
   it('open the moderation page for moderators', async () => {
     signInAs('moderator');
     renderAt('/moderation');
-    expect(await screen.findByRole('heading', { name: 'Moderation is not available yet' })).toBeDefined();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Moderation' })).toBeDefined();
     expect(screen.getAllByRole('link', { name: 'Moderation' }).length).toBeGreaterThan(0);
   });
 });

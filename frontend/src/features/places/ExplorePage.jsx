@@ -1,11 +1,12 @@
 import { Suspense, lazy, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { ChevronLeft, ChevronRight, List, LocateFixed, Map as MapIcon, MapPin, Search, SearchX, X } from 'lucide-react';
+import { List, LocateFixed, Map as MapIcon, MapPin, Search, SearchX, X } from 'lucide-react';
 import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
 import { ErrorState } from '../../components/ErrorState.jsx';
 import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { Checkbox, Field, Select } from '../../components/Field.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import { useCategories } from '../catalogue/api.js';
 import { useExploreResults } from './api.js';
 import { activeFilterCount, parseExploreParams, toSearchParams } from './exploreParams.js';
@@ -96,9 +97,7 @@ export function ExplorePage() {
             onWiderRadius={() => update({ radiusKm: Math.min(50, state.radiusKm * 2) })}
           />
 
-          {meta && meta.totalPages > 1 && (
-            <Pagination meta={meta} onPage={(page) => update({ page })} />
-          )}
+          {meta && <Pagination page={meta.page} totalPages={meta.totalPages} onPage={(page) => update({ page })} />}
         </div>
 
         <div className={`${styles.mapColumn} ${view === 'list' ? styles.hiddenOnSmall : ''}`}>
@@ -405,22 +404,5 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
         </li>
       ))}
     </ul>
-  );
-}
-
-function Pagination({ meta, onPage }) {
-  return (
-    <nav className={styles.pagination} aria-label="Pages">
-      <Button variant="secondary" size="sm" icon={ChevronLeft} disabled={meta.page <= 1} onClick={() => onPage(meta.page - 1)}>
-        Previous
-      </Button>
-      <span className="muted">
-        Page {meta.page} of {meta.totalPages}
-      </span>
-      <Button variant="secondary" size="sm" disabled={meta.page >= meta.totalPages} onClick={() => onPage(meta.page + 1)}>
-        Next
-        <ChevronRight size={16} aria-hidden="true" />
-      </Button>
-    </nav>
   );
 }
