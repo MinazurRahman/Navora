@@ -238,6 +238,12 @@ advice the user can apply with `PATCH /itineraries/:id` (checked there like any 
   `AI_CONTEXT_WINDOW_TOKENS`, `AI_MAX_CONCURRENT` in `.env.example`). Ollama has no
   authentication: keep it on localhost or a private network, ideally not on the API host
   (production logs a warning for plain `http` to a non-private host).
+- Ollama's cloud instead (fast without a GPU): `OLLAMA_BASE_URL=https://ollama.com`, a cloud
+  model such as `OLLAMA_MODEL=gemma4:31b` (on the free plan) and `OLLAMA_API_KEY` from
+  https://ollama.com/settings/keys. The key is sent only over https and never logged; trip
+  details then leave your infrastructure (production logs a warning). Some cloud models do not
+  enforce structured output and wrap the JSON in a Markdown fence; the adapter unwraps it and
+  the answer is still validated.
 - The model only sees a small context built through the owning services (other users'
   trips/itineraries are 404): no IDs, start location, address or user data. It is trimmed to
   fit `AI_CONTEXT_WINDOW_TOKENS` (sent to Ollama as `num_ctx`); place descriptions are only

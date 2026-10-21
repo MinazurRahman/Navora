@@ -74,11 +74,14 @@ const envSchema = z.object({
   // AI assistant. Off by default: the app and CI run without any AI service.
   AI_ENABLED: z.enum(['true', 'false']).default('false'),
   AI_PROVIDER: z.enum(['ollama']).default('ollama'),
-  // Local/self-hosted Ollama. It has no authentication: never point this at a public host.
+  // Local/self-hosted Ollama (no authentication: never point plain http at a public host), or
+  // Ollama's cloud API (https://ollama.com) together with OLLAMA_API_KEY.
   OLLAMA_BASE_URL: z
     .string()
     .regex(/^https?:\/\/[^/\s]+$/, 'must be a base URL like http://localhost:11434 (no path or trailing slash)')
     .default('http://localhost:11434'),
+  // Secret. Sent as a Bearer token, and only over https.
+  OLLAMA_API_KEY: z.string().trim().min(1).max(500).optional(),
   OLLAMA_MODEL: z.string().regex(/^[A-Za-z0-9._:/-]{1,100}$/, 'must be an Ollama model tag like llama3.2:3b').default('llama3.2:3b'),
   // Upper bound for one AI call; keep below HTTP_KEEP_ALIVE_TIMEOUT_MS and the load balancer's timeout.
   AI_TIMEOUT_MS: intInRange(1_000, 60_000).default(30_000),
@@ -103,6 +106,9 @@ export function parseEnv(source) {
   }
   if (e.MAP_PROVIDER !== 'estimate' && !e.MAP_API_KEY) {
     throw new Error(`Invalid environment configuration:\n  - MAP_API_KEY: required when MAP_PROVIDER=${e.MAP_PROVIDER}`);
+  }
+  if (e.OLLAMA_API_KEY && !e.OLLAMA_BASE_URL.startsWith('https://')) {
+    throw new Error('Invalid environment configuration:\n  - OLLAMA_API_KEY: needs an https OLLAMA_BASE_URL (the key must never travel unencrypted)');
   }
   if (e.AI_MAX_OUTPUT_TOKENS * 2 > e.AI_CONTEXT_WINDOW_TOKENS) {
     throw new Error('Invalid environment configuration:\n  - AI_MAX_OUTPUT_TOKENS: must be at most half of AI_CONTEXT_WINDOW_TOKENS (the rest is for the prompt)');
@@ -155,7 +161,7 @@ export function parseEnv(source) {
       maxOutputTokens: e.AI_MAX_OUTPUT_TOKENS,
       contextWindowTokens: e.AI_CONTEXT_WINDOW_TOKENS,
       maxConcurrent: e.AI_MAX_CONCURRENT,
-      ollama: Object.freeze({ baseUrl: e.OLLAMA_BASE_URL, model: e.OLLAMA_MODEL }),
+      ollama: Object.freeze({ baseUrl: e.OLLAMA_BASE_URL, model: e.OLLAMA_MODEL, apiKey: e.OLLAMA_API_KEY ?? null }),
     }),
   });
 }
@@ -190,6 +196,9 @@ export function productionWarnings(config) {
   }
   if (config.ai.enabled) {
     const { protocol, hostname } = new URL(config.ai.ollama.baseUrl);
+    if (hostname === 'ollama.com') {
+      warnings.push("OLLAMA_BASE_URL=https://ollama.com: trip details are sent to Ollama's cloud. Prefer a local or self-hosted model where that matters.");
+    }
     if (protocol === 'http:' && !isPrivateHost(hostname)) {
       warnings.push(`OLLAMA_BASE_URL=${config.ai.ollama.baseUrl}: plain http to a non-private host. Ollama has no authentication and trip details would travel unencrypted; keep it on localhost or a private network.`);
     }

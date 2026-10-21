@@ -15,6 +15,7 @@ export function createAiServiceFromConfig(config, { cache }) {
     provider = createOllamaProvider({
       baseUrl: ai.ollama.baseUrl,
       model: ai.ollama.model,
+      apiKey: ai.ollama.apiKey,
       timeoutMs: ai.timeoutMs,
       maxOutputTokens: ai.maxOutputTokens,
       contextWindowTokens: ai.contextWindowTokens,

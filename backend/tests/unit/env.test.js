@@ -103,7 +103,7 @@ describe('parseEnv', () => {
       maxOutputTokens: 600,
       contextWindowTokens: 8_192,
       maxConcurrent: 2,
-      ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2:3b' },
+      ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2:3b', apiKey: null },
     });
   });
 
@@ -128,6 +128,14 @@ describe('parseEnv', () => {
     // Above the HTTP keep-alive timeout an AI call could outlive its connection.
     expect(() => parseEnv({ ...base, AI_TIMEOUT_MS: '120000' })).toThrow(/AI_TIMEOUT_MS/);
     expect(() => parseEnv({ ...base, AI_MAX_OUTPUT_TOKENS: '100000' })).toThrow(/AI_MAX_OUTPUT_TOKENS/);
+  });
+
+  it('accepts an Ollama cloud API key only with an https base URL', () => {
+    const cloud = parseEnv({ ...base, AI_ENABLED: 'true', OLLAMA_BASE_URL: 'https://ollama.com', OLLAMA_MODEL: 'gemma4:31b', OLLAMA_API_KEY: 'test-key' });
+    expect(cloud.ai.ollama).toEqual({ baseUrl: 'https://ollama.com', model: 'gemma4:31b', apiKey: 'test-key' });
+    expect(() => parseEnv({ ...base, OLLAMA_API_KEY: 'test-key' })).toThrow(/OLLAMA_API_KEY: needs an https OLLAMA_BASE_URL/);
+    const production = parseEnv({ ...base, NODE_ENV: 'production', AI_ENABLED: 'true', OLLAMA_BASE_URL: 'https://ollama.com', OLLAMA_API_KEY: 'test-key' });
+    expect(productionWarnings(production).some((w) => w.includes("Ollama's cloud"))).toBe(true);
   });
 
   it('parses the AI context window and concurrency limits', () => {

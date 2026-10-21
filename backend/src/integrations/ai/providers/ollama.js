@@ -51,8 +51,11 @@ function assertRequest({ system, messages }) {
 }
 
 // contextWindowTokens → num_ctx: without it Ollama uses its small default window and silently
-// truncates longer prompts.
-export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputTokens, contextWindowTokens, fetchImpl = fetch }) {
+// truncates longer prompts. apiKey: for Ollama's cloud API (https://ollama.com); config
+// validation guarantees it is only set with an https baseUrl. Never logged.
+export function createOllamaProvider({ baseUrl, model, apiKey = null, timeoutMs, maxOutputTokens, contextWindowTokens, fetchImpl = fetch }) {
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json', ...(apiKey && { Authorization: `Bearer ${apiKey}` }) };
+
   async function request(path, { method = 'GET', body, signal, timeout = timeoutMs } = {}) {
     const combined = AbortSignal.any(signal ? [AbortSignal.timeout(timeout), signal] : [AbortSignal.timeout(timeout)]);
     const failure = (err) => {
@@ -69,7 +72,7 @@ export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputToken
     try {
       response = await fetchImpl(`${baseUrl}${path}`, {
         method,
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers,
         ...(body !== undefined && { body: JSON.stringify(body) }),
         signal: combined,
       });
@@ -133,7 +136,9 @@ export function createOllamaProvider({ baseUrl, model, timeoutMs, maxOutputToken
       let output = content;
       if (outputSchema) {
         try {
-          output = JSON.parse(content);
+          // Some models (e.g. gemma4 on Ollama's cloud) do not enforce `format` and wrap the
+          // JSON in a Markdown fence. Unwrap it; the caller still validates the shape.
+          output = JSON.parse(content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
         } catch {
           throw new AiProviderError(
             AI_ERROR.INVALID_RESPONSE,

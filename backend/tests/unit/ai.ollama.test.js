@@ -29,6 +29,29 @@ async function failure(promise) {
   throw new Error('expected a failure');
 }
 
+describe('Ollama provider: cloud API key', () => {
+  it('sends the key as a Bearer token on every request when configured', async () => {
+    const fetchImpl = vi.fn(async (url) => (url.endsWith('/api/tags') ? reply(200, { models: [{ name: 'gemma4:31b' }] }) : chat('{"answer":"ok"}')));
+    const cloud = ollama(fetchImpl, { baseUrl: 'https://ollama.com', model: 'gemma4:31b', apiKey: 'test-key' });
+    await cloud.generate({ ...request, outputSchema: schema });
+    await cloud.checkHealth();
+    expect(fetchImpl.mock.calls.map(([, init]) => init.headers.Authorization)).toEqual(['Bearer test-key', 'Bearer test-key']);
+  });
+});
+
+describe('Ollama provider: structured output in a Markdown fence', () => {
+  it('unwraps a fenced JSON answer from models that ignore the format setting', async () => {
+    const fetchImpl = vi.fn(async () => chat('```json\n{"answer":"Day 1 visits two museums."}\n```'));
+    const result = await ollama(fetchImpl).generate({ ...request, outputSchema: schema });
+    expect(result.output).toEqual({ answer: 'Day 1 visits two museums.' });
+  });
+
+  it('still rejects text that is not JSON', async () => {
+    const fetchImpl = vi.fn(async () => chat('```\nSure! Day 1 is lovely.\n```'));
+    expect((await failure(ollama(fetchImpl).generate({ ...request, outputSchema: schema }))).kind).toBe(AI_ERROR.INVALID_RESPONSE);
+  });
+});
+
 describe('Ollama provider: generate', () => {
   it('posts a non-streaming chat with the configured model, system prompt, schema and limits', async () => {
     const fetchImpl = vi.fn(async () => chat('{"answer":"Day 1 visits two museums."}'));
