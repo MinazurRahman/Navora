@@ -16,6 +16,7 @@ if (typeof window !== 'undefined') {
     };
   }
 
-  // jsdom has no scrolling; ScrollRestoration calls window.scrollTo on navigation.
+  // jsdom has no scrolling or layout.
   window.scrollTo = () => {};
+  Element.prototype.scrollIntoView = () => {};
 }

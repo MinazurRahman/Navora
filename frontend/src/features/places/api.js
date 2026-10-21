@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { request } from '../../api/client.js';
+import { exploreRequest } from './exploreParams.js';
 
 // Lists resolve to { data, meta } (meta = pagination); single items to the item.
 // Filters: category (array of slugs), maxEntryFee, minRating, page, limit.
@@ -15,6 +16,18 @@ export function usePlaces(filters) {
     queryFn: ({ signal }) => listPlaces(filters, { signal }),
     placeholderData: keepPreviousData,
   });
+}
+
+// Results for Explore's URL state: list, text search or nearby, decided by exploreRequest.
+// Changing the state cancels the previous request; the old results stay visible meanwhile.
+export function useExploreResults(state) {
+  const { mode, path, query } = exploreRequest(state);
+  const result = useQuery({
+    queryKey: ['places', mode, query],
+    queryFn: ({ signal }) => request(path, { query, signal }),
+    placeholderData: keepPreviousData,
+  });
+  return { mode, ...result };
 }
 
 export function searchPlaces({ q, ...filters }, { signal } = {}) {

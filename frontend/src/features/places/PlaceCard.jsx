@@ -5,14 +5,15 @@ import { Skeleton } from '../../components/Feedback.jsx';
 import { formatDistance, formatEntryFee, formatRating } from '../../lib/format.js';
 import styles from './PlaceCard.module.css';
 
-// Summary of an approved place. The whole card is one link (to the details page).
-export function PlaceCard({ place, headingLevel: Heading = 'h3' }) {
+// Summary of an approved place. The whole card is one link (to the details page);
+// `action` is an extra control drawn above that link (e.g. "Show on map").
+export function PlaceCard({ place, headingLevel: Heading = 'h3', selected = false, action }) {
   const where = [place.address, place.city].filter(Boolean).join(', ');
   const distance = formatDistance(place.distanceMeters);
   const rated = place.rating.count > 0 && place.rating.average !== null;
 
   return (
-    <article className={styles.card}>
+    <article className={`${styles.card} ${selected ? styles.selected : ''}`}>
       <div className={styles.top}>
         <Badge>{place.category.name}</Badge>
         {distance && <span className={styles.distance}>{distance} away</span>}
@@ -39,6 +40,7 @@ export function PlaceCard({ place, headingLevel: Heading = 'h3' }) {
           {formatEntryFee(place.entryFee, place.currency)}
         </li>
       </ul>
+      {action && <div className={styles.action}>{action}</div>}
     </article>
   );
 }

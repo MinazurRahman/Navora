@@ -1,0 +1,66 @@
+.wrapper {
+  position: relative;
+  height: 100%;
+  min-height: 20rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  font-family: var(--font-sans);
+}
+
+/* Keep Leaflet's panes under the sticky header. */
+.map :global(.leaflet-pane),
+.map :global(.leaflet-top),
+.map :global(.leaflet-bottom) {
+  z-index: 1;
+}
+
+.overlay {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-md);
+}
+
+.marker {
+  background: none;
+  border: 0;
+  color: var(--color-navy);
+}
+
+.marker svg {
+  fill: currentColor;
+  filter: drop-shadow(0 1px 1px rgb(15 23 42 / 0.35));
+  transition: transform var(--duration-fast) var(--ease-out);
+  transform-origin: 50% 100%;
+}
+
+.markerSelected {
+  color: var(--color-action);
+}
+
+.markerSelected svg {
+  transform: scale(1.3);
+}
+
+.popupCategory {
+  margin: 0 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.popupName {
+  margin: 0 0 var(--space-2);
+  color: var(--text-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
