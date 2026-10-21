@@ -1,3 +1,4 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { request } from '../../api/client.js';
 
 // Lists resolve to { data, meta } (meta = pagination); single items to the item.
@@ -5,6 +6,15 @@ import { request } from '../../api/client.js';
 
 export function listPlaces(filters, { signal } = {}) {
   return request('/places', { query: filters, signal });
+}
+
+// Approved places, newest first. Keeps the previous page on screen while the next loads.
+export function usePlaces(filters) {
+  return useQuery({
+    queryKey: ['places', 'list', filters],
+    queryFn: ({ signal }) => listPlaces(filters, { signal }),
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function searchPlaces({ q, ...filters }, { signal } = {}) {

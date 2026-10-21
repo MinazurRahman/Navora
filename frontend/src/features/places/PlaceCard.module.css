@@ -1,0 +1,89 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.card:hover {
+  border-color: var(--color-border-input);
+}
+
+/* Focus ring on the card when its link is focused. */
+.card:has(.link:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.distance {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.name {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:focus-visible {
+  box-shadow: none;
+}
+
+/* Stretch the link over the card so the whole card is clickable. */
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+}
+
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: auto 0 0;
+  padding: var(--space-2) 0 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.meta li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.meta svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.unknown {
+  color: var(--text-muted);
+}

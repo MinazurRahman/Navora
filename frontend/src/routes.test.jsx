@@ -7,7 +7,7 @@ import { clearSession, getSession, setSession } from './api/session.js';
 import { AuthProvider } from './features/auth/AuthProvider.jsx';
 import { createQueryClient } from './lib/queryClient.js';
 import { routes } from './routes.jsx';
-import { fail, mockFetch, ok, sessionData, user } from './test/fetchMock.js';
+import { fail, mockFetch, ok, page, sessionData, user } from './test/fetchMock.js';
 
 function renderAt(path) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -31,7 +31,11 @@ function signInAs(role = 'user') {
 // The desktop nav is the first "Main" navigation; the mobile one exists only while open.
 const mainNav = () => screen.getAllByRole('navigation', { name: 'Main' })[0];
 
-beforeEach(() => clearSession());
+beforeEach(() => {
+  clearSession();
+  // Public pages load catalogue and place lists; individual tests replace this.
+  mockFetch((path) => (path.endsWith('/categories') ? ok([]) : page([])));
+});
 afterEach(() => vi.unstubAllGlobals());
 
 describe('navigation', () => {

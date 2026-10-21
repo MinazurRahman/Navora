@@ -30,3 +30,30 @@ export const user = { id: 'u1', name: 'Ayesha Rahman', email: 'ayesha@example.co
 export function sessionData(accessToken = 'access-2', refreshToken = 'refresh-2', who = user) {
   return { user: who, tokens: { tokenType: 'Bearer', accessToken, expiresIn: 900, refreshToken } };
 }
+
+// A Place as returned by the API (openapi.yaml Place schema).
+export function place(overrides = {}) {
+  return {
+    id: 'p1',
+    name: 'Lalbagh Fort',
+    description: 'Mughal fort complex from the 17th century',
+    category: { slug: 'historical_site', name: 'Historical Site' },
+    location: { latitude: 23.7189, longitude: 90.3882 },
+    address: 'Lalbagh Road',
+    city: 'Dhaka',
+    entryFee: 20,
+    currency: 'BDT',
+    typicalVisitMinutes: 90,
+    tags: ['history'],
+    openingHours: [],
+    facilities: { parking: 'YES', petFriendly: 'NO', wheelchairAccessible: 'UNKNOWN', accessibilityNotes: null, restrictions: null, verifiedAt: null },
+    rating: { average: 4.5, count: 12 },
+    status: 'APPROVED',
+    createdBy: null,
+    createdAt: '2026-10-01T08:24:19.955Z',
+    updatedAt: '2026-10-01T08:24:19.955Z',
+    ...overrides,
+  };
+}
+
+export const page = (items) => ok(items, { page: 1, limit: 20, total: items.length, totalPages: 1 });
