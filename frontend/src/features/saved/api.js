@@ -19,10 +19,10 @@ export async function unsavePlace(placeId) {
   return (await request(`/saved-places/${encodeURIComponent(placeId)}`, { method: 'DELETE' })).data;
 }
 
-export function useSavedPlaces(page) {
+export function useSavedPlaces(page, limit = 20) {
   return useQuery({
-    queryKey: ['saved', 'list', page],
-    queryFn: ({ signal }) => listSavedPlaces({ page }, { signal }),
+    queryKey: ['saved', 'list', page, limit],
+    queryFn: ({ signal }) => listSavedPlaces({ page, limit }, { signal }),
     placeholderData: keepPreviousData,
   });
 }
