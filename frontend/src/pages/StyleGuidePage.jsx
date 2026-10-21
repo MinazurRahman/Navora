@@ -53,6 +53,7 @@ export function StyleGuidePage() {
 
   return (
     <main className="container">
+      <title>Design system | NAVORA</title>
       <PageHeader
         title="Design system"
         description="Tokens and components used across NAVORA. Development reference only."

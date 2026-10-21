@@ -1,11 +1,16 @@
+import { RouterProvider, createBrowserRouter } from 'react-router';
 import { ToastProvider } from './components/Toast.jsx';
-import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
+import { AuthProvider } from './features/auth/AuthProvider.jsx';
+import { routes } from './routes.jsx';
 
-// Phase 2: only the design-system preview. Routing and the app shell arrive in Phase 3.
+const router = createBrowserRouter(routes);
+
 export function App() {
   return (
-    <ToastProvider>
-      <StyleGuidePage />
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </AuthProvider>
   );
 }

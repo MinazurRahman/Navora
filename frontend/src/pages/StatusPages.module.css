@@ -1,0 +1,8 @@
+.errorPage {
+  padding-top: var(--space-8);
+}
+
+.errorLogo {
+  display: inline-flex;
+  text-decoration: none;
+}

@@ -13,3 +13,6 @@ if (!HTMLDialogElement.prototype.showModal) {
     this.dispatchEvent(new Event('close'));
   };
 }
+
+// jsdom has no scrolling; ScrollRestoration calls window.scrollTo on navigation.
+window.scrollTo = () => {};

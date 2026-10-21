@@ -27,7 +27,7 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <LoaderCircle className={styles.spinner} size={16} aria-hidden="true" />
+        <LoaderCircle className="spin" size={16} aria-hidden="true" />
       ) : (
         Icon && <Icon size={16} aria-hidden="true" />
       )}
