@@ -261,6 +261,37 @@ describe('trip page', () => {
     expect(recommendation.body).toMatchObject({ location: TRIP.startLocation, startDate: '2026-10-24', durationDays: 1, interests: ['history'] });
   });
 
+  it('lists versions, shows an older one read-only, and deletes one after confirmation', async () => {
+    const summary = (id, version, isCurrent) => ({
+      id, tripId: 't1', tripTitle: 'Old Dhaka weekend', version, isCurrent, userModified: false, dayCount: 2, stopCount: 3,
+      totals: {}, travelTimesEstimated: true, createdAt: '2026-10-22T08:00:00Z', updatedAt: '2026-10-22T08:00:00Z',
+    });
+    let versions = [summary('i1', 2, true), summary('i0', 1, false)];
+    serve({
+      handlers: {
+        'GET /itineraries?': () => ok(versions, { page: 1, limit: 50, total: versions.length, totalPages: 1 }),
+        'GET /itineraries/i0': () => ok(itinerary({ id: 'i0', version: 1, isCurrent: false })),
+        'DELETE /itineraries/i0': () => {
+          versions = versions.filter((v) => v.id !== 'i0');
+          return ok({ id: 'i0', deleted: true });
+        },
+      },
+    });
+    const router = renderAt();
+    await userEvent.click(await screen.findByText(/^Versions/));
+    await userEvent.click(await screen.findByRole('link', { name: 'View version 1' }));
+    expect(await screen.findByText('You are viewing version 1, an older version')).toBeDefined();
+    expect(router.state.location.search).toBe('?version=i0');
+    expect(screen.queryByRole('button', { name: 'Edit day' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete version 1' }));
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete version 1?' })).getByRole('button', { name: 'Delete version' }));
+    expect(await screen.findByText('Version 1 was deleted.')).toBeDefined();
+    await vi.waitFor(() => expect(router.state.location.search).toBe(''));
+    expect(await screen.findByRole('button', { name: 'Edit day' })).toBeDefined();
+    expect(state.calls.some((c) => c.method === 'DELETE' && c.path === '/itineraries/i0')).toBe(true);
+  });
+
   it('keeps the day unchanged when the backend refuses an edit', async () => {
     serve({
       handlers: {

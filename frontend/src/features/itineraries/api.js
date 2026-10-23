@@ -36,6 +36,16 @@ export async function recommendForDay(trip, date, { signal } = {}) {
   return (await request('/recommendations', { method: 'POST', body, signal })).data;
 }
 
+// Summaries of every version of a trip's itinerary, newest first.
+export function listItineraries(tripId, { signal } = {}) {
+  return request('/itineraries', { query: { tripId, limit: 50 }, signal });
+}
+
+// Deleting the current version makes the newest remaining one current.
+export async function deleteItinerary(id) {
+  return (await request(`/itineraries/${encodeURIComponent(id)}`, { method: 'DELETE' })).data;
+}
+
 export async function regenerateItinerary(id) {
   return (await request(`/itineraries/${encodeURIComponent(id)}/regenerate`, { method: 'POST' })).data;
 }

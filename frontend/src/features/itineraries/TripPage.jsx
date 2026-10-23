@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarRange, RefreshCw, Settings2, Sparkles, Trash2, TriangleAlert, Users } from 'lucide-react';
 import { Badge } from '../../components/Badge.jsx';
@@ -14,6 +14,7 @@ import { TRAVEL_MODES } from '../trips/tripForm.js';
 import { generateItinerary, getItinerary, regenerateItinerary } from './api.js';
 import { AssistantPanel } from './AssistantPanel.jsx';
 import { DayTimeline } from './DayTimeline.jsx';
+import { VersionHistory } from './VersionHistory.jsx';
 import styles from './TripPage.module.css';
 
 const ItineraryMap = lazy(() => import('./ItineraryMap.jsx'));
@@ -103,8 +104,10 @@ export function TripPage() {
   const [activeOrder, setActiveOrder] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const [searchParams] = useSearchParams();
   const trip = useQuery({ queryKey: ['trips', tripId], queryFn: ({ signal }) => getTrip(tripId, { signal }) });
-  const itineraryId = trip.data?.currentItineraryId;
+  // ?version=<itineraryId> shows an older version (read-only); otherwise the current one.
+  const itineraryId = searchParams.get('version') ?? trip.data?.currentItineraryId;
   const itinerary = useQuery({
     queryKey: ['itineraries', itineraryId],
     queryFn: ({ signal }) => getItinerary(itineraryId, { signal }),
@@ -115,8 +118,11 @@ export function TripPage() {
   function showNewVersion(next) {
     queryClient.setQueryData(['itineraries', next.id], next);
     queryClient.invalidateQueries({ queryKey: ['trips'] });
+    // Every other version just stopped being current, including cached copies.
+    queryClient.invalidateQueries({ queryKey: ['itineraries'], predicate: (q) => q.queryKey[1] !== next.id });
     setDayIndex(0);
     setActiveOrder(null);
+    if (searchParams.has('version')) navigate(`/trips/${tripId}`);
   }
 
   const regenerate = useMutation({
@@ -173,7 +179,7 @@ export function TripPage() {
   }
 
   const t = trip.data;
-  const plan = itinerary.data;
+  const plan = itinerary.data?.tripId === t.id ? itinerary.data : undefined;
   const day = plan?.days[Math.min(dayIndex, plan.days.length - 1)];
   const mode = TRAVEL_MODES.find((m) => m.value === t.travelMode)?.label;
   const failure = regenerate.error?.status === 422 ? regenerate.error : null;
@@ -225,6 +231,14 @@ export function TripPage() {
         </div>
       </header>
 
+      {plan && !plan.isCurrent && (
+        <Alert tone="info" title={`You are viewing version ${plan.version}, an older version`}>
+          <p>
+            Older versions cannot be edited. <Link to={`/trips/${t.id}`}>Show the current version</Link>
+          </p>
+        </Alert>
+      )}
+
       {failure && <GenerateFailure error={failure} tripId={t.id} />}
       {regenerate.isError && !failure && <ErrorAlert error={regenerate.error} />}
 
@@ -269,6 +283,13 @@ export function TripPage() {
           </p>
 
           <Warnings warnings={plan.warnings} />
+          <VersionHistory
+            tripId={t.id}
+            viewingId={plan.id}
+            onDeleted={(id) => {
+              if (id === plan.id) navigate(`/trips/${t.id}`, { replace: true });
+            }}
+          />
 
           {plan.days.length > 1 && (
             <div className={styles.dayTabs} role="group" aria-label="Choose a day">
