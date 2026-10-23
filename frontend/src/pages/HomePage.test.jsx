@@ -56,7 +56,7 @@ describe('home page', () => {
     const router = renderHome();
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search places' }), '  lalbagh fort ');
     await userEvent.click(screen.getByRole('button', { name: 'Explore' }));
-    expect(router.state.location.pathname).toBe('/explore');
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/explore'));
     expect(router.state.location.search).toBe('?q=lalbagh%20fort');
   });
 

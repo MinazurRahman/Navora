@@ -62,10 +62,10 @@ describe('saved places page', () => {
     expect(screen.getByRole('link', { name: 'Explore places' }).getAttribute('href')).toBe('/explore');
   });
 
-  it('is only for signed-in users', () => {
+  it('is only for signed-in users', async () => {
     clearSession();
     serve([]);
     const router = renderSaved();
-    expect(router.state.location.pathname).toBe('/login');
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/login'));
   });
 });

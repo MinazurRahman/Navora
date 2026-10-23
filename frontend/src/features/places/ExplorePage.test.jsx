@@ -114,7 +114,7 @@ describe('explore', () => {
       geolocation: { getCurrentPosition: (_success, error) => error({ code: 1, PERMISSION_DENIED: 1 }) },
     });
     renderExplore();
-    await userEvent.click(screen.getByRole('button', { name: 'Near me' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Near me' }));
     expect(await screen.findByText(/Location access was denied/)).toBeDefined();
   });
 

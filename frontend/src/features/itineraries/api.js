@@ -6,11 +6,6 @@ export async function generateItinerary(tripId) {
   return (await request('/itineraries/generate', { method: 'POST', body: { tripId } })).data;
 }
 
-// tripId and current ('true' = only each trip's current version) are optional filters.
-export function listItineraries({ tripId, current, page, limit } = {}, { signal } = {}) {
-  return request('/itineraries', { query: { tripId, current, page, limit }, signal });
-}
-
 export async function getItinerary(id, { signal } = {}) {
   return (await request(`/itineraries/${encodeURIComponent(id)}`, { signal })).data;
 }
@@ -18,10 +13,6 @@ export async function getItinerary(id, { signal } = {}) {
 // days: [{ dayNumber, placeIds, optimizeOrder? }]; each listed day is replaced. Current version only.
 export async function updateItinerary(id, days) {
   return (await request(`/itineraries/${encodeURIComponent(id)}`, { method: 'PATCH', body: { days } })).data;
-}
-
-export async function deleteItinerary(id) {
-  return (await request(`/itineraries/${encodeURIComponent(id)}`, { method: 'DELETE' })).data;
 }
 
 export async function regenerateItinerary(id) {

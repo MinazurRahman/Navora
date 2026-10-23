@@ -1,50 +1,44 @@
 import { AppShell } from './components/AppShell.jsx';
-import { LoginPage, RegisterPage } from './features/auth/AuthPages.jsx';
+import { PageLoading } from './components/PageLoading.jsx';
 import { RequireAuth } from './features/auth/RequireAuth.jsx';
-import { ExplorePage } from './features/places/ExplorePage.jsx';
-import { PlaceDetailPage } from './features/places/PlaceDetailPage.jsx';
-import { SavedPlacesPage } from './features/saved/SavedPlacesPage.jsx';
-import { PlanTripPage } from './features/trips/PlanTripPage.jsx';
-import { TripsPage } from './features/trips/TripsPage.jsx';
-import { ProfilePage } from './features/auth/ProfilePage.jsx';
-import { TripPage } from './features/itineraries/TripPage.jsx';
-import { CommunityPage } from './features/community/CommunityPage.jsx';
-import { ModerationPage } from './features/community/ModerationPage.jsx';
-import { MySubmissionsPage } from './features/community/MySubmissionsPage.jsx';
-import { EditPlacePage, SubmitPlacePage } from './features/community/PlaceFormPages.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { NotFoundPage, RouteErrorPage } from './pages/StatusPages.jsx';
-import { StyleGuidePage } from './pages/StyleGuidePage.jsx';
+
+// Pages load on demand (one chunk each) so the first visit downloads only the shell and the
+// home page. `page(load, name)` builds React Router's lazy route from a named export.
+const page = (load, name) => async () => ({ Component: (await load())[name] });
 
 export const routes = [
   {
     element: <AppShell />,
     errorElement: <RouteErrorPage />,
+    // Shown on a first visit straight to a lazy page while its chunk downloads.
+    hydrateFallbackElement: <PageLoading label="Loading NAVORA" />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'explore', element: <ExplorePage /> },
-      { path: 'places/:placeId', element: <PlaceDetailPage /> },
-      { path: 'community', element: <CommunityPage /> },
-      { path: 'login', element: <LoginPage /> },
-      { path: 'register', element: <RegisterPage /> },
+      { path: 'explore', lazy: page(() => import('./features/places/ExplorePage.jsx'), 'ExplorePage') },
+      { path: 'places/:placeId', lazy: page(() => import('./features/places/PlaceDetailPage.jsx'), 'PlaceDetailPage') },
+      { path: 'community', lazy: page(() => import('./features/community/CommunityPage.jsx'), 'CommunityPage') },
+      { path: 'login', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'LoginPage') },
+      { path: 'register', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'RegisterPage') },
       {
         element: <RequireAuth />,
         children: [
-          { path: 'plan', element: <PlanTripPage /> },
-          { path: 'saved', element: <SavedPlacesPage /> },
-          { path: 'trips', element: <TripsPage /> },
-          { path: 'trips/:tripId', element: <TripPage /> },
-          { path: 'community/submit', element: <SubmitPlacePage /> },
-          { path: 'community/mine', element: <MySubmissionsPage /> },
-          { path: 'community/:placeId/edit', element: <EditPlacePage /> },
-          { path: 'profile', element: <ProfilePage /> },
+          { path: 'plan', lazy: page(() => import('./features/trips/PlanTripPage.jsx'), 'PlanTripPage') },
+          { path: 'saved', lazy: page(() => import('./features/saved/SavedPlacesPage.jsx'), 'SavedPlacesPage') },
+          { path: 'trips', lazy: page(() => import('./features/trips/TripsPage.jsx'), 'TripsPage') },
+          { path: 'trips/:tripId', lazy: page(() => import('./features/itineraries/TripPage.jsx'), 'TripPage') },
+          { path: 'community/submit', lazy: page(() => import('./features/community/PlaceFormPages.jsx'), 'SubmitPlacePage') },
+          { path: 'community/mine', lazy: page(() => import('./features/community/MySubmissionsPage.jsx'), 'MySubmissionsPage') },
+          { path: 'community/:placeId/edit', lazy: page(() => import('./features/community/PlaceFormPages.jsx'), 'EditPlacePage') },
+          { path: 'profile', lazy: page(() => import('./features/auth/ProfilePage.jsx'), 'ProfilePage') },
         ],
       },
       {
         element: <RequireAuth roles={['moderator', 'admin']} />,
-        children: [{ path: 'moderation', element: <ModerationPage /> }],
+        children: [{ path: 'moderation', lazy: page(() => import('./features/community/ModerationPage.jsx'), 'ModerationPage') }],
       },
-      ...(import.meta.env.DEV ? [{ path: 'style-guide', element: <StyleGuidePage /> }] : []),
+      ...(import.meta.env.DEV ? [{ path: 'style-guide', lazy: page(() => import('./pages/StyleGuidePage.jsx'), 'StyleGuidePage') }] : []),
       { path: '*', element: <NotFoundPage /> },
     ],
   },

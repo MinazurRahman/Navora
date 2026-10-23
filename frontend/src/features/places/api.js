@@ -30,15 +30,6 @@ export function useExploreResults(state) {
   return { mode, ...result };
 }
 
-export function searchPlaces({ q, ...filters }, { signal } = {}) {
-  return request('/places/search', { query: { q, ...filters }, signal });
-}
-
-// latitude, longitude, radiusKm (default 5, max 50) plus the filters above.
-export function nearbyPlaces(params, { signal } = {}) {
-  return request('/places/nearby', { query: params, signal });
-}
-
 export async function getPlace(id, { signal } = {}) {
   return (await request(`/places/${encodeURIComponent(id)}`, { signal })).data;
 }

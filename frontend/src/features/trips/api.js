@@ -24,8 +24,3 @@ export async function deleteTrip(id) {
   return (await request(`/trips/${encodeURIComponent(id)}`, { method: 'DELETE' })).data;
 }
 
-// Ranked places for a set of preferences (no sign-in needed). Resolves to { data, meta };
-// an empty data list comes with meta.suggestions naming the limiting requirements.
-export function getRecommendations(preferences, { signal } = {}) {
-  return request('/recommendations', { method: 'POST', body: preferences, signal });
-}
