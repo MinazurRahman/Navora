@@ -318,18 +318,10 @@ export const DEMO_PLACE_IMAGES = {
     {
       "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Bara_Katra_by_Ragib.jpg/1280px-Bara_Katra_by_Ragib.jpg",
       "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Bara_Katra_by_Ragib.jpg/500px-Bara_Katra_by_Ragib.jpg",
-      "author": "Ragib Hasan, User:Ragib, site",
+      "author": "Ragib Hasan",
       "license": "CC BY 2.5",
       "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bara_Katra_by_Ragib.jpg"
-    },
-    {
-      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/24/Boro_Katra_4_by_Ashif_Siddique.jpg/1280px-Boro_Katra_4_by_Ashif_Siddique.jpg",
-      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/24/Boro_Katra_4_by_Ashif_Siddique.jpg/500px-Boro_Katra_4_by_Ashif_Siddique.jpg",
-      "author": "Ashif Anam Siddique",
-      "license": "CC BY-SA 3.0",
-      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Boro_Katra_4_by_Ashif_Siddique.jpg"
     },
     {
       "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/DG_26_-08_BORO_KATRA_1644_CHAK_BAZAR_DHAKA_IMG_4303.jpg/1280px-DG_26_-08_BORO_KATRA_1644_CHAK_BAZAR_DHAKA_IMG_4303.jpg",
@@ -1064,7 +1056,7 @@ export const DEMO_PLACE_IMAGES = {
     {
       "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Bashundhara_city.JPG/1280px-Bashundhara_city.JPG",
       "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Bashundhara_city.JPG/500px-Bashundhara_city.JPG",
-      "author": "No machine-readable author provided. Mamun2a assumed (based on copyright claims).",
+      "author": "Mamun2a",
       "license": "CC BY-SA 2.5",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bashundhara_city.JPG"
@@ -1674,6 +1666,740 @@ export const DEMO_PLACE_IMAGES = {
       "license": "CC BY-SA 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bara_Sardar_Bari_at_Sonargaon_Folk_Art_Museum_IMG_20250209_140953.jpg"
+    }
+  ],
+  "Goaldi Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7f/Front_view_of_Goaldi_mosque%2C_Sonargaon.jpg/1280px-Front_view_of_Goaldi_mosque%2C_Sonargaon.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7f/Front_view_of_Goaldi_mosque%2C_Sonargaon.jpg/500px-Front_view_of_Goaldi_mosque%2C_Sonargaon.jpg",
+      "author": "Ferdous",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Front_view_of_Goaldi_mosque,_Sonargaon.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Goaldi_Mosque_%2827628998360%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Goaldi_Mosque_%2827628998360%29.jpg/500px-Goaldi_Mosque_%2827628998360%29.jpg",
+      "author": "David Stanley from Nanaimo, Canada",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Goaldi_Mosque_(27628998360).jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/DG_74_-_09_GOALDI_MOSQUE_SONARGAON_THE_CAPITAL_CITY_OF_BENGAL_OF_MUGHAL_ERA_1650_AD_NARAYANGONJ_2.jpg/1280px-DG_74_-_09_GOALDI_MOSQUE_SONARGAON_THE_CAPITAL_CITY_OF_BENGAL_OF_MUGHAL_ERA_1650_AD_NARAYANGONJ_2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/DG_74_-_09_GOALDI_MOSQUE_SONARGAON_THE_CAPITAL_CITY_OF_BENGAL_OF_MUGHAL_ERA_1650_AD_NARAYANGONJ_2.jpg/500px-DG_74_-_09_GOALDI_MOSQUE_SONARGAON_THE_CAPITAL_CITY_OF_BENGAL_OF_MUGHAL_ERA_1650_AD_NARAYANGONJ_2.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_74_-_09_GOALDI_MOSQUE_SONARGAON_THE_CAPITAL_CITY_OF_BENGAL_OF_MUGHAL_ERA_1650_AD_NARAYANGONJ_2.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Historical_Goaldi_Mosque_Front_View.jpg/1280px-Historical_Goaldi_Mosque_Front_View.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Historical_Goaldi_Mosque_Front_View.jpg/500px-Historical_Goaldi_Mosque_Front_View.jpg",
+      "author": "Parvezahmed",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Historical_Goaldi_Mosque_Front_View.jpg"
+    }
+  ],
+  "Hajiganj Fort": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6424.jpg/1280px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6424.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6424.jpg/500px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6424.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6424.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Hajiganj-fort2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Hajiganj-fort2.jpg/500px-Hajiganj-fort2.jpg",
+      "author": "Siplusinha",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hajiganj-fort2.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6470.jpg/1280px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6470.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6470.jpg/500px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6470.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6470.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6441.jpg/1280px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6441.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6441.jpg/500px-DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6441.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_43_-_08_HAJI_GONJ_FORT_OF_SAESTA_KHAN_16_CENTURTY_NARAYANGONJ_IMG_6441.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Hajiganj_Fort.jpg/1280px-Hajiganj_Fort.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Hajiganj_Fort.jpg/500px-Hajiganj_Fort.jpg",
+      "author": "Tufan Mazhar Khan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hajiganj_Fort.jpg"
+    }
+  ],
+  "Sonakanda Fort": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Sonakanda_Fort_main_gate.jpg/1280px-Sonakanda_Fort_main_gate.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Sonakanda_Fort_main_gate.jpg/500px-Sonakanda_Fort_main_gate.jpg",
+      "author": "SabbirAbeir (md sabbir)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sonakanda_Fort_main_gate.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/DG_36_-08_SONA_KANDA_FORT16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5471.jpg/1280px-DG_36_-08_SONA_KANDA_FORT16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5471.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/DG_36_-08_SONA_KANDA_FORT16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5471.jpg/500px-DG_36_-08_SONA_KANDA_FORT16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5471.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_36_-08_SONA_KANDA_FORT16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5471.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Sonakanda_Fort_outside.jpg/1280px-Sonakanda_Fort_outside.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Sonakanda_Fort_outside.jpg/500px-Sonakanda_Fort_outside.jpg",
+      "author": "SabbirAbeir (md sabbir)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sonakanda_Fort_outside.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/DG_36_-08_SONA_KANDA_FORT_16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5467.jpg/1280px-DG_36_-08_SONA_KANDA_FORT_16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5467.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/DG_36_-08_SONA_KANDA_FORT_16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5467.jpg/500px-DG_36_-08_SONA_KANDA_FORT_16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5467.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_36_-08_SONA_KANDA_FORT_16_CE_NTURY_MUGAL_ERA_BANDAR_NARAYAN_GONJ_IMG_5467.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Sonakanda_Fort-02.jpg/1280px-Sonakanda_Fort-02.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Sonakanda_Fort-02.jpg/500px-Sonakanda_Fort-02.jpg",
+      "author": "SabbirAbeir (md sabbir)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sonakanda_Fort-02.jpg"
+    }
+  ],
+  "Idrakpur Fort": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/Historical_Idrakpur_Fort_of_Munshiganj.jpg/1280px-Historical_Idrakpur_Fort_of_Munshiganj.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/Historical_Idrakpur_Fort_of_Munshiganj.jpg/500px-Historical_Idrakpur_Fort_of_Munshiganj.jpg",
+      "author": "Rayhan9d",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Historical_Idrakpur_Fort_of_Munshiganj.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5384.jpg/1280px-DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5384.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5384.jpg/500px-DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5384.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5384.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Edrakpor_kella_in_Munshiganj_%282%29.JPG/1280px-Edrakpor_kella_in_Munshiganj_%282%29.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Edrakpor_kella_in_Munshiganj_%282%29.JPG/500px-Edrakpor_kella_in_Munshiganj_%282%29.JPG",
+      "author": "Mithun Ahmed",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Edrakpor_kella_in_Munshiganj_(2).JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5377.jpg/1280px-DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5377.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5377.jpg/500px-DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5377.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_34_-_08_IDRAK_PUR_FORT_MADE_B_Y_EMPEROR_MIR_JUMLA_1660_MUGUL_ERA_MUNSIGONJ_IMG_5377.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Idrakpur_Fort_main_gate.jpg/1280px-Idrakpur_Fort_main_gate.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Idrakpur_Fort_main_gate.jpg/500px-Idrakpur_Fort_main_gate.jpg",
+      "author": "SabbirAbeir (md sabbir)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Idrakpur_Fort_main_gate.jpg"
+    }
+  ],
+  "Bibi Maryam Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/The_three_domes_of_late_17th_century.jpg/1280px-The_three_domes_of_late_17th_century.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/The_three_domes_of_late_17th_century.jpg/500px-The_three_domes_of_late_17th_century.jpg",
+      "author": "Fahad Islam Nashid",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_three_domes_of_late_17th_century.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/This_unit_was_used_to_shelter_the_guards_of_the_complex.jpg/1280px-This_unit_was_used_to_shelter_the_guards_of_the_complex.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/This_unit_was_used_to_shelter_the_guards_of_the_complex.jpg/500px-This_unit_was_used_to_shelter_the_guards_of_the_complex.jpg",
+      "author": "Fahad Islam Nashid",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:This_unit_was_used_to_shelter_the_guards_of_the_complex.jpg"
+    }
+  ],
+  "Bhawal National Park": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/A_Road_of_Bhawal_Nationa_Park%2C_Gazipur.jpg/1280px-A_Road_of_Bhawal_Nationa_Park%2C_Gazipur.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/A_Road_of_Bhawal_Nationa_Park%2C_Gazipur.jpg/500px-A_Road_of_Bhawal_Nationa_Park%2C_Gazipur.jpg",
+      "author": "Shimul Mohammad",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Road_of_Bhawal_Nationa_Park,_Gazipur.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Adopt_the_pace_of_nature_%26_her_secret_is_patience.png/1280px-Adopt_the_pace_of_nature_%26_her_secret_is_patience.png",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Adopt_the_pace_of_nature_%26_her_secret_is_patience.png/500px-Adopt_the_pace_of_nature_%26_her_secret_is_patience.png",
+      "author": "Mahfuzulangkon17",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Adopt_the_pace_of_nature_%26_her_secret_is_patience.png"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Beside_lake_at_Bhawal_National_Park.jpg/1280px-Beside_lake_at_Bhawal_National_Park.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Beside_lake_at_Bhawal_National_Park.jpg/500px-Beside_lake_at_Bhawal_National_Park.jpg",
+      "author": "Tazmul58",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Beside_lake_at_Bhawal_National_Park.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Bhaowal_forest_25.03.2014.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Bhaowal_forest_25.03.2014.jpg/500px-Bhaowal_forest_25.03.2014.jpg",
+      "author": "Ahmedfaisal0905",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bhaowal_forest_25.03.2014.jpg"
+    }
+  ],
+  "Gazipur Safari Park": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Aerial_view_of_African_Safari_in_Bangabandhu_Sheikh_Mujib_Safari_Park.jpg/1280px-Aerial_view_of_African_Safari_in_Bangabandhu_Sheikh_Mujib_Safari_Park.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Aerial_view_of_African_Safari_in_Bangabandhu_Sheikh_Mujib_Safari_Park.jpg/500px-Aerial_view_of_African_Safari_in_Bangabandhu_Sheikh_Mujib_Safari_Park.jpg",
+      "author": "Azim Khan Ronnie",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_African_Safari_in_Bangabandhu_Sheikh_Mujib_Safari_Park.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Antelope_in_Gazipur_Safari_Park.jpg/1280px-Antelope_in_Gazipur_Safari_Park.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Antelope_in_Gazipur_Safari_Park.jpg/500px-Antelope_in_Gazipur_Safari_Park.jpg",
+      "author": "Fahad Ibn Shams",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Antelope_in_Gazipur_Safari_Park.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/A_Great_Hornbill.IMG-20250703.jpg/1280px-A_Great_Hornbill.IMG-20250703.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/A_Great_Hornbill.IMG-20250703.jpg/500px-A_Great_Hornbill.IMG-20250703.jpg",
+      "author": "Unknown author",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Great_Hornbill.IMG-20250703.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Bangabandhu_Safari_Park_Entrance.jpg/1280px-Bangabandhu_Safari_Park_Entrance.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Bangabandhu_Safari_Park_Entrance.jpg/500px-Bangabandhu_Safari_Park_Entrance.jpg",
+      "author": "Ali Haidar Khan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangabandhu_Safari_Park_Entrance.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Aerial_view_of_Gazipur_Safari_Park.jpg/1280px-Aerial_view_of_Gazipur_Safari_Park.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Aerial_view_of_Gazipur_Safari_Park.jpg/500px-Aerial_view_of_Gazipur_Safari_Park.jpg",
+      "author": "Azim Khan Ronnie",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Gazipur_Safari_Park.jpg"
+    }
+  ],
+  "Padma Bridge": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Padma_River_Life_04.jpg/1280px-Padma_River_Life_04.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Padma_River_Life_04.jpg/500px-Padma_River_Life_04.jpg",
+      "author": "A S M Jobaer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Padma_River_Life_04.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Padma_Bridge_side.jpg/1280px-Padma_Bridge_side.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Padma_Bridge_side.jpg/500px-Padma_Bridge_side.jpg",
+      "author": "আসিফ খান আযাদ",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Padma_Bridge_side.jpg"
+    }
+  ],
+  "Binat Bibi Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/%E0%A6%AC%E0%A6%BF%E0%A6%A8%E0%A6%A4_%E0%A6%AC%E0%A6%BF%E0%A6%AC%E0%A6%BF_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_03.jpg/1280px-%E0%A6%AC%E0%A6%BF%E0%A6%A8%E0%A6%A4_%E0%A6%AC%E0%A6%BF%E0%A6%AC%E0%A6%BF_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_03.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/%E0%A6%AC%E0%A6%BF%E0%A6%A8%E0%A6%A4_%E0%A6%AC%E0%A6%BF%E0%A6%AC%E0%A6%BF_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_03.jpg/500px-%E0%A6%AC%E0%A6%BF%E0%A6%A8%E0%A6%A4_%E0%A6%AC%E0%A6%BF%E0%A6%AC%E0%A6%BF_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_03.jpg",
+      "author": "Aminul joy",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%AC%E0%A6%BF%E0%A6%A8%E0%A6%A4_%E0%A6%AC%E0%A6%BF%E0%A6%AC%E0%A6%BF_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_03.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Binot_Bibi_mosque_in_Old_Dhaka.JPG/1280px-Binot_Bibi_mosque_in_Old_Dhaka.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Binot_Bibi_mosque_in_Old_Dhaka.JPG/500px-Binot_Bibi_mosque_in_Old_Dhaka.JPG",
+      "author": "Mak",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Binot_Bibi_mosque_in_Old_Dhaka.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Beautiful_Blue_Minaret_of_Binat_Bibi_mosque%2C_Gandaria%2C_Photographer%2C_Pratyay_Hasan.jpg/1280px-Beautiful_Blue_Minaret_of_Binat_Bibi_mosque%2C_Gandaria%2C_Photographer%2C_Pratyay_Hasan.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Beautiful_Blue_Minaret_of_Binat_Bibi_mosque%2C_Gandaria%2C_Photographer%2C_Pratyay_Hasan.jpg/500px-Beautiful_Blue_Minaret_of_Binat_Bibi_mosque%2C_Gandaria%2C_Photographer%2C_Pratyay_Hasan.jpg",
+      "author": "Pratyay Hasan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Beautiful_Blue_Minaret_of_Binat_Bibi_mosque,_Gandaria,_Photographer,_Pratyay_Hasan.jpg"
+    }
+  ],
+  "Kartalab Khan Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_%E0%A6%9B%E0%A6%AC%E0%A6%BF_%E0%A6%A8%E0%A6%82_%E0%A7%A7.jpg/1280px-%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_%E0%A6%9B%E0%A6%AC%E0%A6%BF_%E0%A6%A8%E0%A6%82_%E0%A7%A7.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_%E0%A6%9B%E0%A6%AC%E0%A6%BF_%E0%A6%A8%E0%A6%82_%E0%A7%A7.jpg/500px-%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_%E0%A6%9B%E0%A6%AC%E0%A6%BF_%E0%A6%A8%E0%A6%82_%E0%A7%A7.jpg",
+      "author": "Shariful Islam (Masum)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6_%E0%A6%9B%E0%A6%AC%E0%A6%BF_%E0%A6%A8%E0%A6%82_%E0%A7%A7.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/24/%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6%2C_%E0%A6%AC%E0%A7%87%E0%A6%97%E0%A6%AE_%E0%A6%AC%E0%A6%BE%E0%A6%9C%E0%A6%BE%E0%A6%B0%E0%A5%A4_06.jpg/1280px-%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6%2C_%E0%A6%AC%E0%A7%87%E0%A6%97%E0%A6%AE_%E0%A6%AC%E0%A6%BE%E0%A6%9C%E0%A6%BE%E0%A6%B0%E0%A5%A4_06.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/24/%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6%2C_%E0%A6%AC%E0%A7%87%E0%A6%97%E0%A6%AE_%E0%A6%AC%E0%A6%BE%E0%A6%9C%E0%A6%BE%E0%A6%B0%E0%A5%A4_06.jpg/500px-%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6%2C_%E0%A6%AC%E0%A7%87%E0%A6%97%E0%A6%AE_%E0%A6%AC%E0%A6%BE%E0%A6%9C%E0%A6%BE%E0%A6%B0%E0%A5%A4_06.jpg",
+      "author": "Aminul joy",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%95%E0%A6%B0%E0%A6%A4%E0%A6%B2%E0%A6%AC_%E0%A6%96%E0%A6%BE%E0%A6%A8_%E0%A6%AE%E0%A6%B8%E0%A6%9C%E0%A6%BF%E0%A6%A6,_%E0%A6%AC%E0%A7%87%E0%A6%97%E0%A6%AE_%E0%A6%AC%E0%A6%BE%E0%A6%9C%E0%A6%BE%E0%A6%B0%E0%A5%A4_06.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Kartalab_Khan_Mosque_in_Dhaka_%28cropped%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Kartalab_Khan_Mosque_in_Dhaka_%28cropped%29.jpg/500px-Kartalab_Khan_Mosque_in_Dhaka_%28cropped%29.jpg",
+      "author": "Tanzin1990",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kartalab_Khan_Mosque_in_Dhaka_(cropped).jpg"
+    }
+  ],
+  "Northbrook Hall": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/DG_21_-08_NORTH_BROOK_HALL_IMG_3500.jpg/1280px-DG_21_-08_NORTH_BROOK_HALL_IMG_3500.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/DG_21_-08_NORTH_BROOK_HALL_IMG_3500.jpg/500px-DG_21_-08_NORTH_BROOK_HALL_IMG_3500.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_21_-08_NORTH_BROOK_HALL_IMG_3500.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/DG_FOLDER_82_-_09_NORTH_BROOK_HALL_01.jpg/1280px-DG_FOLDER_82_-_09_NORTH_BROOK_HALL_01.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/DG_FOLDER_82_-_09_NORTH_BROOK_HALL_01.jpg/500px-DG_FOLDER_82_-_09_NORTH_BROOK_HALL_01.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_FOLDER_82_-_09_NORTH_BROOK_HALL_01.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Dhaka_Lalkhuthi_15Aug15_MG_7485.jpg/1280px-Dhaka_Lalkhuthi_15Aug15_MG_7485.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Dhaka_Lalkhuthi_15Aug15_MG_7485.jpg/500px-Dhaka_Lalkhuthi_15Aug15_MG_7485.jpg",
+      "author": "Kazi Rashed Abdallah",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dhaka_Lalkhuthi_15Aug15_MG_7485.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bf/Dhaka_Lalkhuthi_15Aug15_MG_7493.jpg/1280px-Dhaka_Lalkhuthi_15Aug15_MG_7493.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bf/Dhaka_Lalkhuthi_15Aug15_MG_7493.jpg/500px-Dhaka_Lalkhuthi_15Aug15_MG_7493.jpg",
+      "author": "Kazi Rashed Abdallah",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dhaka_Lalkhuthi_15Aug15_MG_7493.jpg"
+    }
+  ],
+  "Ramakrishna Mission Temple": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Ramakrishna_Mission_Temple%2CDhaka_%28cropped%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Ramakrishna_Mission_Temple%2CDhaka_%28cropped%29.jpg/500px-Ramakrishna_Mission_Temple%2CDhaka_%28cropped%29.jpg",
+      "author": "Masafi Mustafa Haider",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ramakrishna_Mission_Temple,Dhaka_(cropped).jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Ramkrishna_Missionaries%2C_Dhaka.jpeg/1280px-Ramkrishna_Missionaries%2C_Dhaka.jpeg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Ramkrishna_Missionaries%2C_Dhaka.jpeg/500px-Ramkrishna_Missionaries%2C_Dhaka.jpeg",
+      "author": "Rahul_Kumar_Sanjowal",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ramkrishna_Missionaries,_Dhaka.jpeg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/Durga_Puja_2013_at_Ramakrishna_Mission_in_Dhaka_001.jpg/1280px-Durga_Puja_2013_at_Ramakrishna_Mission_in_Dhaka_001.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/Durga_Puja_2013_at_Ramakrishna_Mission_in_Dhaka_001.jpg/500px-Durga_Puja_2013_at_Ramakrishna_Mission_in_Dhaka_001.jpg",
+      "author": "Pratyya Ghosh",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Durga_Puja_2013_at_Ramakrishna_Mission_in_Dhaka_001.jpg"
+    }
+  ],
+  "Musa Khan Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Back_Side_Of_Musa_Khan_Mosque_1.jpg/1280px-Back_Side_Of_Musa_Khan_Mosque_1.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Back_Side_Of_Musa_Khan_Mosque_1.jpg/500px-Back_Side_Of_Musa_Khan_Mosque_1.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Back_Side_Of_Musa_Khan_Mosque_1.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Birds_eye_view_domes.jpg/1280px-Birds_eye_view_domes.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Birds_eye_view_domes.jpg/500px-Birds_eye_view_domes.jpg",
+      "author": "Rawnak Dihan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Birds_eye_view_domes.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/Basement%26masjid_01.jpg/1280px-Basement%26masjid_01.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/Basement%26masjid_01.jpg/500px-Basement%26masjid_01.jpg",
+      "author": "Rawnak Dihan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Basement%26masjid_01.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/Back_Side_Of_Musa_Khan_Mosque.jpg/1280px-Back_Side_Of_Musa_Khan_Mosque.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/Back_Side_Of_Musa_Khan_Mosque.jpg/500px-Back_Side_Of_Musa_Khan_Mosque.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Back_Side_Of_Musa_Khan_Mosque.jpg"
+    }
+  ],
+  "Dhaka Gate": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/MIR_JUMLA_GATE-.jpg/1280px-MIR_JUMLA_GATE-.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/MIR_JUMLA_GATE-.jpg/500px-MIR_JUMLA_GATE-.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MIR_JUMLA_GATE-.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/MIR_JUMLA_GATE.jpg/1280px-MIR_JUMLA_GATE.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/MIR_JUMLA_GATE.jpg/500px-MIR_JUMLA_GATE.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MIR_JUMLA_GATE.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/MJUmlaG4.jpg/1280px-MJUmlaG4.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/MJUmlaG4.jpg/500px-MJUmlaG4.jpg",
+      "author": "Sume3349",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MJUmlaG4.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/MJUmlaG7.jpg/1280px-MJUmlaG7.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/MJUmlaG7.jpg/500px-MJUmlaG7.jpg",
+      "author": "Sume3349",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MJUmlaG7.jpg"
+    }
+  ],
+  "Aparajeyo Bangla": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Aparajeyo_Bangla_%283%29.jpg/1280px-Aparajeyo_Bangla_%283%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Aparajeyo_Bangla_%283%29.jpg/500px-Aparajeyo_Bangla_%283%29.jpg",
+      "author": "MD SAIFUL AMIN",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aparajeyo_Bangla_(3).jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Aparajeyo_Bangla_-_1979_CE_-_Sculpture_by_Syed_Abdullah_Khalid_-_University_of_Dhaka_Campus_-_Dhaka_2015-05-31_2365.JPG/1280px-Aparajeyo_Bangla_-_1979_CE_-_Sculpture_by_Syed_Abdullah_Khalid_-_University_of_Dhaka_Campus_-_Dhaka_2015-05-31_2365.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Aparajeyo_Bangla_-_1979_CE_-_Sculpture_by_Syed_Abdullah_Khalid_-_University_of_Dhaka_Campus_-_Dhaka_2015-05-31_2365.JPG/500px-Aparajeyo_Bangla_-_1979_CE_-_Sculpture_by_Syed_Abdullah_Khalid_-_University_of_Dhaka_Campus_-_Dhaka_2015-05-31_2365.JPG",
+      "author": "Biswarup Ganguly",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aparajeyo_Bangla_-_1979_CE_-_Sculpture_by_Syed_Abdullah_Khalid_-_University_of_Dhaka_Campus_-_Dhaka_2015-05-31_2365.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Aparajeyo_Bangla_%281%29.jpg/1280px-Aparajeyo_Bangla_%281%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Aparajeyo_Bangla_%281%29.jpg/500px-Aparajeyo_Bangla_%281%29.jpg",
+      "author": "MD SAIFUL AMIN",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aparajeyo_Bangla_(1).jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Aparajeyo_Bangla_%284%29.jpg/1280px-Aparajeyo_Bangla_%284%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Aparajeyo_Bangla_%284%29.jpg/500px-Aparajeyo_Bangla_%284%29.jpg",
+      "author": "MD SAIFUL AMIN",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aparajeyo_Bangla_(4).jpg"
+    }
+  ],
+  "St. Mary's Cathedral": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/Kakrail_Church.jpg/1280px-Kakrail_Church.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/Kakrail_Church.jpg/500px-Kakrail_Church.jpg",
+      "author": "S.M.M.Musabbir Uddin",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kakrail_Church.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/Dhaka%2C_Catholic_Cathedral_of_the_Immaculate_Conception.JPG/1280px-Dhaka%2C_Catholic_Cathedral_of_the_Immaculate_Conception.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/Dhaka%2C_Catholic_Cathedral_of_the_Immaculate_Conception.JPG/500px-Dhaka%2C_Catholic_Cathedral_of_the_Immaculate_Conception.JPG",
+      "author": "Grentidez",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dhaka,_Catholic_Cathedral_of_the_Immaculate_Conception.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Inside_the_Kakrail_Church.jpg/1280px-Inside_the_Kakrail_Church.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Inside_the_Kakrail_Church.jpg/500px-Inside_the_Kakrail_Church.jpg",
+      "author": "S.M.M.Musabbir Uddin",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Inside_the_Kakrail_Church.jpg"
+    }
+  ],
+  "Holy Rosary Church": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/df/Holy_Rosary_Church%2C_Tejgaon--.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/df/Holy_Rosary_Church%2C_Tejgaon--.jpg/500px-Holy_Rosary_Church%2C_Tejgaon--.jpg",
+      "author": "Mahbubur",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Holy_Rosary_Church,_Tejgaon--.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Tejaon_Church%2C_Dhaka.jpg/1280px-Tejaon_Church%2C_Dhaka.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Tejaon_Church%2C_Dhaka.jpg/500px-Tejaon_Church%2C_Dhaka.jpg",
+      "author": "FahimHP",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tejaon_Church,_Dhaka.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Holy_Rosary_Church_02.jpg/1280px-Holy_Rosary_Church_02.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Holy_Rosary_Church_02.jpg/500px-Holy_Rosary_Church_02.jpg",
+      "author": "Asivechowdhury",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Holy_Rosary_Church_02.jpg"
+    }
+  ],
+  "Novotheatre": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Bangabandhu_Novo_Theatre.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f0/Bangabandhu_Novo_Theatre.jpg/500px-Bangabandhu_Novo_Theatre.jpg",
+      "author": "David Stanley",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangabandhu_Novo_Theatre.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre_%2808%29.jpg/1280px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre_%2808%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre_%2808%29.jpg/500px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre_%2808%29.jpg",
+      "author": "Nahid Sultan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre_(08).jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre.jpg/1280px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre.jpg/500px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre.jpg",
+      "author": "Nahid Sultan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre%2CDhaka.jpg/1280px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre%2CDhaka.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre%2CDhaka.jpg/500px-Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre%2CDhaka.jpg",
+      "author": "Syed Sajidul Islam",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangabandhu_Sheikh_Mujibur_Rahman_Novo_Theatre,Dhaka.jpg"
+    }
+  ],
+  "National Museum of Science and Technology": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/National_Museum_of_Science_and_Technology_04.jpg/1280px-National_Museum_of_Science_and_Technology_04.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/National_Museum_of_Science_and_Technology_04.jpg/500px-National_Museum_of_Science_and_Technology_04.jpg",
+      "author": "Asivechowdhury",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:National_Museum_of_Science_and_Technology_04.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/National_Museum_of_Science_and_Technology_08.jpg/1280px-National_Museum_of_Science_and_Technology_08.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/National_Museum_of_Science_and_Technology_08.jpg/500px-National_Museum_of_Science_and_Technology_08.jpg",
+      "author": "Asivechowdhury",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:National_Museum_of_Science_and_Technology_08.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Ivchenko_AI-24_turboprop_engine_on_display_at_NMST.jpg/1280px-Ivchenko_AI-24_turboprop_engine_on_display_at_NMST.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Ivchenko_AI-24_turboprop_engine_on_display_at_NMST.jpg/500px-Ivchenko_AI-24_turboprop_engine_on_display_at_NMST.jpg",
+      "author": "Tausheef Hassan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ivchenko_AI-24_turboprop_engine_on_display_at_NMST.jpg"
+    }
+  ],
+  "Bangladesh Air Force Museum": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Bangladesh_Air_Force_Museum_3.jpg/1280px-Bangladesh_Air_Force_Museum_3.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Bangladesh_Air_Force_Museum_3.jpg/500px-Bangladesh_Air_Force_Museum_3.jpg",
+      "author": "S.M.M.Musabbir Uddin",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangladesh_Air_Force_Museum_3.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/BAF_Museum_ground.jpg/1280px-BAF_Museum_ground.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/BAF_Museum_ground.jpg/500px-BAF_Museum_ground.jpg",
+      "author": "Niasoh",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:BAF_Museum_ground.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/BAF_Museum_Main_Gate.jpg/1280px-BAF_Museum_Main_Gate.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/BAF_Museum_Main_Gate.jpg/500px-BAF_Museum_Main_Gate.jpg",
+      "author": "Masum-al-hasan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:BAF_Museum_Main_Gate.jpg"
+    }
+  ],
+  "Bangladesh Bank Currency Museum": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Bangladesh_Bank_Taka_Museum.jpg/1280px-Bangladesh_Bank_Taka_Museum.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Bangladesh_Bank_Taka_Museum.jpg/500px-Bangladesh_Bank_Taka_Museum.jpg",
+      "author": "Jaman Md",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bangladesh_Bank_Taka_Museum.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Gallery_1_of_Bangladesh_Bank_Taka_Museum_on_1st_floor.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Gallery_1_of_Bangladesh_Bank_Taka_Museum_on_1st_floor.jpg/500px-Gallery_1_of_Bangladesh_Bank_Taka_Museum_on_1st_floor.jpg",
+      "author": "Jaman Md",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gallery_1_of_Bangladesh_Bank_Taka_Museum_on_1st_floor.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Diorama_representing_Barter_System.jpg/1280px-Diorama_representing_Barter_System.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Diorama_representing_Barter_System.jpg/500px-Diorama_representing_Barter_System.jpg",
+      "author": "Jaman Md",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Diorama_representing_Barter_System.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Mural_at_Bangladesh_Bank_Taka_Museum.jpg/1280px-Mural_at_Bangladesh_Bank_Taka_Museum.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Mural_at_Bangladesh_Bank_Taka_Museum.jpg/500px-Mural_at_Bangladesh_Bank_Taka_Museum.jpg",
+      "author": "Jaman Md",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mural_at_Bangladesh_Bank_Taka_Museum.jpg"
+    }
+  ],
+  "Rayer Bazar Martyred Intellectuals Memorial": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/2._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg/1280px-2._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/2._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg/500px-2._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg",
+      "author": "Pinu Rahman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Dg_DVD_125_-_14_SHAHEE_BUDDIJIBI_SMRITI_SOD_084.jpg/1280px-Dg_DVD_125_-_14_SHAHEE_BUDDIJIBI_SMRITI_SOD_084.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Dg_DVD_125_-_14_SHAHEE_BUDDIJIBI_SMRITI_SOD_084.jpg/500px-Dg_DVD_125_-_14_SHAHEE_BUDDIJIBI_SMRITI_SOD_084.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dg_DVD_125_-_14_SHAHEE_BUDDIJIBI_SMRITI_SOD_084.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/A_Partial_View_of_Rayerbazar_Boddhobhumi-1.JPG/1280px-A_Partial_View_of_Rayerbazar_Boddhobhumi-1.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/A_Partial_View_of_Rayerbazar_Boddhobhumi-1.JPG/500px-A_Partial_View_of_Rayerbazar_Boddhobhumi-1.JPG",
+      "author": "Farhana Islam Nova",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Partial_View_of_Rayerbazar_Boddhobhumi-1.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/1._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg/1280px-1._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/1._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg/500px-1._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg",
+      "author": "Pinu Rahman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:1._%E0%A6%B6%E0%A6%B9%E0%A7%80%E0%A6%A6_%E0%A6%AC%E0%A7%81%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%BF%E0%A6%9C%E0%A7%80%E0%A6%AC%E0%A7%80_%E0%A6%B8%E0%A7%8D%E0%A6%AE%E0%A7%83%E0%A6%A4%E0%A6%BF%E0%A6%B8%E0%A7%8C%E0%A6%A7.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/A_Partial_View_of_Rayerbazar_Boddhobhumi-3.JPG/1280px-A_Partial_View_of_Rayerbazar_Boddhobhumi-3.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/A_Partial_View_of_Rayerbazar_Boddhobhumi-3.JPG/500px-A_Partial_View_of_Rayerbazar_Boddhobhumi-3.JPG",
+      "author": "Farhana Islam Nova",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Partial_View_of_Rayerbazar_Boddhobhumi-3.JPG"
+    }
+  ],
+  "Mirpur Martyred Intellectuals Memorial": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/A_Partial_View_of_Mirpur_Boddhobhumi-4.jpg/1280px-A_Partial_View_of_Mirpur_Boddhobhumi-4.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/A_Partial_View_of_Mirpur_Boddhobhumi-4.jpg/500px-A_Partial_View_of_Mirpur_Boddhobhumi-4.jpg",
+      "author": "Farhana Islam Nova",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Partial_View_of_Mirpur_Boddhobhumi-4.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Buddhijibi.JPG/1280px-Buddhijibi.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Buddhijibi.JPG/500px-Buddhijibi.JPG",
+      "author": "Mamun2a",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Buddhijibi.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Buddhijibi_Graveyard_Dhaka_2.jpg/1280px-Buddhijibi_Graveyard_Dhaka_2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Buddhijibi_Graveyard_Dhaka_2.jpg/500px-Buddhijibi_Graveyard_Dhaka_2.jpg",
+      "author": "Aashaa",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Buddhijibi_Graveyard_Dhaka_2.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Intellectual_Martyrs_Memorial_%28Side_View_3%29.jpg/1280px-Intellectual_Martyrs_Memorial_%28Side_View_3%29.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Intellectual_Martyrs_Memorial_%28Side_View_3%29.jpg/500px-Intellectual_Martyrs_Memorial_%28Side_View_3%29.jpg",
+      "author": "Ranadipam Basu",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Intellectual_Martyrs_Memorial_(Side_View_3).jpg"
     }
   ]
 };

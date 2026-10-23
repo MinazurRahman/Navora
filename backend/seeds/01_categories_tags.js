@@ -1,6 +1,6 @@
 // Reference data. Idempotent: safe to run repeatedly; updates names/descriptions in place.
 
-const CATEGORIES = [
+export const CATEGORIES = [
   ['museum', 'Museum', 'Museums and exhibitions'],
   ['historical_site', 'Historical Site', 'Monuments, forts, heritage buildings and ruins'],
   ['religious_site', 'Religious Site', 'Mosques, temples, churches and other places of worship'],
@@ -19,7 +19,7 @@ const CATEGORIES = [
   ['amusement_park', 'Amusement Park', 'Amusement and theme parks'],
 ];
 
-const TAGS = [
+export const TAGS = [
   ['history', 'History'],
   ['food', 'Food'],
   ['nature', 'Nature'],
