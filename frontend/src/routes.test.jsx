@@ -28,7 +28,11 @@ function renderAt(path) {
 function signInAs(role = 'user') {
   const who = { ...user, role };
   setSession({ accessToken: 'access', refreshToken: 'refresh', user: who });
-  return mockFetch((path) => (path.endsWith('/auth/me') ? ok({ user: who }) : ok({ loggedOut: true })));
+  return mockFetch((path) => {
+    if (path.endsWith('/auth/me')) return ok({ user: who });
+    if (path.endsWith('/auth/logout')) return ok({ loggedOut: true });
+    return page([]);
+  });
 }
 
 // The desktop nav is the first "Main" navigation; the mobile one exists only while open.
@@ -81,8 +85,8 @@ describe('private routes', () => {
   it('wait for the stored session to be verified, then render', async () => {
     signInAs('user');
     renderAt('/trips');
-    expect(screen.queryByRole('heading', { name: 'My trips is not available yet' })).toBeNull();
-    expect(await screen.findByRole('heading', { name: 'My trips is not available yet' })).toBeDefined();
+    expect(screen.queryByRole('heading', { level: 1, name: 'My trips' })).toBeNull();
+    expect(await screen.findByRole('heading', { level: 1, name: 'My trips' })).toBeDefined();
     expect(screen.getAllByText('Ayesha Rahman').length).toBeGreaterThan(0);
   });
 

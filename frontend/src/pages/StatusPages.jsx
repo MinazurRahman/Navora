@@ -1,5 +1,5 @@
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
-import { Compass, Hammer, TriangleAlert } from 'lucide-react';
+import { Compass, TriangleAlert } from 'lucide-react';
 import { Button } from '../components/Button.jsx';
 import { EmptyState } from '../components/Feedback.jsx';
 import { Logo } from '../components/Logo.jsx';
@@ -19,16 +19,6 @@ export function NotFoundPage() {
           </Button>
         }
       />
-    </main>
-  );
-}
-
-// A page whose feature is not built yet. It states that plainly instead of showing a fake UI.
-export function PlaceholderPage({ title, description }) {
-  return (
-    <main className="container">
-      <title>{`${title} | NAVORA`}</title>
-      <EmptyState icon={Hammer} title={`${title} is not available yet`} description={description} />
     </main>
   );
 }
