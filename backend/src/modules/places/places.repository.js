@@ -35,6 +35,7 @@ const placeColumns = (conn) => [
   'p.typical_visit_minutes', 'p.parking_available', 'p.pet_friendly', 'p.wheelchair_accessible',
   'p.accessibility_notes', 'p.restrictions', 'p.facilities_verified_at', 'p.status', 'p.created_by',
   'p.avg_rating', 'p.review_count', 'p.created_at', 'p.updated_at',
+  'p.image_url', 'p.image_author', 'p.image_license', 'p.image_license_url', 'p.image_source_url',
   'c.slug as category_slug', 'c.name as category_name',
   conn.raw('ST_Y(p.location::geometry) AS latitude'),
   conn.raw('ST_X(p.location::geometry) AS longitude'),

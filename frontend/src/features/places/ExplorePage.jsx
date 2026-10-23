@@ -417,6 +417,7 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
           <li key={place.id} ref={(el) => (el ? cards.current.set(place.id, el) : cards.current.delete(place.id))}>
             <PlaceCard
               headingLevel="h2"
+              layout="row"
               place={place}
               selected={place.id === selectedId}
               action={

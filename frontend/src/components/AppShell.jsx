@@ -137,7 +137,8 @@ function Footer() {
           <p className="muted">Discover beyond the usual.</p>
         </div>
         <p className={styles.footerNote}>
-          Places are contributed by the community and reviewed by moderators before they are listed.
+          Places are contributed by the community and reviewed by moderators before they are listed. Place photos
+          come from Wikimedia Commons contributors, under the licenses credited on each place&apos;s page.
         </p>
       </div>
     </footer>

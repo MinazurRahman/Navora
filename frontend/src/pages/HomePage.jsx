@@ -7,6 +7,7 @@ import { Skeleton } from '../components/Feedback.jsx';
 import { useCategories } from '../features/catalogue/api.js';
 import { usePlaces } from '../features/places/api.js';
 import { PlaceCard, PlaceCardSkeleton } from '../features/places/PlaceCard.jsx';
+import { PlaceImage } from '../features/places/PlaceImage.jsx';
 import styles from './HomePage.module.css';
 
 const STEPS = [
@@ -65,7 +66,7 @@ function CategoryLinks() {
   return (
     <section className={styles.categories} aria-labelledby="home-categories">
       <h2 id="home-categories" className={styles.panelTitle}>
-        Browse by category
+        Or browse by category
       </h2>
       {isPending && (
         <div className={styles.chips} aria-hidden="true">
@@ -87,6 +88,32 @@ function CategoryLinks() {
         </ul>
       )}
     </section>
+  );
+}
+
+// Three photographed places, skipping the six shown under Recently added; each tile links
+// to its place. The photos' credits are on the place pages.
+function HeroCollage() {
+  const { data, isPending } = usePlaces({ limit: 12 });
+  const featured = (data?.data ?? []).slice(6).filter((place) => place.image).slice(0, 3);
+
+  if (isPending) return <Skeleton height="100%" className={styles.collageSkeleton} />;
+  if (featured.length < 3) return null;
+
+  return (
+    <figure className={styles.collage}>
+      <ul className={styles.collageGrid}>
+        {featured.map((place) => (
+          <li key={place.id}>
+            <Link to={`/places/${place.id}`} className={styles.tile}>
+              <PlaceImage place={place} className={styles.tileImage} eager />
+              <span className={styles.tileName}>{place.name}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <figcaption className={styles.collageNote}>Photos from Wikimedia Commons; credits on each place's page.</figcaption>
+    </figure>
   );
 }
 
@@ -149,8 +176,9 @@ export function HomePage() {
                 Plan a trip
               </Button>
             </div>
+            <CategoryLinks />
           </div>
-          <CategoryLinks />
+          <HeroCollage />
         </div>
       </div>
 

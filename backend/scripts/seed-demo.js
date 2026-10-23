@@ -3,7 +3,11 @@
 import { createHash } from 'node:crypto';
 import { env } from '../src/config/env.js';
 import { createDb } from '../src/config/database.js';
+import { createRedis } from '../src/config/redis.js';
+import { createCache } from '../src/integrations/redis/cache.js';
+import { CACHE_NAMESPACE } from '../src/modules/places/places.service.js';
 import { DEMO_PLACES } from './demo-places.js';
+import { DEMO_PLACE_IMAGES } from './demo-place-images.js';
 
 if (env.isProduction) {
   console.error('Refusing to load demo places with NODE_ENV=production.');
@@ -28,6 +32,7 @@ try {
   await db.transaction(async (trx) => {
     for (const [name, category, latitude, longitude, placeTags, description] of DEMO_PLACES) {
       const id = demoId(name);
+      const image = DEMO_PLACE_IMAGES[name];
       await trx('places')
         .insert({
           id,
@@ -37,13 +42,20 @@ try {
           location: trx.raw('ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [longitude, latitude]),
           city: 'Dhaka',
           status: 'APPROVED',
+          image_url: image?.url ?? null,
+          image_author: image?.author ?? null,
+          image_license: image?.license ?? null,
+          image_license_url: image?.licenseUrl ?? null,
+          image_source_url: image?.sourceUrl ?? null,
         })
         .onConflict('id')
-        .merge(['name', 'description', 'category_id', 'location', 'city', 'status']);
+        .merge(['name', 'description', 'category_id', 'location', 'city', 'status', 'image_url', 'image_author', 'image_license', 'image_license_url', 'image_source_url']);
       await trx('place_tags').where({ place_id: id }).delete();
       await trx('place_tags').insert(placeTags.map((slug) => ({ place_id: id, tag_id: tags.get(slug) })));
     }
   });
+  // Cached place lists would otherwise keep serving the old rows until they expire.
+  await createCache(createRedis(env)).bumpVersion(CACHE_NAMESPACE);
   console.log(`Loaded ${DEMO_PLACES.length} demo places (approved; fees, hours and facilities unknown).`);
 } finally {
   await db.destroy();
