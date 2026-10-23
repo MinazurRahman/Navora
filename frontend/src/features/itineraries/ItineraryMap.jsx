@@ -62,8 +62,8 @@ export default function ItineraryMap({ start, day, activeOrder }) {
   const reduceMotion = prefersReducedMotion();
 
   return (
-    <figure className={styles.figure}>
-      <MapContainer center={toLatLng(start)} zoom={13} className={styles.map} aria-label={`Map of day ${day.dayNumber}`} zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
+    <figure className={styles.figure} aria-label={`Map of day ${day.dayNumber}`}>
+      <MapContainer center={toLatLng(start)} zoom={13} className={styles.map} zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
         <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
         <Polyline
           positions={points}

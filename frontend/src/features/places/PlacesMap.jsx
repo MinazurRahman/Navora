@@ -85,8 +85,10 @@ export default function PlacesMap({ places, selectedId, onSelect, center, radius
   const reduceMotion = prefersReducedMotion();
 
   return (
-    <div className={styles.wrapper}>
-      <MapContainer center={DHAKA} zoom={12} className={styles.map} ref={setMap} aria-label="Map of results" zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
+    // react-leaflet passes only className/id/style to its element, so the accessible name
+    // lives on this wrapper.
+    <div className={styles.wrapper} role="region" aria-label="Map of results">
+      <MapContainer center={DHAKA} zoom={12} className={styles.map} ref={setMap} zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
         <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
         {center && (
           <Circle

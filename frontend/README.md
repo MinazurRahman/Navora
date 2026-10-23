@@ -12,6 +12,7 @@ React + Vite (JavaScript, ESM) web app for the NAVORA API in `../backend`.
 |---|---|
 | `npm run dev` | Development server (also serves `/style-guide`, the design-system reference) |
 | `npm test` | Vitest unit and component tests |
+| `npm run test:e2e` | Playwright browser tests (layout at 390/768/1440 px, key flows) against the build with a fake API; uses the installed Chrome, CI installs Chromium |
 | `npm run lint` | oxlint |
 | `npm run build` / `npm run preview` | Production build and a local preview of it |
 
@@ -26,6 +27,9 @@ once on `401 TOKEN_EXPIRED`; refresh tokens are single use, so duplicated tabs (
 - `src/features/<feature>/` – pages, components and endpoint functions (`api.js`) per feature
 - `src/components/` – shared UI built on the tokens in `src/styles/tokens.css`
 - `src/routes.jsx` – every route
+
+Before a release, also run through [docs/INTEGRATION_CHECKLIST.md](docs/INTEGRATION_CHECKLIST.md) against the real backend.
+CI (`.github/workflows/frontend-ci.yml`) runs lint, audit, tests, build and the browser tests.
 
 The API contract is `../backend/docs/openapi.yaml`. Rules worth knowing: branch on error `code`,
 never on `message`; unknown facility values, fees, ratings and opening hours are shown as unknown,

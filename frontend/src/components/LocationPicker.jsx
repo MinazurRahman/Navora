@@ -35,34 +35,36 @@ function FollowValue({ value }) {
 
 export default function LocationPicker({ value, onChange, label = 'Map: click to choose a point' }) {
   const reduceMotion = prefersReducedMotion();
+  // react-leaflet passes only className/id/style to its element, so the name is on a wrapper.
   return (
-    <MapContainer
-      center={value ? [value.latitude, value.longitude] : DHAKA}
-      zoom={value ? 14 : 12}
-      className={styles.map}
-      aria-label={label}
-      zoomAnimation={!reduceMotion}
-      fadeAnimation={!reduceMotion}
-      markerZoomAnimation={!reduceMotion}
-    >
-      <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
-      <ClickToPick onChange={onChange} />
-      <FollowValue value={value} />
-      {value && (
-        <Marker
-          position={[value.latitude, value.longitude]}
-          icon={PIN}
-          draggable
-          title="Chosen point"
-          alt="Chosen point"
-          eventHandlers={{
-            dragend: (event) => {
-              const { lat, lng } = event.target.getLatLng();
-              onChange({ latitude: lat, longitude: lng });
-            },
-          }}
-        />
-      )}
-    </MapContainer>
+    <div role="region" aria-label={label}>
+      <MapContainer
+        center={value ? [value.latitude, value.longitude] : DHAKA}
+        zoom={value ? 14 : 12}
+        className={styles.map}
+        zoomAnimation={!reduceMotion}
+        fadeAnimation={!reduceMotion}
+        markerZoomAnimation={!reduceMotion}
+      >
+        <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
+        <ClickToPick onChange={onChange} />
+        <FollowValue value={value} />
+        {value && (
+          <Marker
+            position={[value.latitude, value.longitude]}
+            icon={PIN}
+            draggable
+            title="Chosen point"
+            alt="Chosen point"
+            eventHandlers={{
+              dragend: (event) => {
+                const { lat, lng } = event.target.getLatLng();
+                onChange({ latitude: lat, longitude: lng });
+              },
+            }}
+          />
+        )}
+      </MapContainer>
+    </div>
   );
 }
