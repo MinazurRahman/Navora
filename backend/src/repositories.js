@@ -1,6 +1,6 @@
 import { createHealthRepository } from './modules/health/health.repository.js';
 import { createUsersRepository } from './modules/users/index.js';
-import { createRefreshTokenRepository } from './modules/auth/index.js';
+import { createPasswordResetTokenRepository, createRefreshTokenRepository } from './modules/auth/index.js';
 import { createCategoriesRepository } from './modules/categories/index.js';
 import { createPlacesRepository } from './modules/places/index.js';
 import { createReviewsRepository } from './modules/reviews/index.js';
@@ -15,6 +15,7 @@ export function createRepositories(db) {
     health: createHealthRepository(db),
     users: createUsersRepository(db),
     refreshTokens: createRefreshTokenRepository(db),
+    passwordResetTokens: createPasswordResetTokenRepository(db),
     categories: createCategoriesRepository(db),
     places: createPlacesRepository(db),
     reviews: createReviewsRepository(db),

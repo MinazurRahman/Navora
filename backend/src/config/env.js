@@ -91,6 +91,11 @@ const envSchema = z.object({
   AI_CONTEXT_WINDOW_TOKENS: intInRange(2_048, 131_072).default(8_192),
   // AI calls one instance runs at once; more are refused with 503. Match the AI host's capacity.
   AI_MAX_CONCURRENT: intInRange(1, 32).default(2),
+
+  // The frontend's origin; password reset links point there.
+  APP_BASE_URL: originSchema.default('http://localhost:5173'),
+  // How mail is delivered. log = written to the server log (development; nothing is sent).
+  MAIL_PROVIDER: z.enum(['log']).default('log'),
 });
 
 export function parseEnv(source) {
@@ -154,6 +159,8 @@ export function parseEnv(source) {
       requestBudgetMs: e.MAP_REQUEST_BUDGET_MS,
       fallbackToEstimate: e.MAP_FALLBACK_TO_ESTIMATE === 'true',
     }),
+    appBaseUrl: e.APP_BASE_URL,
+    mail: Object.freeze({ provider: e.MAIL_PROVIDER }),
     ai: Object.freeze({
       enabled: e.AI_ENABLED === 'true',
       provider: e.AI_PROVIDER,
@@ -202,6 +209,12 @@ export function productionWarnings(config) {
     if (protocol === 'http:' && !isPrivateHost(hostname)) {
       warnings.push(`OLLAMA_BASE_URL=${config.ai.ollama.baseUrl}: plain http to a non-private host. Ollama has no authentication and trip details would travel unencrypted; keep it on localhost or a private network.`);
     }
+  }
+  if (config.mail.provider === 'log') {
+    warnings.push('MAIL_PROVIDER=log: no mail is sent; password reset links only appear in the server log.');
+  }
+  if (new URL(config.appBaseUrl).hostname === 'localhost') {
+    warnings.push(`APP_BASE_URL=${config.appBaseUrl}: password reset links will point to localhost.`);
   }
   if (config.logLevel === 'debug' || config.logLevel === 'trace') {
     warnings.push(`LOG_LEVEL=${config.logLevel}: very verbose logging in production.`);

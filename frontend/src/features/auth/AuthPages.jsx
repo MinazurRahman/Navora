@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -7,7 +7,7 @@ import { Alert } from '../../components/Feedback.jsx';
 import { Field, Input } from '../../components/Field.jsx';
 import { NavoraMark } from '../../components/Logo.jsx';
 import { errorMessage, fieldErrors } from '../../lib/errors.js';
-import { login, register } from './api.js';
+import { login, register, requestPasswordReset, resetPassword } from './api.js';
 import { safeNext } from './safeNext.js';
 import { useAuth } from './useAuth.js';
 import { ErrorAlert } from '../../components/ErrorState.jsx';
@@ -105,6 +105,9 @@ export function LoginPage() {
             />
           )}
         </Field>
+        <Link to="/forgot-password" className={styles.forgot}>
+          Forgot your password?
+        </Link>
         <Button type="submit" loading={mutation.isPending} className={styles.submit}>
           Sign in
         </Button>
@@ -190,6 +193,139 @@ export function RegisterPage() {
           Create account
         </Button>
       </form>
+    </AuthLayout>
+  );
+}
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState();
+  const mutation = useMutation({ mutationFn: requestPasswordReset, onError: (err) => setError(fieldErrors(err).email) });
+
+  function onSubmit(event) {
+    event.preventDefault();
+    if (!email.trim()) {
+      setError('Enter your email address.');
+      return focusFirstInvalid(event.currentTarget);
+    }
+    mutation.mutate(email.trim());
+  }
+
+  const otherError = mutation.error && mutation.error.code !== 'VALIDATION_ERROR' ? mutation.error : null;
+
+  return (
+    <AuthLayout
+      title="Reset your password"
+      intro="Enter the email of your account and we will send you a link to choose a new password."
+      footer={
+        <>
+          Remembered it? <Link to="/login">Sign in</Link>
+        </>
+      }
+    >
+      {mutation.isSuccess ? (
+        <Alert tone="success" title="Check your email" role="status">
+          If an account uses {email.trim()}, a link to reset its password is on its way. It works once, for 30 minutes.
+        </Alert>
+      ) : (
+        <form className={styles.form} onSubmit={onSubmit} noValidate>
+          {otherError && <ErrorAlert error={otherError} />}
+          <Field label="Email" error={error}>
+            {(props) => (
+              <Input
+                {...props}
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(undefined);
+                }}
+              />
+            )}
+          </Field>
+          <Button type="submit" loading={mutation.isPending} className={styles.submit}>
+            Send reset link
+          </Button>
+        </form>
+      )}
+    </AuthLayout>
+  );
+}
+
+// Opened from the mailed link: /reset-password#token=<token>. The token is read once and
+// removed from the address bar, so it does not stay in the browser history.
+export function ResetPasswordPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [token] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') ?? '');
+  const [values, setValues] = useState({ newPassword: '', confirm: '' });
+  const [errors, setErrors] = useState({});
+  const mutation = useMutation({ mutationFn: resetPassword, onError: (err) => setErrors(fieldErrors(err)) });
+
+  useEffect(() => {
+    if (location.hash) navigate({ pathname: location.pathname, search: location.search }, { replace: true });
+  }, [location, navigate]);
+
+  const update = (field) => (event) => {
+    setValues((v) => ({ ...v, [field]: event.target.value }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
+  };
+
+  function onSubmit(event) {
+    event.preventDefault();
+    const found = {};
+    if (values.newPassword.length < 8) found.newPassword = 'Use at least 8 characters.';
+    if (values.confirm !== values.newPassword) found.confirm = 'The passwords do not match.';
+    setErrors(found);
+    if (Object.keys(found).length) return focusFirstInvalid(event.currentTarget);
+    mutation.mutate({ token, newPassword: values.newPassword });
+  }
+
+  const linkProblem = !token || mutation.error?.code === 'INVALID_RESET_TOKEN';
+  const otherError =
+    mutation.error && !['VALIDATION_ERROR', 'INVALID_RESET_TOKEN'].includes(mutation.error.code) ? mutation.error : null;
+
+  return (
+    <AuthLayout
+      title="Choose a new password"
+      intro="You will be signed out everywhere, then sign in with the new password."
+      footer={<Link to="/login">Back to sign in</Link>}
+    >
+      {mutation.isSuccess ? (
+        <Alert tone="success" title="Your password was changed" role="status">
+          <Link to="/login">Sign in</Link> with your new password.
+        </Alert>
+      ) : linkProblem ? (
+        <Alert tone="warning" title="This reset link cannot be used">
+          It may be incomplete, already used, or older than 30 minutes. <Link to="/forgot-password">Ask for a new link</Link>.
+        </Alert>
+      ) : (
+        <form className={styles.form} onSubmit={onSubmit} noValidate>
+          {otherError && <ErrorAlert error={otherError} />}
+          <Field label="New password" hint="At least 8 characters." error={errors.newPassword}>
+            {(props) => (
+              <Input
+                {...props}
+                type="password"
+                autoComplete="new-password"
+                maxLength={128}
+                value={values.newPassword}
+                onChange={update('newPassword')}
+              />
+            )}
+          </Field>
+          <Field label="Confirm new password" error={errors.confirm}>
+            {(props) => (
+              <Input {...props} type="password" autoComplete="new-password" maxLength={128} value={values.confirm} onChange={update('confirm')} />
+            )}
+          </Field>
+          <Button type="submit" loading={mutation.isPending} className={styles.submit}>
+            Change password
+          </Button>
+        </form>
+      )}
     </AuthLayout>
   );
 }

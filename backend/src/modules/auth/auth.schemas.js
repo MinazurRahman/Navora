@@ -32,6 +32,15 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'must be at least 8 characters').max(128),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1).max(256),
+  newPassword: z.string().min(8, 'must be at least 8 characters').max(128),
+});
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1).max(256),
 });

@@ -69,6 +69,7 @@ function withoutPasswordHash({ password_hash: _omit, ...rest }) {
 export function createInMemoryRepositories({ dbHealthy = true } = {}) {
   const users = new Map();
   const refreshTokens = [];
+  const resetTokens = [];
   const findUserByEmail = (email) => [...users.values()].find((u) => u.email.toLowerCase() === email.toLowerCase());
 
   return {
@@ -165,8 +166,35 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
       },
     },
 
+    passwordResetTokens: {
+      async create({ userId, tokenHash, expiresAt }) {
+        resetTokens.push({ user_id: userId, token_hash: tokenHash, expires_at: expiresAt, used_at: null });
+      },
+      async claim(tokenHash) {
+        const row = resetTokens.find((t) => t.token_hash === tokenHash && t.used_at === null && t.expires_at > new Date());
+        if (!row) return undefined;
+        row.used_at = new Date();
+        return { user_id: row.user_id };
+      },
+      async deleteForUser(userId) {
+        for (let i = resetTokens.length - 1; i >= 0; i -= 1) if (resetTokens[i].user_id === userId) resetTokens.splice(i, 1);
+      },
+    },
+
     // Test-only access to stored rows.
-    state: { users, refreshTokens },
+    state: { users, refreshTokens, resetTokens },
+  };
+}
+
+// Records messages instead of sending them; `fail: true` makes every send reject.
+export function createFakeMailService({ fail = false } = {}) {
+  const sent = [];
+  return {
+    sent,
+    async send(message) {
+      if (fail) throw new Error('SMTP unavailable');
+      sent.push(message);
+    },
   };
 }
 
@@ -178,6 +206,7 @@ export function buildTestApp({
   cache = createCache(createInMemoryRedis()),
   mapService = createMapServiceFromConfig(config, { cache }),
   aiService = createAiServiceFromConfig(config, { cache }), // disabled unless config enables it
+  mailService = createFakeMailService(),
 } = {}) {
-  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService });
+  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService, mailService });
 }

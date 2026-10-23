@@ -1,7 +1,15 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate.middleware.js';
 import { byIpAndEmail } from '../../middleware/rateLimit.middleware.js';
-import { changePasswordSchema, loginSchema, refreshTokenSchema, registerSchema, updateProfileSchema } from './auth.schemas.js';
+import {
+  changePasswordSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
+} from './auth.schemas.js';
 
 export function createAuthRouter({ authController, authenticate, rateLimit }) {
   const router = Router();
@@ -35,6 +43,10 @@ export function createAuthRouter({ authController, authenticate, rateLimit }) {
     validate({ body: changePasswordSchema }),
     authController.changePassword,
   );
+  // Same limits as sign-in: they also stop the endpoint being used to flood a mailbox.
+  router.post('/forgot-password', credentialLimits, validate({ body: forgotPasswordSchema }), authController.forgotPassword);
+  // The token cannot be guessed; the IP limit bounds password hashing work.
+  router.post('/reset-password', rateLimit('authIp'), validate({ body: resetPasswordSchema }), authController.resetPassword);
 
   return router;
 }

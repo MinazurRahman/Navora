@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import { buildTestApp, buildTestConfig, createInMemoryRepositories } from '../helpers/testApp.js';
+import { buildTestApp, buildTestConfig, createFakeMailService, createInMemoryRepositories } from '../helpers/testApp.js';
 
 const PASSWORD = 'correct horse battery staple';
 const newUser = (overrides = {}) => ({ name: 'Ayesha Rahman', email: 'ayesha@example.com', password: PASSWORD, ...overrides });
@@ -351,5 +351,73 @@ describe('POST /api/v1/auth/change-password', () => {
 
   it('requires sign-in', async () => {
     expect((await request(app).post('/api/v1/auth/change-password').send({ currentPassword: 'a', newPassword: 'long enough password' })).status).toBe(401);
+  });
+});
+
+describe('password reset', () => {
+  let mail;
+  beforeEach(() => {
+    mail = createFakeMailService();
+    app = buildTestApp({ repositories, mailService: mail });
+  });
+
+  const forgot = (email) => request(app).post('/api/v1/auth/forgot-password').send({ email });
+  const reset = (body) => request(app).post('/api/v1/auth/reset-password').send(body);
+  const tokenFromMail = () => mail.sent.at(-1).text.match(/#token=([\w-]+)/)[1];
+
+  it('answers the same for registered and unknown emails, mailing only the registered one', async () => {
+    await register();
+    const known = await forgot('Ayesha@Example.com ');
+    const unknown = await forgot('nobody@example.com');
+
+    expect(known.status).toBe(202);
+    expect(unknown.status).toBe(202);
+    expect(known.body).toEqual(unknown.body);
+    expect(known.headers['cache-control']).toBe('no-store');
+    await vi.waitFor(() => expect(mail.sent).toHaveLength(1));
+    expect(mail.sent[0]).toMatchObject({ to: 'ayesha@example.com', subject: 'Reset your NAVORA password' });
+    expect(mail.sent[0].text).toContain('http://localhost:5173/reset-password#token=');
+    // Only the hash is stored.
+    expect(repositories.state.resetTokens[0].token_hash).not.toBe(tokenFromMail());
+  });
+
+  it('sets the new password once, signs out every session, and invalidates older links', async () => {
+    const { refreshToken } = (await register()).body.data.tokens;
+    await forgot('ayesha@example.com');
+    await vi.waitFor(() => expect(mail.sent).toHaveLength(1));
+    const oldLink = tokenFromMail();
+    await forgot('ayesha@example.com');
+    await vi.waitFor(() => expect(mail.sent).toHaveLength(2));
+    const token = tokenFromMail();
+
+    expect((await reset({ token: oldLink, newPassword: 'a new passphrase' })).body.error.code).toBe('INVALID_RESET_TOKEN');
+    const res = await reset({ token, newPassword: 'a new passphrase' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ reset: true });
+
+    expect((await login({ email: 'ayesha@example.com', password: PASSWORD })).status).toBe(401);
+    expect((await login({ email: 'ayesha@example.com', password: 'a new passphrase' })).status).toBe(200);
+    expect((await refresh(refreshToken)).status).toBe(401);
+    const again = await reset({ token, newPassword: 'another passphrase' });
+    expect(again.status).toBe(400);
+    expect(again.body.error.code).toBe('INVALID_RESET_TOKEN');
+  });
+
+  it('rejects an expired link', async () => {
+    await register();
+    await forgot('ayesha@example.com');
+    await vi.waitFor(() => expect(mail.sent).toHaveLength(1));
+    repositories.state.resetTokens[0].expires_at = new Date(Date.now() - 1000);
+    expect((await reset({ token: tokenFromMail(), newPassword: 'a new passphrase' })).body.error.code).toBe('INVALID_RESET_TOKEN');
+  });
+
+  it('validates input and still answers 202 when the mail cannot be sent', async () => {
+    app = buildTestApp({ repositories, mailService: createFakeMailService({ fail: true }) });
+    await register();
+    expect((await forgot('ayesha@example.com')).status).toBe(202);
+    expect((await forgot('not an email')).status).toBe(400);
+    const short = await reset({ token: 'x', newPassword: 'short' });
+    expect(short.status).toBe(400);
+    expect(short.body.error.details.map((d) => d.path)).toContain('newPassword');
   });
 });

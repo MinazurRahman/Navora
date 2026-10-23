@@ -77,6 +77,8 @@ the spec. Change an endpoint → update the spec, or the tests fail.
 | GET | `/api/v1/auth/me` | Bearer | Current user |
 | PATCH | `/api/v1/auth/me` | Bearer | `{ name?, email?, currentPassword? }`; an email change needs the current password |
 | POST | `/api/v1/auth/change-password` | Bearer | `{ currentPassword, newPassword }` → revokes every session, returns a new `{ user, tokens }` |
+| POST | `/api/v1/auth/forgot-password` | — | `{ email }` → 202 always; mails a 30-minute single-use link to `APP_BASE_URL/reset-password#token=…` (`MAIL_PROVIDER=log`: written to the server log) |
+| POST | `/api/v1/auth/reset-password` | — | `{ token, newPassword }` → sets the password, revokes every session (`INVALID_RESET_TOKEN` if unknown, used or expired) |
 | GET | `/api/v1/categories` | – | Category slugs and names |
 | GET | `/api/v1/places` | – | Approved places, newest first. Filters below |
 | GET | `/api/v1/places/nearby` | – | `latitude`, `longitude`, `radiusKm` (≤ 50, default 5); closest first, with `distanceMeters` |
@@ -304,7 +306,9 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 | `assistantGlobal` | `POST /ai/trip-assistant`, all users together | 60 / min | 503 `RATE_LIMIT_UNAVAILABLE` |
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
-  `INVALID_REFRESH_TOKEN`, `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).
+  `INVALID_REFRESH_TOKEN`, `INVALID_RESET_TOKEN` (400), `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).
+- Password reset mail goes through `src/integrations/mail` (`MAIL_PROVIDER`; only `log` so far,
+  which writes the message to the server log). Set `APP_BASE_URL` to the frontend's origin.
 
 Every response carries an `X-Request-Id` header. Responses use a standard envelope:
 

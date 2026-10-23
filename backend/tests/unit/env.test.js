@@ -82,17 +82,25 @@ describe('parseEnv', () => {
     expect(productionWarnings(parseEnv({ ...base, NODE_ENV: 'development' }))).toEqual([]);
   });
 
-  it('has no warnings for a well-configured production deployment', () => {
+  it('only warns that no mail is sent for a well-configured production deployment', () => {
     const good = parseEnv({
       ...base,
       NODE_ENV: 'production',
       TRUST_PROXY: '1',
       CORS_ORIGINS: 'https://app.navora.example',
+      APP_BASE_URL: 'https://app.navora.example',
       SHUTDOWN_DRAIN_MS: '5000',
       MAP_PROVIDER: 'openrouteservice',
       MAP_API_KEY: 'k',
     });
-    expect(productionWarnings(good)).toEqual([]);
+    // log is the only mail provider so far.
+    expect(productionWarnings(good)).toEqual([expect.stringMatching(/^MAIL_PROVIDER=log/)]);
+  });
+
+  it('warns when reset links would point to localhost in production', () => {
+    const config = parseEnv({ ...base, NODE_ENV: 'production' });
+    expect(productionWarnings(config)).toContainEqual(expect.stringMatching(/^APP_BASE_URL=http:\/\/localhost:5173/));
+    expect(() => parseEnv({ ...base, APP_BASE_URL: 'https://app.example/path' })).toThrow(/APP_BASE_URL/);
   });
 
   it('disables AI by default, with local Ollama defaults', () => {

@@ -375,6 +375,94 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
+  /api/v1/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: 'Request a password reset link'
+      description: |
+        If the email belongs to an active account, a single-use link to
+        `APP_BASE_URL/reset-password#token=<token>` is mailed to it (valid 30 minutes; it replaces any
+        earlier link). The answer is the same whether or not the email is registered. Rate limited like
+        sign-in; refuses with 503 if rate limiting is unavailable. With `MAIL_PROVIDER=log` the message
+        is written to the server log instead of being sent.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              additionalProperties: false
+              properties:
+                email: { type: string, format: email, maxLength: 254 }
+            example: { email: ayesha@example.com }
+      responses:
+        '202':
+          description: 'Accepted (also for unknown emails).'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [requested]
+                    additionalProperties: false
+                    properties: { requested: { const: true } }
+              example: { success: true, data: { requested: true } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: 'Choose a new password with a reset link'
+      description: |
+        Sets `newPassword` using the `token` from the reset link. The link works once; every session of
+        the account is revoked, and the user signs in again with the new password.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              additionalProperties: false
+              properties:
+                token: { type: string, minLength: 1, maxLength: 256 }
+                newPassword: { type: string, minLength: 8, maxLength: 128 }
+            example: { token: 3q2-7wEXAMPLEtokenEXAMPLEtokenEXAMPLE0, newPassword: a brand new passphrase }
+      responses:
+        '200':
+          description: 'Password changed.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [reset]
+                    additionalProperties: false
+                    properties: { reset: { const: true } }
+              example: { success: true, data: { reset: true } }
+        '400':
+          description: '`VALIDATION_ERROR`, or `INVALID_RESET_TOKEN` (unknown, used or expired link).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: INVALID_RESET_TOKEN, message: 'This reset link is invalid, used or expired', requestId: d4052722-bda2-49d0-9d4a-0056d095d3cc } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
   # ============================== Catalogue ==============================
   /api/v1/categories:
     get:

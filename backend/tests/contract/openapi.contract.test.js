@@ -4,7 +4,7 @@
 //  3. live: every operation is called against the real app, and each response's status must
 //     be documented and its body must match the documented schema (schemas reject
 //     undocumented fields, so drift in either direction fails).
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
@@ -116,7 +116,7 @@ describe('route parity (code ⇄ spec)', () => {
 
     expect([...inCode].filter((r) => !inSpec.has(r)), 'routes missing from the spec').toEqual([]);
     expect([...inSpec].filter((r) => !inCode.has(r)), 'documented routes that do not exist').toEqual([]);
-    expect(inCode.size).toBe(48);
+    expect(inCode.size).toBe(50);
   });
 });
 
@@ -318,6 +318,15 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     await call('post', '/api/v1/auth/change-password', { as: other, body: { currentPassword: 'wrong', newPassword: 'another long password' } }); // 400
     await call('post', '/api/v1/auth/change-password', { as: other, body: { currentPassword: 'long enough password', newPassword: 'another long password' } });
     await call('post', '/api/v1/auth/change-password', { body: { currentPassword: 'x', newPassword: 'another long password' } }); // 401
+
+    // Password reset (also revokes sessions).
+    await call('post', '/api/v1/auth/forgot-password', { body: { email: 'user@example.com' } });
+    await call('post', '/api/v1/auth/forgot-password', { body: { email: 'nobody@example.com' } });
+    await call('post', '/api/v1/auth/forgot-password', { body: { email: 'not an email' } }); // 400
+    await vi.waitFor(() => expect(ctx.mailService.sent).toHaveLength(1));
+    const resetToken = ctx.mailService.sent[0].text.match(/#token=([\w-]+)/)[1];
+    await call('post', '/api/v1/auth/reset-password', { body: { token: resetToken, newPassword: 'reset long password' } });
+    await call('post', '/api/v1/auth/reset-password', { body: { token: resetToken, newPassword: 'reset long password' } }); // 400 used
 
     expect(failures).toEqual([]);
     const missing = operations().map(({ method, template }) => `${method.toUpperCase()} ${template}`).filter((op) => !covered.has(op));

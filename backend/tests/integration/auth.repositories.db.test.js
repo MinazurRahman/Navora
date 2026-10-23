@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { createUsersRepository } from '../../src/modules/users/users.repository.js';
 import { createUsersService } from '../../src/modules/users/users.service.js';
 import { createRefreshTokenRepository } from '../../src/modules/auth/refreshToken.repository.js';
+import { createPasswordResetTokenRepository } from '../../src/modules/auth/passwordResetToken.repository.js';
 
 // Runs only with TEST_DATABASE_URL (disposable PostGIS database; contents are wiped).
 const url = process.env.TEST_DATABASE_URL;
@@ -30,6 +31,23 @@ describe.skipIf(!url)('auth repositories against PostgreSQL', () => {
     if (!db) return;
     await db.migrate.rollback(undefined, true);
     await db.destroy();
+  });
+
+  it('claims a reset token once, never after expiry, and deletes all tokens of a user', async () => {
+    const resets = createPasswordResetTokenRepository(db);
+    const user = await users.create({ name: 'A', email: 'a@example.com', passwordHash: 'h' });
+    const soon = new Date(Date.now() + 60_000);
+    await resets.create({ userId: user.id, tokenHash: 'live', expiresAt: soon });
+    await resets.create({ userId: user.id, tokenHash: 'expired', expiresAt: new Date(Date.now() - 1000) });
+
+    expect(await resets.claim('expired')).toBeUndefined();
+    const [first, second] = await Promise.all([resets.claim('live'), resets.claim('live')]);
+    expect([first, second].filter(Boolean)).toEqual([{ user_id: user.id }]);
+
+    await resets.create({ userId: user.id, tokenHash: 'newer', expiresAt: soon });
+    await resets.deleteForUser(user.id);
+    expect(await resets.claim('newer')).toBeUndefined();
+    expect((await db('password_reset_tokens').count({ n: '*' }))[0].n).toBe('0');
   });
 
   it('never returns password_hash from create or findById', async () => {

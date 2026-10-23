@@ -21,6 +21,8 @@ export const routes = [
       { path: 'community', lazy: page(() => import('./features/community/CommunityPage.jsx'), 'CommunityPage') },
       { path: 'login', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'LoginPage') },
       { path: 'register', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'RegisterPage') },
+      { path: 'forgot-password', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'ForgotPasswordPage') },
+      { path: 'reset-password', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'ResetPasswordPage') },
       {
         element: <RequireAuth />,
         children: [

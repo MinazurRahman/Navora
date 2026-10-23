@@ -43,3 +43,9 @@
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
+
+.forgot {
+  align-self: flex-end;
+  margin-top: calc(-1 * var(--space-2));
+  font-size: var(--text-sm);
+}

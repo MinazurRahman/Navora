@@ -37,4 +37,14 @@ export async function changePassword({ currentPassword, newPassword }) {
   return data.user;
 }
 
+// Resolves the same whether or not the email is registered.
+export async function requestPasswordReset(email) {
+  await request('/auth/forgot-password', { method: 'POST', body: { email } });
+}
+
+// token comes from the reset link's #token= fragment. Every session is signed out.
+export async function resetPassword({ token, newPassword }) {
+  await request('/auth/reset-password', { method: 'POST', body: { token, newPassword } });
+}
+
 export { logout } from '../../api/client.js';

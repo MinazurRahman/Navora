@@ -8,7 +8,7 @@ import { createEstimateProvider, createMapService, createMapServiceFromConfig } 
 import { createAiService, createAiServiceFromConfig } from '../../src/integrations/ai/index.js';
 import { CACHE_TTL } from '../../src/config/cache.js';
 import { PLANNING_CONFIG } from '../../src/config/planning.js';
-import { buildTestConfig, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
+import { buildTestConfig, createFakeMailService, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
 export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -29,6 +29,7 @@ export async function createIntegrationApp({ mapProvider, mapRequestBudgetMs, ai
   const mapService = mapProvider
     ? createMapService({ provider: mapProvider, fallback: createEstimateProvider(PLANNING_CONFIG), cache, ttlSeconds: 60, requestBudgetMs: mapRequestBudgetMs })
     : createMapServiceFromConfig(config, { cache });
+  const mailService = createFakeMailService();
   const app = createApp({
     config,
     lifecycle: createLifecycle(),
@@ -39,6 +40,7 @@ export async function createIntegrationApp({ mapProvider, mapRequestBudgetMs, ai
     aiService: aiProvider
       ? createAiService({ provider: aiProvider, cache, statusTtlSeconds: CACHE_TTL.aiStatus })
       : createAiServiceFromConfig(config, { cache }),
+    mailService,
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.
@@ -65,5 +67,5 @@ export async function createIntegrationApp({ mapProvider, mapRequestBudgetMs, ai
     await db.destroy();
   }
 
-  return { db, app, redis, signUp, reset, teardown };
+  return { db, app, redis, mailService, signUp, reset, teardown };
 }

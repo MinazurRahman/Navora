@@ -30,5 +30,16 @@ export function createAuthController(authService) {
     async changePassword(req, res) {
       sendSuccess(res, await authService.changePassword(req.user.id, req.validated.body));
     },
+
+    // 202 whether or not the email is registered.
+    async forgotPassword(req, res) {
+      await authService.requestPasswordReset(req.validated.body);
+      res.status(202).json({ success: true, data: { requested: true } });
+    },
+
+    async resetPassword(req, res) {
+      await authService.resetPassword(req.validated.body);
+      sendSuccess(res, { reset: true });
+    },
   };
 }
