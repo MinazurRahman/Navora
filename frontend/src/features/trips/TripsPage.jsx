@@ -5,12 +5,11 @@ import { CalendarRange, Map as MapIcon, Plus, Trash2, Users } from 'lucide-react
 import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
-import { ErrorState } from '../../components/ErrorState.jsx';
-import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
+import { EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage } from '../../lib/errors.js';
 import { formatDayDate } from '../../lib/format.js';
 import { deleteTrip, listTrips } from './api.js';
 import { TRAVEL_MODES } from './tripForm.js';
@@ -137,7 +136,7 @@ export function TripsPage() {
           </>
         }
       >
-        {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
+        {remove.isError && <ErrorAlert error={remove.error} />}
       </Dialog>
     </main>
   );

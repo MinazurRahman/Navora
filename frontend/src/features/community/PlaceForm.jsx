@@ -1,11 +1,12 @@
 import { Suspense, lazy, useRef, useState } from 'react';
 import { LocateFixed, Plus, X } from 'lucide-react';
 import { Button, IconButton } from '../../components/Button.jsx';
-import { Alert, Skeleton } from '../../components/Feedback.jsx';
+import { Skeleton } from '../../components/Feedback.jsx';
 import { Checkbox, Field, Input, Select, Textarea } from '../../components/Field.jsx';
-import { errorMessage, fieldErrors } from '../../lib/errors.js';
+import { fieldErrors } from '../../lib/errors.js';
 import { useCategories, useTags } from '../catalogue/api.js';
 import { DAYS, FACILITY_FIELDS, buildPlacePayload, toPlaceFormErrors, validatePlaceForm } from './placeForm.js';
+import { ErrorAlert } from '../../components/ErrorState.jsx';
 import styles from './PlaceForm.module.css';
 
 const LocationPicker = lazy(() => import('../../components/LocationPicker.jsx'));
@@ -215,7 +216,7 @@ export function PlaceForm({ initial, submitLabel, pending, serverError, onSubmit
 
   return (
     <form ref={formRef} className={styles.form} onSubmit={submit} noValidate>
-      {showServerAlert && <Alert tone="danger">{errorMessage(serverError)}</Alert>}
+      {showServerAlert && <ErrorAlert error={serverError} />}
 
       <section className={styles.section} aria-labelledby="section-basics">
         <h2 id="section-basics" className={styles.sectionTitle}>

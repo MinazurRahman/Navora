@@ -4,13 +4,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Check, ShieldCheck, X } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
-import { ErrorState } from '../../components/ErrorState.jsx';
-import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
+import { EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { Field, Select, Textarea } from '../../components/Field.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage } from '../../lib/errors.js';
 import { formatEntryFee, formatMinutes } from '../../lib/format.js';
 import { approvePlace, getModerationQueue, rejectPlace } from '../places/api.js';
 import { PlaceStatusBadge } from '../places/PlaceStatusBadge.jsx';
@@ -127,7 +126,7 @@ function DecisionDialog({ decision, onClose }) {
         </>
       }
     >
-      {mutation.isError && <Alert tone="danger">{errorMessage(mutation.error)}</Alert>}
+      {mutation.isError && <ErrorAlert error={mutation.error} />}
       <Field
         label={approving ? 'Note' : 'Reason'}
         optional={approving}

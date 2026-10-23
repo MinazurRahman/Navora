@@ -5,10 +5,9 @@ import { ArrowLeft, CalendarRange, RefreshCw, Settings2, Sparkles, Trash2, Trian
 import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
-import { ErrorState } from '../../components/ErrorState.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
 import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage } from '../../lib/errors.js';
 import { formatDayDate, formatDistance, formatMinutes } from '../../lib/format.js';
 import { deleteTrip, getTrip } from '../trips/api.js';
 import { TRAVEL_MODES } from '../trips/tripForm.js';
@@ -227,7 +226,7 @@ export function TripPage() {
       </header>
 
       {failure && <GenerateFailure error={failure} tripId={t.id} />}
-      {regenerate.isError && !failure && <Alert tone="danger">{errorMessage(regenerate.error)}</Alert>}
+      {regenerate.isError && !failure && <ErrorAlert error={regenerate.error} />}
 
       {!plan && (
         <EmptyState
@@ -322,7 +321,7 @@ export function TripPage() {
           </>
         }
       >
-        {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
+        {remove.isError && <ErrorAlert error={remove.error} />}
       </Dialog>
     </main>
   );

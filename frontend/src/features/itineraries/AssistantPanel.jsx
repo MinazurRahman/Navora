@@ -4,10 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Bot, Lightbulb, MessageCircleQuestion, Send } from 'lucide-react';
 import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
-import { Alert } from '../../components/Feedback.jsx';
 import { Field, Select, Textarea } from '../../components/Field.jsx';
 import { errorMessage } from '../../lib/errors.js';
 import { askAssistant, getAssistantStatus } from './api.js';
+import { ErrorAlert } from '../../components/ErrorState.jsx';
 import styles from './AssistantPanel.module.css';
 
 // AI Trip Assistant: explains this itinerary. It is read-only and its answers are
@@ -190,7 +190,7 @@ export function AssistantPanel({ itinerary }) {
             The assistant is reading your itinerary. This can take a little while.
           </p>
         )}
-        {ask.isError && <Alert tone="danger">{assistantError(ask.error)}</Alert>}
+        {ask.isError && <ErrorAlert error={ask.error} message={assistantError(ask.error)} />}
         {results.map((result) => (
           <Answer key={result.id} result={result} />
         ))}

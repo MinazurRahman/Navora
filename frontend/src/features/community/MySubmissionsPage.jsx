@@ -4,13 +4,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Archive, ClipboardList, MapPinPlus, Pencil } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
-import { ErrorState } from '../../components/ErrorState.jsx';
-import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
+import { EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { Field, Select } from '../../components/Field.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage } from '../../lib/errors.js';
 import { archivePlace, listMyPlaces } from '../places/api.js';
 import { PlaceStatusBadge } from '../places/PlaceStatusBadge.jsx';
 import { RejectionReason } from './PlaceFormPages.jsx';
@@ -151,7 +150,7 @@ export function MySubmissionsPage() {
           </>
         }
       >
-        {withdraw.isError && <Alert tone="danger">{errorMessage(withdraw.error)}</Alert>}
+        {withdraw.isError && <ErrorAlert error={withdraw.error} />}
       </Dialog>
     </main>
   );

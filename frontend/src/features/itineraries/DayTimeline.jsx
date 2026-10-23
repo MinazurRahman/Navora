@@ -4,12 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Bike, Bus, Car, Clock, Footprints, Pencil, Ticket, Trash2, TriangleAlert } from 'lucide-react';
 import { Badge } from '../../components/Badge.jsx';
 import { Button, IconButton } from '../../components/Button.jsx';
-import { Alert } from '../../components/Feedback.jsx';
 import { Checkbox } from '../../components/Field.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage } from '../../lib/errors.js';
 import { formatDayDate, formatDistance, formatEntryFee, formatMinutes } from '../../lib/format.js';
 import { updateItinerary } from './api.js';
+import { ErrorAlert } from '../../components/ErrorState.jsx';
 import styles from './DayTimeline.module.css';
 
 const MODE_ICONS = { car: Car, walking: Footprints, cycling: Bike, public_transport: Bus };
@@ -97,7 +96,7 @@ function DayEditor({ itinerary, day, onDone }) {
         Reorder or remove stops, then save. NAVORA recalculates times and checks opening hours; nothing changes if the
         new day does not fit.
       </p>
-      {save.isError && <Alert tone="danger">{errorMessage(save.error)}</Alert>}
+      {save.isError && <ErrorAlert error={save.error} />}
       {stops.length === 0 && <p className="muted">This day will have no stops.</p>}
       <ol className={styles.editList}>
         {stops.map((place, index) => (

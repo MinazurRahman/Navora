@@ -4,11 +4,11 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { MessageSquare, Pencil, Star, Trash2 } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
-import { ErrorState } from '../../components/ErrorState.jsx';
-import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
+import { EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { Field, Textarea } from '../../components/Field.jsx';
 import { useToast } from '../../components/useToast.js';
-import { errorMessage, fieldErrors } from '../../lib/errors.js';
+import { fieldErrors } from '../../lib/errors.js';
 import { useAuth } from '../auth/useAuth.js';
 import { createReview, deleteReview, getMyReview, listReviews, updateReview } from './api.js';
 import styles from './Reviews.module.css';
@@ -94,7 +94,7 @@ function ReviewForm({ placeId, existing, onDone }) {
   const error = mutation.error;
   return (
     <form className={styles.form} onSubmit={onSubmit} noValidate>
-      {error && error.code !== 'VALIDATION_ERROR' && <Alert tone="danger">{errorMessage(error)}</Alert>}
+      {error && error.code !== 'VALIDATION_ERROR' && <ErrorAlert error={error} />}
       <RatingInput value={rating} onChange={setRating} error={errors.rating} />
       <Field label="Comment" optional hint="Share what visitors should know. Up to 2,000 characters." error={errors.comment}>
         {(props) => (
@@ -204,7 +204,7 @@ function MyReview({ placeId }) {
           </>
         }
       >
-        {remove.isError && <Alert tone="danger">{errorMessage(remove.error)}</Alert>}
+        {remove.isError && <ErrorAlert error={remove.error} />}
       </Dialog>
     </div>
   );

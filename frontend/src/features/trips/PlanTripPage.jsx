@@ -6,12 +6,12 @@ import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Alert, Skeleton } from '../../components/Feedback.jsx';
 import { Checkbox, Field, Input, Select } from '../../components/Field.jsx';
-import { errorMessage, fieldErrors } from '../../lib/errors.js';
+import { fieldErrors } from '../../lib/errors.js';
 import { formatEntryFee } from '../../lib/format.js';
 import { useCategories, useTags } from '../catalogue/api.js';
 import { generateItinerary } from '../itineraries/api.js';
 import { useSavedPlaces } from '../saved/api.js';
-import { ErrorState } from '../../components/ErrorState.jsx';
+import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
 import { createTrip, getTrip, updateTrip } from './api.js';
 import {
   MAX_DAYS,
@@ -623,7 +623,7 @@ function TripWizard({ initial, existingTripId }) {
               <>
                 <Summary form={form} goTo={goTo} />
                 {failure && <GenerationFailure error={failure} form={form} goTo={goTo} />}
-                {otherError && <Alert tone="danger">{errorMessage(otherError)}</Alert>}
+                {otherError && <ErrorAlert error={otherError} />}
                 <p className={styles.hint} role="status">
                   {generate.isPending
                     ? 'Building your itinerary: choosing places, checking opening hours and ordering each day. This can take a few seconds.'

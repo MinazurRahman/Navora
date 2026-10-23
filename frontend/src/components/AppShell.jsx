@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router';
-import { CircleUser, LogOut, Menu, ShieldCheck, TriangleAlert, X } from 'lucide-react';
+import { CircleUser, LogOut, Menu, ShieldCheck, TriangleAlert, WifiOff, X } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth.js';
+import { useOnline } from '../lib/useOnline.js';
 import { Button, IconButton } from './Button.jsx';
 import { Logo } from './Logo.jsx';
 import styles from './AppShell.module.css';
@@ -163,6 +164,20 @@ function SessionEndedBanner() {
   );
 }
 
+function OfflineBanner() {
+  if (useOnline()) return null;
+  return (
+    <div className={styles.banner} role="status">
+      <div className={`container ${styles.bannerInner}`}>
+        <WifiOff size={18} aria-hidden="true" className={styles.bannerIcon} />
+        <p className={styles.bannerText}>
+          You are offline. Pages you already opened still work; new information loads when you are back online.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function AppShell() {
   const mainRef = useRef(null);
   const { pathname } = useLocation();
@@ -183,6 +198,7 @@ export function AppShell() {
         Skip to content
       </a>
       <Header />
+      <OfflineBanner />
       <SessionEndedBanner />
       <div id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         <Outlet />

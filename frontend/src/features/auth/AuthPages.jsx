@@ -10,6 +10,7 @@ import { errorMessage, fieldErrors } from '../../lib/errors.js';
 import { login, register } from './api.js';
 import { safeNext } from './safeNext.js';
 import { useAuth } from './useAuth.js';
+import { ErrorAlert } from '../../components/ErrorState.jsx';
 import styles from './AuthPages.module.css';
 
 function focusFirstInvalid(form) {
@@ -155,7 +156,7 @@ export function RegisterPage() {
       }
     >
       <form className={styles.form} onSubmit={onSubmit} noValidate>
-        {showAlert && <Alert tone="danger">{errorMessage(error)}</Alert>}
+        {showAlert && <ErrorAlert error={error} />}
         <Field label="Name" error={errors.name}>
           {(props) => (
             <Input {...props} autoComplete="name" maxLength={100} value={values.name} onChange={update('name')} />

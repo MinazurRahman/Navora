@@ -390,21 +390,26 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
   }
 
   return (
-    <ul className={`${styles.list} ${results.isPlaceholderData ? styles.stale : ''}`}>
-      {places.map((place) => (
-        <li key={place.id} ref={(el) => (el ? cards.current.set(place.id, el) : cards.current.delete(place.id))}>
-          <PlaceCard
-            headingLevel="h2"
-            place={place}
-            selected={place.id === selectedId}
-            action={
-              <Button variant="ghost" size="sm" icon={MapPin} onClick={() => onShowOnMap(place.id)}>
-                Show on map
-              </Button>
-            }
-          />
-        </li>
-      ))}
-    </ul>
+    <>
+      {results.isError && (
+        <ErrorState error={results.error} onRetry={results.refetch} title="These results could not be updated" />
+      )}
+      <ul className={`${styles.list} ${results.isPlaceholderData ? styles.stale : ''}`}>
+        {places.map((place) => (
+          <li key={place.id} ref={(el) => (el ? cards.current.set(place.id, el) : cards.current.delete(place.id))}>
+            <PlaceCard
+              headingLevel="h2"
+              place={place}
+              selected={place.id === selectedId}
+              action={
+                <Button variant="ghost" size="sm" icon={MapPin} onClick={() => onShowOnMap(place.id)}>
+                  Show on map
+                </Button>
+              }
+            />
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

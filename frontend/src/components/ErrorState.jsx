@@ -22,3 +22,14 @@ export function ErrorState({ error, onRetry, title = 'Could not load this conten
     </Alert>
   );
 }
+
+// An action that failed (a form or button), shown inline. Server-side failures carry the
+// request reference so the user can quote it; expected business errors stay uncluttered.
+export function ErrorAlert({ error, message = errorMessage(error) }) {
+  return (
+    <Alert tone="danger">
+      <p>{message}</p>
+      {error?.status >= 500 && error.requestId && <p className="muted">Reference: {error.requestId}</p>}
+    </Alert>
+  );
+}
