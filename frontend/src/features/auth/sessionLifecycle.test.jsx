@@ -54,7 +54,8 @@ describe('when the server ends the session', () => {
     act(() => clearSession({ reason: 'expired' }));
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(router.state.location.search).toBe(`?next=${encodeURIComponent('/saved')}`);
-    expect(screen.getByText('Your session has ended. Sign in again to continue where you left off.')).toBeDefined();
+    // The sign-in page is a lazy route: wait for it to render.
+    expect(await screen.findByText('Your session has ended. Sign in again to continue where you left off.')).toBeDefined();
   });
 
   it('shows no notice after a normal sign-out', async () => {
