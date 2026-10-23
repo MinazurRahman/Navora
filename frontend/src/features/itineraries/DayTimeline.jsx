@@ -79,7 +79,7 @@ function DayEditor({ itinerary, trip, day, onDone }) {
     onSuccess: (updated) => {
       queryClient.setQueryData(['itineraries', updated.id], updated);
       queryClient.invalidateQueries({ queryKey: ['trips'] });
-      const days = [...new Set([day.dayNumber, ...Object.values(moves)])].sort((a, b) => a - b);
+      const days = [...new Set([day.dayNumber, ...Object.values(moves).filter(Boolean)])].sort((a, b) => a - b);
       const which = days.length > 1 ? `Days ${days.join(', ')} were` : `Day ${day.dayNumber} was`;
       toast.show({ tone: 'success', message: `${which} updated and re-scheduled.` });
       onDone();
@@ -118,7 +118,7 @@ function DayEditor({ itinerary, trip, day, onDone }) {
                 value={moves[place.id] ?? day.dayNumber}
                 onChange={(e) => {
                   const target = Number(e.target.value);
-                  setMoves(({ [place.id]: _, ...rest }) => (target === day.dayNumber ? rest : { ...rest, [place.id]: target }));
+                  setMoves((current) => ({ ...current, [place.id]: target === day.dayNumber ? undefined : target }));
                 }}
               >
                 {itinerary.days.map((d) => (
@@ -171,7 +171,7 @@ function DayEditor({ itinerary, trip, day, onDone }) {
 }
 
 // This day's new stop list, plus each day receiving moved stops (appended to its own).
-export function buildChanges(itinerary, day, stops, moves, optimizeOrder) {
+function buildChanges(itinerary, day, stops, moves, optimizeOrder) {
   const changes = [{ dayNumber: day.dayNumber, placeIds: stops.filter((p) => !moves[p.id]).map((p) => p.id), optimizeOrder }];
   for (const target of itinerary.days) {
     const incoming = stops.filter((p) => moves[p.id] === target.dayNumber).map((p) => p.id);
