@@ -44,6 +44,7 @@ function useRedirectIfSignedIn() {
 
 export function LoginPage() {
   const { redirect, next } = useRedirectIfSignedIn();
+  const { sessionExpired } = useAuth();
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const mutation = useMutation({
@@ -79,6 +80,9 @@ export function LoginPage() {
       }
     >
       <form className={styles.form} onSubmit={onSubmit} noValidate>
+        {sessionExpired && !showAlert && (
+          <Alert tone="warning">Your session has ended. Sign in again to continue where you left off.</Alert>
+        )}
         {showAlert && (
           <Alert tone="danger">
             {error.code === 'INVALID_CREDENTIALS' ? 'The email or password is incorrect.' : errorMessage(error)}

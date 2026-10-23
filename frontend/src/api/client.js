@@ -1,4 +1,4 @@
-import { clearSession, getSession, setSession } from './session.js';
+import { clearSession, getSession, rotateSession } from './session.js';
 
 // Base URL of the versioned API, e.g. http://localhost:3000/api/v1 (see .env.example).
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
@@ -77,25 +77,36 @@ async function send(path, { method = 'GET', query, body, signal, token }) {
 
 // One refresh at a time: every request that hits TOKEN_EXPIRED while a refresh is running
 // waits for the same one. Refresh tokens are single use; sending one twice ends the session.
+// Across tabs (a duplicated tab shares the tokens) a Web Lock serialises refreshes, and a tab
+// that gets the lock after another refreshed adopts the broadcast tokens instead.
 let refreshing = null;
+const ADOPT_WAIT_MS = 50;
 
-function refreshSession() {
-  refreshing ??= (async () => {
+function withRefreshLock(work) {
+  return globalThis.navigator?.locks?.request ? navigator.locks.request('navora-token-refresh', work) : work();
+}
+
+function refreshSession(expiredToken) {
+  refreshing ??= withRefreshLock(async () => {
+    // ponytail: a rotation broadcast by the tab that held the lock is normally delivered
+    // before we get the lock, but browsers do not guarantee the order; a short wait covers it.
+    if (getSession()?.accessToken === expiredToken) await new Promise((resolve) => setTimeout(resolve, ADOPT_WAIT_MS));
     const session = getSession();
     if (!session) throw new ApiError({ status: 401, code: 'UNAUTHORIZED', message: 'Not signed in' });
+    if (session.accessToken !== expiredToken) return; // another tab already refreshed
     try {
       const { data } = await send('/auth/refresh', {
         method: 'POST',
         body: { refreshToken: session.refreshToken },
       });
-      setSession({ accessToken: data.tokens.accessToken, refreshToken: data.tokens.refreshToken, user: data.user });
+      rotateSession({ accessToken: data.tokens.accessToken, refreshToken: data.tokens.refreshToken, user: data.user });
     } catch (error) {
       // A rejected refresh token means the session is over. Network or rate-limit failures
       // keep it: the request fails, but the user is not signed out by a blip.
-      if (error.status === 401 || error.status === 400) clearSession();
+      if (error.status === 401 || error.status === 400) clearSession({ reason: 'expired' });
       throw error;
     }
-  })().finally(() => {
+  }).finally(() => {
     refreshing = null;
   });
   return refreshing;
@@ -114,10 +125,10 @@ export async function request(path, options = {}) {
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401 || !token) throw error;
     if (error.code === 'TOKEN_EXPIRED') {
-      await refreshSession();
+      await refreshSession(token);
       return send(path, { ...options, token: getSession()?.accessToken });
     }
-    if (SESSION_ENDED.has(error.code)) clearSession();
+    if (SESSION_ENDED.has(error.code)) clearSession({ reason: 'expired' });
     throw error;
   }
 }

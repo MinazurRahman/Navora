@@ -18,6 +18,11 @@ React + Vite (JavaScript, ESM) web app for the NAVORA API in `../backend`.
 ## Where things live
 
 - `src/api/` – the only code that calls the API: `client.js` (envelope, errors, token refresh) and `session.js` (tokens in sessionStorage)
+
+Sessions live in `sessionStorage` (per tab, gone when the tab closes). Access tokens are refreshed
+once on `401 TOKEN_EXPIRED`; refresh tokens are single use, so duplicated tabs (which copy
+`sessionStorage`) serialise refreshes with a Web Lock and share the new tokens over a
+`BroadcastChannel`. When the server ends a session, the app says so and offers to sign in again.
 - `src/features/<feature>/` – pages, components and endpoint functions (`api.js`) per feature
 - `src/components/` – shared UI built on the tokens in `src/styles/tokens.css`
 - `src/routes.jsx` – every route

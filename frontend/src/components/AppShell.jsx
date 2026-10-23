@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router';
-import { CircleUser, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
+import { CircleUser, LogOut, Menu, ShieldCheck, TriangleAlert, X } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth.js';
 import { Button, IconButton } from './Button.jsx';
 import { Logo } from './Logo.jsx';
@@ -143,6 +143,26 @@ function Footer() {
   );
 }
 
+// Shown when the server ended the session (expired or revoked), so being signed out is
+// never a silent surprise. The sign-in pages show their own notice instead.
+function SessionEndedBanner() {
+  const { sessionExpired, dismissSessionExpired } = useAuth();
+  const { pathname, search } = useLocation();
+  if (!sessionExpired || pathname === '/login' || pathname === '/register') return null;
+  return (
+    <div className={styles.banner} role="status">
+      <div className={`container ${styles.bannerInner}`}>
+        <TriangleAlert size={18} aria-hidden="true" className={styles.bannerIcon} />
+        <p className={styles.bannerText}>
+          Your session has ended.{' '}
+          <Link to={`/login?next=${encodeURIComponent(pathname + search)}`}>Sign in again</Link> to continue.
+        </p>
+        <IconButton icon={X} size="sm" label="Dismiss" onClick={dismissSessionExpired} />
+      </div>
+    </div>
+  );
+}
+
 export function AppShell() {
   const mainRef = useRef(null);
   const { pathname } = useLocation();
@@ -163,6 +183,7 @@ export function AppShell() {
         Skip to content
       </a>
       <Header />
+      <SessionEndedBanner />
       <div id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         <Outlet />
       </div>

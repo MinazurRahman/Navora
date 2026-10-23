@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSession, setSession, subscribe } from '../../api/session.js';
+import { dismissEndedReason, getEndedReason, getSession, setSession, subscribe } from '../../api/session.js';
 import { getMe, logout } from './api.js';
 import { AuthContext } from './useAuth.js';
 
@@ -8,6 +8,7 @@ import { AuthContext } from './useAuth.js';
 // this re-renders whenever it does.
 export function AuthProvider({ children }) {
   const session = useSyncExternalStore(subscribe, getSession);
+  const endedReason = useSyncExternalStore(subscribe, getEndedReason);
   const queryClient = useQueryClient();
   // A session restored from storage is checked with the server before private pages render.
   const [checking, setChecking] = useState(() => getSession() !== null);
@@ -45,8 +46,11 @@ export function AuthProvider({ children }) {
       status: !session ? 'anonymous' : checking ? 'loading' : 'authenticated',
       user: session?.user ?? null,
       signOut: logout,
+      // 'expired' when the server ended the session (not the user): the UI explains it.
+      sessionExpired: !session && endedReason === 'expired',
+      dismissSessionExpired: dismissEndedReason,
     }),
-    [session, checking],
+    [session, checking, endedReason],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
