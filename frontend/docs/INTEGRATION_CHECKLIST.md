@@ -20,15 +20,26 @@ app against the real backend with this list. Each line is one thing to do and wh
 - [ ] Duplicate the tab, wait 15+ minutes, use both tabs: both stay signed in (no second refresh).
 - [ ] Sign out: back to the home page; the backend revoked the refresh token; Back does not show private data.
 - [ ] Revoke the session (delete its `refresh_tokens` rows), wait for expiry: "Your session has ended" banner.
+- [ ] Profile: change the name (no password asked); change the email (current password required; a
+      taken email shows under the field). The details card updates at once.
+- [ ] Profile: change the password. This tab stays signed in; another browser is signed out; the old
+      password no longer works.
+- [ ] Sign in, "Forgot your password?": the same confirmation for a registered and an unknown email.
+      With `MAIL_PROVIDER=log`, copy the link from the backend log; it opens the reset page and the
+      token disappears from the address bar. Set a new password, sign in with it; the link does not work twice.
 
 ## Places
 
 - [ ] Home: categories, Recently added; Rated 4 stars appears only once a place is rated 4 or more.
 - [ ] Explore: text search, each filter, Near me (allow location), Search this area, pagination, Clear filters.
+- [ ] Explore facilities (wheelchair, pet friendly, parking): only places marked Yes; seeded places are
+      all unknown, so set a place's facility to Yes first (moderator edit) to see a match.
 - [ ] Explore filters in the URL: copy the URL into a new tab and get the same results.
 - [ ] Place page: unknown fee, hours and facilities say so ("Entry fee unknown", "Not verified").
 - [ ] Save a place, see it under Saved, remove it. Save is idempotent (double click is harmless).
 - [ ] Write, edit and delete a review; the place rating updates.
+- [ ] Place page, Add to trip: add it to an existing trip (shows Added afterwards), or New trip with
+      this place: the wizard has it ticked under Places you must visit even if it is not saved.
 
 ## Trips and itineraries
 
@@ -37,8 +48,12 @@ app against the real backend with this list. Each line is one thing to do and wh
       suggestions appear; changing a step and retrying updates the same trip (no duplicate in My trips).
 - [ ] Trip page: day switching, times, travel legs, warnings in the backend's words, map route.
 - [ ] Edit a day (move a stop, remove a stop, optimise order): times are recalculated, "Edited by you".
+- [ ] Edit a day: move a stop to another day, and add a place from Add a place (recommended for this
+      trip, or saved). Both days are saved together; a day without stops can be edited too.
 - [ ] An edit that cannot fit (remove nothing, but move many stops into one day): reason shown, nothing changes.
 - [ ] Regenerate: Version 2. Change trip settings: the wizard is pre-filled; saving makes a new version.
+- [ ] Versions panel: view an older version (notice, no Edit day), delete it (confirmation); deleting
+      the current version makes the newest remaining one current.
 - [ ] Delete a trip from the trip page and from My trips (confirmation each time).
 
 ## AI trip assistant (backend `AI_ENABLED=true`)
