@@ -15,6 +15,9 @@ export const CACHE_NAMESPACE = 'places';
 // uses the rounded point, so cached and fresh results are identical.
 const roundCoordinate = (value) => Math.round(value * 1000) / 1000;
 
+// Fixed order, so the same filters always produce the same cache key.
+const FACILITY_FILTERS = ['parkingAvailable', 'petFriendly', 'wheelchairAccessible'];
+
 // Approved places are public. Anything else is visible only to its submitter and
 // moderators; for everyone else it does not exist (404, not 403, so nothing leaks).
 function canView(status, ownerId, user) {
@@ -68,6 +71,7 @@ export function createPlacesService({ placesRepository, categoriesService, trans
       categories: query.category && [...query.category].sort(),
       maxEntryFee: query.maxEntryFee,
       minRating: query.minRating,
+      facilities: FACILITY_FILTERS.filter((field) => query[field]),
       page: query.page,
       limit: query.limit,
       ...extra,

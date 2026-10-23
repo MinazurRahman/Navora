@@ -118,6 +118,8 @@ Redis is unreachable, requests are served from PostgreSQL.
 Place list endpoints accept `category` (comma-separated slugs), `maxEntryFee`, `minRating`,
 `page`, `limit` (≤ 50) and return `meta: { page, limit, total, totalPages }`. Places whose
 fee is unknown or that have no rating yet are excluded by `maxEntryFee` / `minRating`.
+`petFriendly`, `parkingAvailable` and `wheelchairAccessible` (`true`) keep only places marked
+`YES`; `NO` and `UNKNOWN` are excluded.
 Place bodies use `location: { latitude, longitude }` and `category: "<slug>"`, plus optional
 `tags: ["history", …]` (interests, see `GET /api/v1/tags`) and
 `openingHours: [{ dayOfWeek: 1–7 (Mon = 1), opensAt: "HH:MM", closesAt: "HH:MM" }]`

@@ -78,10 +78,16 @@ const categoryList = z
   .transform((value) => value.split(',').map((slug) => slug.trim().toLowerCase()).filter(Boolean))
   .pipe(z.array(categorySlug).min(1).max(20));
 
+// ?petFriendly=true keeps only places marked YES; false (or absent) does not filter.
+const facilityFilter = z.enum(['true', 'false']).optional().transform((value) => value === 'true');
+
 export const listPlacesQuerySchema = paginationQuerySchema.extend({
   category: categoryList.optional(),
   maxEntryFee: queryNumber().pipe(z.number().min(0)).optional(),
   minRating: queryNumber().pipe(z.number().min(1).max(5)).optional(),
+  petFriendly: facilityFilter,
+  parkingAvailable: facilityFilter,
+  wheelchairAccessible: facilityFilter,
 });
 
 export const nearbyPlacesQuerySchema = listPlacesQuerySchema.extend({

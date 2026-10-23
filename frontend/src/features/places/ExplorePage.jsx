@@ -10,7 +10,7 @@ import { Pagination } from '../../components/Pagination.jsx';
 import { useCategories } from '../catalogue/api.js';
 import { useExploreResults } from './api.js';
 import { prefersReducedMotion } from '../../lib/motion.js';
-import { activeFilterCount, parseExploreParams, toSearchParams } from './exploreParams.js';
+import { FACILITIES, NO_FILTERS, activeFilterCount, parseExploreParams, toSearchParams } from './exploreParams.js';
 import { PlaceCard, PlaceCardSkeleton } from './PlaceCard.jsx';
 import styles from './ExplorePage.module.css';
 
@@ -94,7 +94,7 @@ export function ExplorePage() {
               setSelectedId(id);
               setView('map');
             }}
-            onClearFilters={() => update({ category: [], maxEntryFee: undefined, minRating: undefined })}
+            onClearFilters={() => update(NO_FILTERS)}
             onWiderRadius={() => update({ radiusKm: Math.min(50, state.radiusKm * 2) })}
           />
 
@@ -246,6 +246,23 @@ function Filters({ state, filterCount, onChange }) {
           )}
         </fieldset>
 
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>Facilities</legend>
+          <p className={styles.fieldsetHint}>Only places confirmed to have it; unknown is left out.</p>
+          <div className={styles.categoryGrid}>
+            {FACILITIES.map(([key, label]) => (
+              <Checkbox
+                key={key}
+                label={label}
+                checked={state.facilities.includes(key)}
+                onChange={(event) =>
+                  onChange({ facilities: event.target.checked ? [...state.facilities, key] : state.facilities.filter((k) => k !== key) })
+                }
+              />
+            ))}
+          </div>
+        </fieldset>
+
         <div className={styles.selectRow}>
           <Field label="Entry fee" hint="Places with an unknown fee are left out.">
             {(props) => (
@@ -298,7 +315,7 @@ function Filters({ state, filterCount, onChange }) {
               variant="ghost"
               size="sm"
               icon={X}
-              onClick={() => onChange({ category: [], maxEntryFee: undefined, minRating: undefined })}
+              onClick={() => onChange(NO_FILTERS)}
             >
               Clear filters
             </Button>
@@ -364,6 +381,7 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
     const notes = [];
     if (state.maxEntryFee !== undefined) notes.push('places with an unknown entry fee are not included');
     if (state.minRating !== undefined) notes.push('places without reviews are not included');
+    if (state.facilities.length) notes.push('places with unknown facilities are not included');
     return (
       <EmptyState
         icon={SearchX}

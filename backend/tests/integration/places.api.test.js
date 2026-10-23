@@ -293,6 +293,18 @@ describe.skipIf(!url)('Places API (PostGIS)', () => {
       expect((await api().get('/api/v1/places').query({ minRating: 3 })).body.meta.total).toBe(2);
     });
 
+    it('filters by facilities, matching only places marked YES', async () => {
+      await db('places').where({ name: 'Lalbagh Fort' }).update({ pet_friendly: 'YES', wheelchair_accessible: 'YES' });
+      await db('places').where({ name: 'Ahsan Manzil' }).update({ pet_friendly: 'NO', wheelchair_accessible: 'YES' });
+
+      expect(names(await api().get('/api/v1/places').query({ petFriendly: true }))).toEqual(['Lalbagh Fort']);
+      expect(names(await api().get('/api/v1/places').query({ wheelchairAccessible: true })).sort()).toEqual(['Ahsan Manzil', 'Lalbagh Fort']);
+      expect(names(await nearby({ radiusKm: 12, petFriendly: true, wheelchairAccessible: true }))).toEqual(['Lalbagh Fort']);
+      expect((await api().get('/api/v1/places').query({ parkingAvailable: true })).body.meta.total).toBe(0); // all UNKNOWN
+      expect((await api().get('/api/v1/places').query({ petFriendly: false })).body.meta.total).toBe(5);
+      expect((await api().get('/api/v1/places').query({ petFriendly: 'yes' })).status).toBe(400);
+    });
+
     it('combines geographic and attribute filters', async () => {
       const res = await nearby({ radiusKm: 12, category: 'museum', minRating: 4 });
       expect(names(res)).toEqual(['Ahsan Manzil']);

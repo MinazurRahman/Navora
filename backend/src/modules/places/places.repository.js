@@ -54,13 +54,15 @@ export function createPlacesRepository(db) {
   return {
     // Approved places only. near = { latitude, longitude, radiusMeters }.
     // sort: 'newest' | 'distance' (needs near) | 'relevance' (needs q).
-    async search({ categories, maxEntryFee, minRating, near, q, sort, page, limit }) {
+    // facilities: field names (petFriendly, …) that must be YES; NO and UNKNOWN both fail.
+    async search({ categories, maxEntryFee, minRating, facilities = [], near, q, sort, page, limit }) {
       const filtered = () => {
         const query = fromPlaces(db).where('p.status', 'APPROVED');
         if (categories?.length) query.whereIn('c.slug', categories);
         // NULL (unknown fee / no rating yet) never satisfies a filter.
         if (maxEntryFee !== undefined) query.where('p.entry_fee', '<=', maxEntryFee);
         if (minRating !== undefined) query.where('p.avg_rating', '>=', minRating);
+        for (const field of facilities) query.where(`p.${COLUMNS[field]}`, 'YES');
         if (near) {
           query.whereRaw(`ST_DWithin(p.location, ${POINT_SQL}, ?)`, [near.longitude, near.latitude, near.radiusMeters]);
         }

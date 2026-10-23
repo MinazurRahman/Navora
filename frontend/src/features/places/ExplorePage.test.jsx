@@ -91,6 +91,15 @@ describe('explore', () => {
     expect(router.state.location.search).toBe('');
   });
 
+  it('filters by facilities, sending each as a YES-only flag', async () => {
+    const router = renderExplore();
+    await screen.findByRole('link', { name: 'Lalbagh Fort' });
+    await userEvent.click(screen.getByLabelText('Wheelchair accessible'));
+    await vi.waitFor(() => expect(lastRequest()).toContain('wheelchairAccessible=true'));
+    expect(router.state.location.search).toBe('?facilities=wheelchairAccessible');
+    expect(screen.getByText('1 active')).toBeDefined();
+  });
+
   it('finds places near the user and shows distances', async () => {
     serve((path) => (path.includes('/places/nearby') ? pageOf([place({ distanceMeters: 1250 })]) : pageOf(PLACES)));
     vi.stubGlobal('navigator', {

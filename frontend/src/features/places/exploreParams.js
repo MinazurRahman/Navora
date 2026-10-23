@@ -5,10 +5,21 @@
 //   category     comma-separated category slugs.
 //   maxEntryFee  known fee at most this (unknown fees are excluded by the backend).
 //   minRating    average rating at least this (unrated places are excluded).
+//   facilities   comma-separated FACILITIES keys; each keeps only places marked YES.
 //   page         1-based.
 export const DEFAULT_RADIUS_KM = 5;
 export const PAGE_SIZE = 20;
 const SLUG = /^[a-z0-9_]{1,50}$/;
+
+// Backend query parameter names; NO and UNKNOWN never match.
+export const FACILITIES = [
+  ['wheelchairAccessible', 'Wheelchair accessible'],
+  ['petFriendly', 'Pet friendly'],
+  ['parkingAvailable', 'Parking'],
+];
+const FACILITY_KEYS = FACILITIES.map(([key]) => key);
+
+export const NO_FILTERS = { category: [], maxEntryFee: undefined, minRating: undefined, facilities: [] };
 
 function toNumber(value, { min, max, minExclusive = false } = {}) {
   if (value === null || value === '') return undefined;
@@ -33,6 +44,7 @@ export function parseExploreParams(searchParams) {
     category: (searchParams.get('category') ?? '').split(',').filter((slug) => SLUG.test(slug)),
     maxEntryFee: toNumber(searchParams.get('maxEntryFee'), { min: 0 }),
     minRating: toNumber(searchParams.get('minRating'), { min: 1, max: 5 }),
+    facilities: FACILITY_KEYS.filter((key) => (searchParams.get('facilities') ?? '').split(',').includes(key)),
     location: hasLocation ? { latitude: lat, longitude: lng } : null,
     radiusKm: toNumber(searchParams.get('radiusKm'), { min: 0, minExclusive: true, max: 50 }) ?? DEFAULT_RADIUS_KM,
     page,
@@ -40,7 +52,7 @@ export function parseExploreParams(searchParams) {
 }
 
 // Inverse of parseExploreParams; defaults are left out to keep URLs short.
-export function toSearchParams({ q, category, maxEntryFee, minRating, location, radiusKm, page }) {
+export function toSearchParams({ q, category, maxEntryFee, minRating, facilities, location, radiusKm, page }) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (!q && location) {
@@ -51,13 +63,15 @@ export function toSearchParams({ q, category, maxEntryFee, minRating, location, 
   if (category?.length) params.set('category', category.join(','));
   if (maxEntryFee !== undefined) params.set('maxEntryFee', String(maxEntryFee));
   if (minRating !== undefined) params.set('minRating', String(minRating));
+  if (facilities?.length) params.set('facilities', facilities.join(','));
   if (page > 1) params.set('page', String(page));
   return params;
 }
 
 // Which endpoint answers this state, and with which query parameters.
-export function exploreRequest({ q, category, maxEntryFee, minRating, location, radiusKm, page }) {
+export function exploreRequest({ q, category, maxEntryFee, minRating, facilities = [], location, radiusKm, page }) {
   const filters = { category, maxEntryFee, minRating, page, limit: PAGE_SIZE };
+  for (const key of facilities) filters[key] = true;
   if (q) return { mode: 'search', path: '/places/search', query: { q, ...filters } };
   if (location) {
     return {
@@ -69,6 +83,6 @@ export function exploreRequest({ q, category, maxEntryFee, minRating, location, 
   return { mode: 'list', path: '/places', query: filters };
 }
 
-export function activeFilterCount({ category, maxEntryFee, minRating }) {
-  return category.length + (maxEntryFee !== undefined ? 1 : 0) + (minRating !== undefined ? 1 : 0);
+export function activeFilterCount({ category, maxEntryFee, minRating, facilities = [] }) {
+  return category.length + facilities.length + (maxEntryFee !== undefined ? 1 : 0) + (minRating !== undefined ? 1 : 0);
 }

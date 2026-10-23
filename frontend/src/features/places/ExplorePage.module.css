@@ -168,6 +168,12 @@
   font-weight: var(--weight-medium);
 }
 
+.fieldsetHint {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));

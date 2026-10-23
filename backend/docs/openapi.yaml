@@ -428,6 +428,9 @@ paths:
         - $ref: '#/components/parameters/CategoryFilter'
         - $ref: '#/components/parameters/MaxEntryFee'
         - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/PetFriendlyFilter'
+        - $ref: '#/components/parameters/ParkingAvailableFilter'
+        - $ref: '#/components/parameters/WheelchairAccessibleFilter'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
       responses:
@@ -496,6 +499,9 @@ paths:
         - $ref: '#/components/parameters/CategoryFilter'
         - $ref: '#/components/parameters/MaxEntryFee'
         - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/PetFriendlyFilter'
+        - $ref: '#/components/parameters/ParkingAvailableFilter'
+        - $ref: '#/components/parameters/WheelchairAccessibleFilter'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
       responses:
@@ -513,6 +519,9 @@ paths:
         - $ref: '#/components/parameters/CategoryFilter'
         - $ref: '#/components/parameters/MaxEntryFee'
         - $ref: '#/components/parameters/MinRating'
+        - $ref: '#/components/parameters/PetFriendlyFilter'
+        - $ref: '#/components/parameters/ParkingAvailableFilter'
+        - $ref: '#/components/parameters/WheelchairAccessibleFilter'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
       responses:
@@ -1647,6 +1656,21 @@ components:
       in: query
       description: 'Only places with an average rating of at least this value. Unrated places are excluded.'
       schema: { type: number, minimum: 1, maximum: 5 }
+    PetFriendlyFilter:
+      name: petFriendly
+      in: query
+      description: 'true = only places marked pet friendly (YES); NO and UNKNOWN are excluded. false or absent does not filter.'
+      schema: { type: string, enum: ['true', 'false'] }
+    ParkingAvailableFilter:
+      name: parkingAvailable
+      in: query
+      description: 'true = only places marked with parking (YES); NO and UNKNOWN are excluded. false or absent does not filter.'
+      schema: { type: string, enum: ['true', 'false'] }
+    WheelchairAccessibleFilter:
+      name: wheelchairAccessible
+      in: query
+      description: 'true = only places marked wheelchair accessible (YES); NO and UNKNOWN are excluded. false or absent does not filter.'
+      schema: { type: string, enum: ['true', 'false'] }
     PlaceStatusFilter:
       name: status
       in: query
