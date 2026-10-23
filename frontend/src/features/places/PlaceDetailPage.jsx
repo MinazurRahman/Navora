@@ -8,6 +8,7 @@ import { Alert, EmptyState, Skeleton } from '../../components/Feedback.jsx';
 import { formatEntryFee, formatMinutes, formatRating } from '../../lib/format.js';
 import { useTags } from '../catalogue/api.js';
 import { SaveButton } from '../saved/SaveButton.jsx';
+import { AddToTripButton } from '../trips/AddToTripButton.jsx';
 import { usePlace } from './api.js';
 import { dhakaWeekday, weeklySchedule } from './openingHours.js';
 import { ReviewsSection } from './Reviews.jsx';
@@ -144,6 +145,7 @@ export function PlaceDetailPage() {
         {approved && (
           <div className={styles.actions}>
             <SaveButton placeId={place.id} />
+            <AddToTripButton placeId={place.id} />
           </div>
         )}
       </header>

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, LocateFixed, Pencil, Sparkles } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -10,6 +10,7 @@ import { fieldErrors } from '../../lib/errors.js';
 import { formatEntryFee } from '../../lib/format.js';
 import { useCategories, useTags } from '../catalogue/api.js';
 import { generateItinerary } from '../itineraries/api.js';
+import { getPlace } from '../places/api.js';
 import { useSavedPlaces } from '../saved/api.js';
 import { ErrorAlert, ErrorState } from '../../components/ErrorState.jsx';
 import { createTrip, getTrip, updateTrip } from './api.js';
@@ -218,9 +219,23 @@ function InterestsStep({ form, errors, update }) {
   );
 }
 
+// Must-visit choices: saved places, plus places the trip started with that are not saved
+// (added from a place page, or unsaved since). Those stay listed after being unticked.
+function useMustVisitPlaces(form) {
+  const saved = useSavedPlaces(1, 50);
+  const savedPlaces = saved.data?.data ?? [];
+  const otherIds = saved.data
+    ? [...new Set([...form.pinnedPlaceIds, ...form.selectedPlaceIds])].filter((id) => !savedPlaces.some((p) => p.id === id))
+    : [];
+  const others = useQueries({
+    queries: otherIds.map((id) => ({ queryKey: ['places', 'detail', id], queryFn: ({ signal }) => getPlace(id, { signal }) })),
+  });
+  return { ...saved, places: [...savedPlaces, ...others.flatMap((q) => (q.data ? [q.data] : []))] };
+}
+
 function PlacesStep({ form, errors, update }) {
   const categories = useCategories();
-  const saved = useSavedPlaces(1, 50);
+  const saved = useMustVisitPlaces(form);
   return (
     <>
       <ChoiceGrid
@@ -240,14 +255,14 @@ function PlacesStep({ form, errors, update }) {
         </p>
         {saved.isPending && <Skeleton height="4rem" />}
         {saved.isError && <Alert tone="danger">Your saved places could not be loaded.</Alert>}
-        {saved.data?.data.length === 0 && (
+        {saved.data && saved.places.length === 0 && (
           <p className="muted">
             You have no saved places yet. <Link to="/explore">Explore places</Link> and save the ones you want to visit.
           </p>
         )}
-        {saved.data?.data.length > 0 && (
+        {saved.places.length > 0 && (
           <div className={styles.placeChoices}>
-            {saved.data.data.map((place) => (
+            {saved.places.map((place) => (
               <Checkbox
                 key={place.id}
                 label={place.name}
@@ -358,9 +373,9 @@ function RequirementsStep({ form, update }) {
 
 // ---------- Step 6: review ----------
 
-function mustVisitText(ids, savedPlaces) {
+function mustVisitText(ids, places) {
   if (!ids.length) return 'None';
-  const known = savedPlaces.filter((p) => ids.includes(p.id)).map((p) => p.name);
+  const known = places.filter((p) => ids.includes(p.id)).map((p) => p.name);
   const others = ids.length - known.length;
   return [...known, ...(others ? [`${others} other place${others === 1 ? '' : 's'}`] : [])].join(', ');
 }
@@ -368,7 +383,7 @@ function mustVisitText(ids, savedPlaces) {
 function Summary({ form, goTo }) {
   const tags = useTags();
   const categories = useCategories();
-  const saved = useSavedPlaces(1, 50);
+  const saved = useMustVisitPlaces(form);
   const names = (list, source, key = 'slug') =>
     list.map((value) => source.data?.find((item) => item[key] === value)?.name ?? value).join(', ') || 'None';
   const travel = TRAVEL_MODES.find((m) => m.value === form.travelMode)?.label;
@@ -392,7 +407,7 @@ function Summary({ form, goTo }) {
       title: 'Categories and places',
       rows: [
         ['Preferred categories', names(form.preferredCategories, categories)],
-        ['Must visit', mustVisitText(form.selectedPlaceIds, saved.data?.data ?? [])],
+        ['Must visit', mustVisitText(form.selectedPlaceIds, saved.places)],
       ],
     },
     {
@@ -435,9 +450,9 @@ function Summary({ form, goTo }) {
 
 // Why generation failed (422): the backend never relaxes requirements, it explains them.
 function GenerationFailure({ error, form, goTo }) {
-  const saved = useSavedPlaces(1, 50);
+  const saved = useMustVisitPlaces(form);
   const details = error.details ?? {};
-  const placeName = (id, name) => name ?? saved.data?.data.find((p) => p.id === id)?.name ?? 'A chosen place';
+  const placeName = (id, name) => name ?? saved.places.find((p) => p.id === id)?.name ?? 'A chosen place';
 
   return (
     <Alert tone="warning" title="No itinerary could be made with these requirements">
@@ -489,7 +504,10 @@ function GenerationFailure({ error, form, goTo }) {
 function TripWizard({ initial, existingTripId }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(() => initial ?? initialForm());
+  const [form, setForm] = useState(() => {
+    const start = initial ?? initialForm();
+    return { ...start, pinnedPlaceIds: start.selectedPlaceIds };
+  });
   const [stepIndex, setStepIndex] = useState(0);
   const [errors, setErrors] = useState({});
   // Set once the trip is saved: a retry after a failed generation updates it instead of
@@ -656,17 +674,23 @@ function TripWizard({ initial, existingTripId }) {
   );
 }
 
-// /plan starts a new trip; /plan?trip=<id> changes an existing trip's settings.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// /plan starts a new trip (/plan?place=<id> with that place as a must-visit);
+// /plan?trip=<id> changes an existing trip's settings.
 export function PlanTripPage() {
   const [params] = useSearchParams();
   const tripId = params.get('trip');
+  const placeId = params.get('place');
   const trip = useQuery({
     queryKey: ['trips', tripId],
     queryFn: ({ signal }) => getTrip(tripId, { signal }),
     enabled: Boolean(tripId),
   });
 
-  if (!tripId) return <TripWizard />;
+  if (!tripId) {
+    return <TripWizard initial={UUID.test(placeId ?? '') ? { ...initialForm(), selectedPlaceIds: [placeId] } : undefined} />;
+  }
   if (trip.isPending) {
     return (
       <main className={`container ${styles.page}`} aria-busy="true" aria-label="Loading trip">

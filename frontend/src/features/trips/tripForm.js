@@ -20,7 +20,7 @@ export const TRAVEL_MODES = [
 
 export const MAX_DAYS = 14;
 const MAX_CHOICES = 10;
-const MAX_SELECTED_PLACES = 30;
+export const MAX_SELECTED_PLACES = 30;
 
 // Today's date in Dhaka (the backend's "today"), as YYYY-MM-DD.
 export function todayInDhaka(date = new Date()) {
