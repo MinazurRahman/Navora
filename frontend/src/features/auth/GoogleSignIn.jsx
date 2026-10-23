@@ -55,6 +55,7 @@ export function GoogleSignIn({ text = 'continue_with' }) {
           size: 'large',
           shape: 'rectangular',
           text,
+          locale: 'en', // the rest of the page is English
           width: Math.min(buttonRef.current.offsetWidth || 360, 400),
         });
       })
