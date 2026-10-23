@@ -4,7 +4,8 @@ import { place } from '../../test/fetchMock.js';
 import { ImageCredit, PlaceImage } from './PlaceImage.jsx';
 
 const image = {
-  url: 'https://thumb.wikimedia.org/example/960px-Fort.jpg',
+  url: 'https://thumb.wikimedia.org/example/1280px-Fort.jpg',
+  thumbUrl: 'https://thumb.wikimedia.org/example/500px-Fort.jpg',
   author: 'Farha Fawzia Atashi',
   license: 'CC BY-SA 4.0',
   licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -12,13 +13,21 @@ const image = {
 };
 
 describe('place image', () => {
-  it('shows the photo without sending a referrer, and falls back when it fails to load', () => {
-    render(<PlaceImage place={place({ image })} alt="Photo of Lalbagh Fort" />);
+  it('shows the cover (small size on cards) without a referrer, and falls back when it fails to load', () => {
+    render(<PlaceImage place={place({ images: [image] })} alt="Photo of Lalbagh Fort" />);
     const img = screen.getByRole('img', { name: 'Photo of Lalbagh Fort' });
-    expect(img.getAttribute('src')).toBe(image.url);
+    expect(img.getAttribute('src')).toBe(image.thumbUrl);
     expect(img.getAttribute('referrerpolicy')).toBe('no-referrer');
     fireEvent.error(img);
     expect(screen.queryByRole('img', { name: 'Photo of Lalbagh Fort' })).toBeNull();
+  });
+
+  it('shows the whole photo over a blurred copy in contain mode', () => {
+    const { container } = render(<PlaceImage place={place({ images: [image] })} fit="contain" size="large" alt="Fort" />);
+    const imgs = container.querySelectorAll('img');
+    expect(imgs).toHaveLength(2);
+    expect(imgs[0].getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByRole('img', { name: 'Fort' }).getAttribute('src')).toBe(image.url);
   });
 
   it('draws a category placeholder when the place has no photo', () => {

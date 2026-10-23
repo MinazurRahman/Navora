@@ -46,29 +46,6 @@
   border-radius: 0;
 }
 
-/* Photo beside the text: more places fit in a long list. */
-@media (min-width: 480px) {
-  .row {
-    flex-direction: row;
-  }
-
-  .row .media {
-    flex: 0 0 38%;
-    align-self: stretch;
-    max-width: 13rem;
-    aspect-ratio: auto;
-    min-height: 9rem;
-  }
-
-  .row .media img {
-    position: absolute;
-    inset: 0;
-  }
-
-  .row .body {
-    padding: var(--space-4);
-  }
-}
 
 .selected,
 .selected:hover {

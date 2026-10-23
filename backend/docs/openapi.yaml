@@ -1134,7 +1134,7 @@ paths:
               example:
                 success: true
                 data:
-                  - place: { id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: Lalbagh Fort, description: null, category: { slug: historical_site, name: Historical Site }, location: { latitude: 23.7189, longitude: 90.3882 }, address: null, city: Dhaka, entryFee: 20, currency: BDT, typicalVisitMinutes: 90, tags: [history], openingHours: [], facilities: { parking: 'YES', petFriendly: 'NO', wheelchairAccessible: UNKNOWN, accessibilityNotes: null, restrictions: null, verifiedAt: null }, image: null, rating: { average: 4.6, count: 23 }, status: APPROVED, createdBy: null, createdAt: '2026-10-01T08:24:19.955Z', updatedAt: '2026-10-01T08:24:19.955Z', distanceMeters: 10420 }
+                  - place: { id: 3f1c9a52-6a4f-4a8e-9a43-0f2b7c1d5e10, name: Lalbagh Fort, description: null, category: { slug: historical_site, name: Historical Site }, location: { latitude: 23.7189, longitude: 90.3882 }, address: null, city: Dhaka, entryFee: 20, currency: BDT, typicalVisitMinutes: 90, tags: [history], openingHours: [], facilities: { parking: 'YES', petFriendly: 'NO', wheelchairAccessible: UNKNOWN, accessibilityNotes: null, restrictions: null, verifiedAt: null }, images: [], rating: { average: 4.6, count: 23 }, status: APPROVED, createdBy: null, createdAt: '2026-10-01T08:24:19.955Z', updatedAt: '2026-10-01T08:24:19.955Z', distanceMeters: 10420 }
                     score: 87
                     breakdown: { interest: 50, proximity: 31, budget: 99, rating: 88, popularity: 82, schedule: 25 }
                     reasons: [Parking available (matches your parking requirement), 'Matches your interests: history', '10.4 km away, within your 15 km search radius', Entry fee BDT 20 fits your budget, Rated 4.6 from 23 reviews]
@@ -2041,7 +2041,7 @@ components:
     # ---------- places ----------
     Place:
       type: object
-      required: [id, name, description, category, location, address, city, entryFee, currency, typicalVisitMinutes, tags, openingHours, facilities, image, rating, status, createdBy, createdAt, updatedAt]
+      required: [id, name, description, category, location, address, city, entryFee, currency, typicalVisitMinutes, tags, openingHours, facilities, images, rating, status, createdBy, createdAt, updatedAt]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -2070,19 +2070,10 @@ components:
             accessibilityNotes: { type: [string, 'null'] }
             restrictions: { type: [string, 'null'] }
             verifiedAt: { type: [string, 'null'], format: date-time }
-        image:
-          description: 'A photo hosted elsewhere, or null. Show the credit with it (author, license with link, source): the licenses require it.'
-          oneOf:
-            - type: 'null'
-            - type: object
-              required: [url, author, license, licenseUrl, sourceUrl]
-              additionalProperties: false
-              properties:
-                url: { type: string, format: uri }
-                author: { type: string }
-                license: { type: string, description: 'For example CC BY-SA 4.0.' }
-                licenseUrl: { type: [string, 'null'], format: uri, description: 'null for public-domain images.' }
-                sourceUrl: { type: string, format: uri, description: 'The image page (for example on Wikimedia Commons).' }
+        images:
+          type: array
+          description: 'Photos in display order; the first is the cover. [] = none. Show each with its credit.'
+          items: { $ref: '#/components/schemas/PlaceImage' }
         rating:
           type: object
           required: [average, count]
@@ -2109,7 +2100,8 @@ components:
         tags: [architecture, history]
         openingHours: [{ dayOfWeek: 1, opensAt: '10:00', closesAt: '17:00' }]
         facilities: { parking: YES, petFriendly: NO, wheelchairAccessible: UNKNOWN, accessibilityNotes: null, restrictions: null, verifiedAt: null }
-        image: { url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/43/%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg/960px-%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg', author: Farha Fawzia Atashi, license: CC BY-SA 4.0, licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg' }
+        images:
+          - { url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/43/%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg/1280px-%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg', thumbUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/43/%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg/500px-%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg', author: Farha Fawzia Atashi, license: CC BY-SA 4.0, licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:%E0%A6%B2%E0%A6%BE%E0%A6%B2_%E0%A6%95%E0%A7%87%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%E0%A6%B0_%E0%A6%AE%E0%A6%BE%E0%A6%AF%E0%A6%BC%E0%A6%BE.jpg' }
         rating: { average: 4.5, count: 12 }
         status: APPROVED
         createdBy: ff57e577-6935-46cd-8b17-e2e81d72f3cf
@@ -2314,6 +2306,23 @@ components:
         name: { type: string }
         category: { $ref: '#/components/schemas/CategoryRef' }
         location: { $ref: '#/components/schemas/Location' }
+        image:
+          description: 'The cover photo, or null (itineraries only).'
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlaceImage'
+    PlaceImage:
+      type: object
+      description: 'A photo hosted elsewhere. Show the credit with it (author, license with link, source): the licenses require it.'
+      required: [url, thumbUrl, author, license, licenseUrl, sourceUrl]
+      additionalProperties: false
+      properties:
+        url: { type: string, format: uri, description: 'About 1280 px wide, for galleries.' }
+        thumbUrl: { type: string, format: uri, description: 'About 500 px wide, for cards and thumbnails.' }
+        author: { type: string }
+        license: { type: string, description: 'For example CC BY-SA 4.0.' }
+        licenseUrl: { type: [string, 'null'], format: uri, description: 'null for public-domain images.' }
+        sourceUrl: { type: string, format: uri, description: 'The image page (for example on Wikimedia Commons).' }
     Leg:
       type: object
       required: [minutes, distanceMeters]

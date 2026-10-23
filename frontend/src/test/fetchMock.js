@@ -47,7 +47,7 @@ export function place(overrides = {}) {
     tags: ['history'],
     openingHours: [],
     facilities: { parking: 'YES', petFriendly: 'NO', wheelchairAccessible: 'UNKNOWN', accessibilityNotes: null, restrictions: null, verifiedAt: null },
-    image: null,
+    images: [],
     rating: { average: 4.5, count: 12 },
     status: 'APPROVED',
     createdBy: null,

@@ -119,6 +119,11 @@ export function createItinerariesRepository(db) {
             'c.name as category_name',
             db.raw('ST_Y(p.location::geometry) AS latitude'),
             db.raw('ST_X(p.location::geometry) AS longitude'),
+            // The cover photo only: enough for the stop card.
+            db.raw(`(SELECT json_build_object(
+                       'url', i.url, 'thumbUrl', i.thumb_url, 'author', i.author, 'license', i.license,
+                       'licenseUrl', i.license_url, 'sourceUrl', i.source_url)
+                     FROM place_images i WHERE i.place_id = p.id ORDER BY i.position LIMIT 1) AS cover_image`),
           ),
       ]);
       return { itinerary, days, stops };

@@ -209,3 +209,32 @@
 .moving .editName {
   color: var(--text-muted);
 }
+
+/* The cover photo sits at the right edge and fades out towards the text. */
+.withPhoto {
+  position: relative;
+  overflow: hidden;
+}
+
+.withPhoto > :not(.stopPhoto) {
+  position: relative;
+}
+
+.stopPhoto {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 45%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to left, rgb(0 0 0 / 0.95) 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
+  mask-image: linear-gradient(to left, rgb(0 0 0 / 0.95) 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
+}
+
+/* Narrow cards: keep the photo lighter so the text stays easy to read. */
+@media (max-width: 479px) {
+  .stopPhoto {
+    width: 55%;
+    opacity: 0.45;
+  }
+}

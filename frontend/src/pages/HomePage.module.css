@@ -269,7 +269,7 @@
   font-size: var(--text-xl);
 }
 
-/* Hero collage: one tall photo and two stacked beside it. */
+/* Hero collage: one wide photo above two smaller ones; all landscape, so little is cropped. */
 .collage {
   display: flex;
   flex-direction: column;
@@ -279,17 +279,22 @@
 
 .collageGrid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  grid-template-rows: 1fr 1fr;
+  /* minmax(0, …): a photo's natural size must not stretch its row. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--space-3);
-  height: clamp(18rem, 42vw, 30rem);
+  height: clamp(18rem, 40vw, 28rem);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.collageGrid li {
+  min-height: 0;
+}
+
 .collageGrid li:first-child {
-  grid-row: span 2;
+  grid-column: span 2;
 }
 
 .collageSkeleton {

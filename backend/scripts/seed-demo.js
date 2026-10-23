@@ -32,7 +32,6 @@ try {
   await db.transaction(async (trx) => {
     for (const [name, category, latitude, longitude, placeTags, description] of DEMO_PLACES) {
       const id = demoId(name);
-      const image = DEMO_PLACE_IMAGES[name];
       await trx('places')
         .insert({
           id,
@@ -42,16 +41,27 @@ try {
           location: trx.raw('ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [longitude, latitude]),
           city: 'Dhaka',
           status: 'APPROVED',
-          image_url: image?.url ?? null,
-          image_author: image?.author ?? null,
-          image_license: image?.license ?? null,
-          image_license_url: image?.licenseUrl ?? null,
-          image_source_url: image?.sourceUrl ?? null,
         })
         .onConflict('id')
-        .merge(['name', 'description', 'category_id', 'location', 'city', 'status', 'image_url', 'image_author', 'image_license', 'image_license_url', 'image_source_url']);
+        .merge(['name', 'description', 'category_id', 'location', 'city', 'status']);
       await trx('place_tags').where({ place_id: id }).delete();
       await trx('place_tags').insert(placeTags.map((slug) => ({ place_id: id, tag_id: tags.get(slug) })));
+      const images = DEMO_PLACE_IMAGES[name] ?? [];
+      await trx('place_images').where({ place_id: id }).delete();
+      if (images.length > 0) {
+        await trx('place_images').insert(
+          images.map((image, position) => ({
+            place_id: id,
+            position,
+            url: image.url,
+            thumb_url: image.thumbUrl,
+            author: image.author,
+            license: image.license,
+            license_url: image.licenseUrl,
+            source_url: image.sourceUrl,
+          })),
+        );
+      }
     }
   });
   // Cached place lists would otherwise keep serving the old rows until they expire.

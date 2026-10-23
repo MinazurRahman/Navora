@@ -48,6 +48,7 @@ export function toItineraryDto({ itinerary, days, stops }) {
             name: stop.place_name,
             category: { slug: stop.category_slug, name: stop.category_name },
             location: { latitude: stop.latitude, longitude: stop.longitude },
+            image: stop.cover_image ?? null,
           },
           plannedStart: hhmm(stop.planned_start),
           plannedEnd: hhmm(stop.planned_end),

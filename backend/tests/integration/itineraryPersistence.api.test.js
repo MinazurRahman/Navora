@@ -68,6 +68,18 @@ describe.skipIf(!testDatabaseUrl)('Itinerary persistence (PostGIS)', () => {
       expect(itinerary).toMatchObject({ version: 1, isCurrent: true, userModified: false });
     });
 
+    it('gives each stop the cover photo of its place, or null', async () => {
+      const photo = (position, file) => ({
+        place_id: places.North.id, position, url: `https://img.example/${file}.jpg`, thumb_url: `https://img.example/t-${file}.jpg`,
+        author: 'A. Photographer', license: 'CC BY 4.0', license_url: 'https://creativecommons.org/licenses/by/4.0', source_url: `https://commons.example/${file}`,
+      });
+      await ctx.db('place_images').insert([photo(1, 'second'), photo(0, 'cover')]);
+      const { itinerary } = await newItinerary();
+      const stops = itinerary.days.flatMap((d) => d.stops);
+      expect(stops.find((s) => s.place.id === places.North.id).place.image).toMatchObject({ url: 'https://img.example/cover.jpg', thumbUrl: 'https://img.example/t-cover.jpg' });
+      expect(stops.find((s) => s.place.id === places.East.id).place.image).toBeNull();
+    });
+
     it('lists my itineraries newest first, paginated, filterable by trip and current version', async () => {
       const first = await newItinerary({ title: 'First trip' });
       await as(owner).post(`/api/v1/itineraries/${first.itinerary.id}/regenerate`); // v2 of the first trip

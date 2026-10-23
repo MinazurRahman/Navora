@@ -293,6 +293,25 @@ describe.skipIf(!url)('Places API (PostGIS)', () => {
       expect((await api().get('/api/v1/places').query({ minRating: 3 })).body.meta.total).toBe(2);
     });
 
+    it('returns photos in display order with their credits, or [] when there are none', async () => {
+      const fort = await db('places').where({ name: 'Lalbagh Fort' }).first();
+      const photo = (position, file) => ({
+        place_id: fort.id, position, url: `https://img.example/${file}.jpg`, thumb_url: `https://img.example/thumb-${file}.jpg`,
+        author: 'A. Photographer', license: 'CC BY-SA 4.0', license_url: 'https://creativecommons.org/licenses/by-sa/4.0', source_url: `https://commons.example/${file}`,
+      });
+      await db('place_images').insert([photo(1, 'gate'), photo(0, 'cover')]);
+
+      const places = (await api().get('/api/v1/places').query({ limit: 50 })).body.data;
+      const withPhotos = places.find((p) => p.name === 'Lalbagh Fort');
+      expect(withPhotos.images.map((i) => i.url)).toEqual(['https://img.example/cover.jpg', 'https://img.example/gate.jpg']);
+      expect(withPhotos.images[0]).toEqual({
+        url: 'https://img.example/cover.jpg', thumbUrl: 'https://img.example/thumb-cover.jpg', author: 'A. Photographer',
+        license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0', sourceUrl: 'https://commons.example/cover',
+      });
+      expect(places.find((p) => p.name === 'Ahsan Manzil').images).toEqual([]);
+      await db('place_images').where({ place_id: fort.id }).delete();
+    });
+
     it('filters by facilities, matching only places marked YES', async () => {
       await db('places').where({ name: 'Lalbagh Fort' }).update({ pet_friendly: 'YES', wheelchair_accessible: 'YES' });
       await db('places').where({ name: 'Ahsan Manzil' }).update({ pet_friendly: 'NO', wheelchair_accessible: 'YES' });

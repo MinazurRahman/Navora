@@ -12,7 +12,7 @@ import { AddToTripButton } from '../trips/AddToTripButton.jsx';
 import { usePlace } from './api.js';
 import { dhakaWeekday, weeklySchedule } from './openingHours.js';
 import { ReviewsSection } from './Reviews.jsx';
-import { ImageCredit, PlaceImage } from './PlaceImage.jsx';
+import { PlaceGallery } from './PlaceGallery.jsx';
 import { PlaceStatusBadge } from './PlaceStatusBadge.jsx';
 import styles from './PlaceDetailPage.module.css';
 
@@ -151,14 +151,7 @@ export function PlaceDetailPage() {
         )}
       </header>
 
-      {place.image && (
-        <figure className={styles.hero}>
-          <PlaceImage place={place} alt={`Photo of ${place.name}`} className={styles.heroImage} eager />
-          <figcaption>
-            <ImageCredit image={place.image} />
-          </figcaption>
-        </figure>
-      )}
+      {place.images.length > 0 && <PlaceGallery place={place} />}
 
       {!approved && (
         <Alert tone={place.status === 'REJECTED' ? 'danger' : 'info'}>

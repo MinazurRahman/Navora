@@ -39,35 +39,37 @@ const CATEGORY_ICONS = {
   zoo: PawPrint,
 };
 
-// The place's photo, or a calm category placeholder when it has none or it fails to load.
-// alt: '' on cards (the name is right next to it); a description where the photo stands alone.
-// No referrer: the photo host does not need to learn which NAVORA page was open.
-export function PlaceImage({ place, alt = '', className = '', eager = false }) {
-  const [failed, setFailed] = useState(false);
-  const url = place.image?.url;
-
-  if (!url || failed) {
-    const Icon = CATEGORY_ICONS[place.category.slug] ?? MapPin;
-    return (
-      <div className={`${styles.frame} ${styles.placeholder} ${className}`} aria-hidden="true">
-        <Icon size={32} strokeWidth={1.5} />
-      </div>
-    );
-  }
-
+// A calm stand-in for a place without photos, marked with its category.
+export function PlaceholderImage({ category, className = '' }) {
+  const Icon = CATEGORY_ICONS[category?.slug] ?? MapPin;
   return (
-    <div className={`${styles.frame} ${className}`}>
-      <img
-        className={styles.img}
-        src={url}
-        alt={alt}
-        loading={eager ? 'eager' : 'lazy'}
-        decoding="async"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
+    <div className={`${styles.frame} ${styles.placeholder} ${className}`} aria-hidden="true">
+      <Icon size={32} strokeWidth={1.5} />
     </div>
   );
+}
+
+// One photo. fit 'cover' fills the frame (fine when shapes are close); 'contain' shows the
+// whole photo over a blurred copy of itself, so nothing important is cut off.
+// No referrer: the photo host does not need to learn which NAVORA page was open.
+export function Photo({ image, alt = '', size = 'large', fit = 'cover', eager = false, className = '', onError }) {
+  const src = size === 'thumb' ? image.thumbUrl : image.url;
+  const common = { referrerPolicy: 'no-referrer', decoding: 'async', loading: eager ? 'eager' : 'lazy' };
+  return (
+    <div className={`${styles.frame} ${className}`}>
+      {fit === 'contain' && <img {...common} className={styles.backdrop} src={image.thumbUrl} alt="" aria-hidden="true" />}
+      <img {...common} className={fit === 'contain' ? styles.contained : styles.img} src={src} alt={alt} onError={onError} />
+    </div>
+  );
+}
+
+// The place's cover photo, or the category placeholder when it has none or it fails to load.
+// alt: '' on cards (the name is right next to it).
+export function PlaceImage({ place, alt = '', className = '', eager = false, size = 'thumb', fit = 'cover' }) {
+  const [failed, setFailed] = useState(false);
+  const cover = place.images?.[0];
+  if (!cover || failed) return <PlaceholderImage category={place.category} className={className} />;
+  return <Photo image={cover} alt={alt} size={size} fit={fit} eager={eager} className={className} onError={() => setFailed(true)} />;
 }
 
 // "Photo: author, license" with links to the license and the source page, as the licenses require.

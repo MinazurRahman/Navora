@@ -12,6 +12,25 @@
   object-fit: cover;
 }
 
+/* contain: the blurred, dimmed copy fills the frame; the sharp photo sits whole on top. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(20px) brightness(0.75) saturate(1.1);
+  transform: scale(1.15);
+}
+
+.contained {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .placeholder {
   display: grid;
   place-items: center;

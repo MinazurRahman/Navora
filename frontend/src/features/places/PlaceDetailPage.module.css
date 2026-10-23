@@ -239,21 +239,3 @@
 .map {
   height: 20rem; /* PlacesMap's own minimum; smaller would overflow onto the next section */
 }
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.heroImage {
-  aspect-ratio: 16 / 9;
-  border-radius: var(--radius-lg);
-}
-
-@media (min-width: 1024px) {
-  .heroImage {
-    aspect-ratio: 21 / 8;
-  }
-}

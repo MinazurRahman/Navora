@@ -24,10 +24,9 @@ export function toPlaceDto(row) {
       restrictions: row.restrictions,
       verifiedAt: row.facilities_verified_at,
     },
-    // Shown with its credit (author, license, source), which the photo's license requires.
-    image: row.image_url
-      ? { url: row.image_url, author: row.image_author, license: row.image_license, licenseUrl: row.image_license_url, sourceUrl: row.image_source_url }
-      : null,
+    // Photos in display order, the first is the cover. Each is shown with its credit
+    // (author, license, source), which its license requires. [] = no photos.
+    images: row.images ?? [],
     rating: { average: toNumberOrNull(row.avg_rating), count: row.review_count },
     status: row.status,
     createdBy: row.created_by,

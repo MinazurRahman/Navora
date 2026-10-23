@@ -155,6 +155,16 @@ describe('trip page', () => {
     expect(within(day1).getByText('Back at the start point by 13:00')).toBeDefined();
   });
 
+  it('shows the cover photo on stop cards that have one', async () => {
+    const plan = itinerary();
+    plan.days[0].stops[0].place = { ...FORT, image: { url: 'https://img.example/fort-1280.jpg', thumbUrl: 'https://img.example/fort-500.jpg', author: 'A', license: 'CC BY 4.0', licenseUrl: null, sourceUrl: 'https://commons.example/fort' } };
+    serve({ plan });
+    renderAt();
+    const fortCard = (await screen.findByRole('link', { name: 'Lalbagh Fort' })).closest('div');
+    expect(fortCard.querySelector('img').getAttribute('src')).toBe('https://img.example/fort-500.jpg');
+    expect(screen.getByRole('link', { name: 'National Museum' }).closest('div').querySelector('img')).toBeNull();
+  });
+
   it('calls the fee total unknown when no stop has a known fee', async () => {
     const plan = itinerary();
     plan.totals.estimatedCost = 0;

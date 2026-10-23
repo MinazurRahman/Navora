@@ -95,7 +95,7 @@ function CategoryLinks() {
 // to its place. The photos' credits are on the place pages.
 function HeroCollage() {
   const { data, isPending } = usePlaces({ limit: 12 });
-  const featured = (data?.data ?? []).slice(6).filter((place) => place.image).slice(0, 3);
+  const featured = (data?.data ?? []).slice(6).filter((place) => place.images.length > 0).slice(0, 3);
 
   if (isPending) return <Skeleton height="100%" className={styles.collageSkeleton} />;
   if (featured.length < 3) return null;
@@ -103,10 +103,10 @@ function HeroCollage() {
   return (
     <figure className={styles.collage}>
       <ul className={styles.collageGrid}>
-        {featured.map((place) => (
+        {featured.map((place, i) => (
           <li key={place.id}>
             <Link to={`/places/${place.id}`} className={styles.tile}>
-              <PlaceImage place={place} className={styles.tileImage} eager />
+              <PlaceImage place={place} className={styles.tileImage} size={i === 0 ? 'large' : 'thumb'} eager />
               <span className={styles.tileName}>{place.name}</span>
             </Link>
           </li>

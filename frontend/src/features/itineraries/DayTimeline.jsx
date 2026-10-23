@@ -35,7 +35,17 @@ function StopRow({ stop, currency, estimated, travelMode, active, onActivate }) 
       </span>
       <div className={styles.stopBody}>
         <Leg stop={stop} estimated={estimated} travelMode={travelMode} />
-        <div className={styles.stopCard} onMouseEnter={onActivate} onFocus={onActivate}>
+        <div className={`${styles.stopCard} ${stop.place.image ? styles.withPhoto : ''}`} onMouseEnter={onActivate} onFocus={onActivate}>
+          {stop.place.image && (
+            <img
+              className={styles.stopPhoto}
+              src={stop.place.image.thumbUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+            />
+          )}
           <p className={styles.time}>
             <span className="visually-hidden">Stop {stop.order}, </span>
             {stop.plannedStart}–{stop.plannedEnd}

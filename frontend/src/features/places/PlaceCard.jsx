@@ -8,14 +8,13 @@ import styles from './PlaceCard.module.css';
 
 // Summary of an approved place. The whole card is one link (to the details page);
 // `action` is an extra control drawn above that link (e.g. "Show on map").
-// layout: 'stack' (photo on top, for grids) or 'row' (photo beside, for long lists).
-export function PlaceCard({ place, headingLevel: Heading = 'h3', selected = false, action, layout = 'stack' }) {
+export function PlaceCard({ place, headingLevel: Heading = 'h3', selected = false, action }) {
   const where = [place.address, place.city].filter(Boolean).join(', ');
   const distance = formatDistance(place.distanceMeters);
   const rated = place.rating.count > 0 && place.rating.average !== null;
 
   return (
-    <article className={`${styles.card} ${styles[layout]} ${selected ? styles.selected : ''}`}>
+    <article className={`${styles.card} ${selected ? styles.selected : ''}`}>
       <PlaceImage place={place} className={styles.media} />
       <div className={styles.body}>
         <div className={styles.top}>
@@ -52,7 +51,7 @@ export function PlaceCard({ place, headingLevel: Heading = 'h3', selected = fals
 
 export function PlaceCardSkeleton() {
   return (
-    <div className={`${styles.card} ${styles.stack}`} aria-hidden="true">
+    <div className={styles.card} aria-hidden="true">
       <Skeleton height="auto" className={styles.mediaSkeleton} />
       <div className={styles.body}>
         <Skeleton width="6rem" height="1.25rem" />
