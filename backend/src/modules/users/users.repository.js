@@ -18,5 +18,20 @@ export function createUsersRepository(db) {
     async findCredentialsByEmail(email) {
       return db('users').select([...PUBLIC_COLUMNS, 'password_hash']).where({ email }).first();
     },
+
+    // For re-checking the password of a signed-in user (email or password change).
+    async findCredentialsById(id) {
+      return db('users').select([...PUBLIC_COLUMNS, 'password_hash']).where({ id }).first();
+    },
+
+    // fields: { name?, email? } — only the keys given are changed.
+    async updateProfile(id, fields) {
+      const [row] = await db('users').where({ id }).update(fields).returning(PUBLIC_COLUMNS);
+      return row;
+    },
+
+    async updatePassword(id, passwordHash) {
+      await db('users').where({ id }).update({ password_hash: passwordHash });
+    },
   };
 }

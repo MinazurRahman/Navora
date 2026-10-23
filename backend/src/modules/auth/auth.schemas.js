@@ -17,6 +17,21 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+// Changing the email needs the current password (checked in the service); changing only
+// the name does not. PATCH: no defaults.
+export const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100).optional(),
+    email: emailSchema.optional(),
+    currentPassword: z.string().min(1).max(128).optional(),
+  })
+  .refine((fields) => fields.name !== undefined || fields.email !== undefined, 'provide name and/or email');
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8, 'must be at least 8 characters').max(128),
+});
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1).max(256),
 });

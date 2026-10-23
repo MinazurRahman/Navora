@@ -106,6 +106,22 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
         const row = findUserByEmail(email);
         return row && { ...row };
       },
+      async findCredentialsById(id) {
+        const row = users.get(id);
+        return row && { ...row };
+      },
+      async updateProfile(id, fields) {
+        const taken = fields.email && findUserByEmail(fields.email);
+        if (taken && taken.id !== id) {
+          throw Object.assign(new Error('duplicate key value'), { code: '23505', constraint: 'users_email_key' });
+        }
+        const row = { ...users.get(id), ...fields, updated_at: new Date() };
+        users.set(id, row);
+        return withoutPasswordHash(row);
+      },
+      async updatePassword(id, passwordHash) {
+        users.set(id, { ...users.get(id), password_hash: passwordHash });
+      },
     },
 
     refreshTokens: {
@@ -140,6 +156,9 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
         for (let i = refreshTokens.length - 1; i >= 0; i -= 1) {
           if (refreshTokens[i].user_id === userId && refreshTokens[i].expires_at < now) refreshTokens.splice(i, 1);
         }
+      },
+      async revokeAllForUser(userId) {
+        for (const t of refreshTokens) if (t.user_id === userId && t.revoked_at === null) t.revoked_at = new Date();
       },
       async revokeFamily(familyId) {
         for (const t of refreshTokens) if (t.family_id === familyId && t.revoked_at === null) t.revoked_at = new Date();

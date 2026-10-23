@@ -26,5 +26,25 @@ export function createUsersService({ usersRepository }) {
     findCredentialsByEmail(email) {
       return usersRepository.findCredentialsByEmail(email);
     },
+
+    findCredentialsById(id) {
+      return usersRepository.findCredentialsById(id);
+    },
+
+    // Same unique-constraint rule as createUser: a taken email is a 409, never a race.
+    async updateProfile(id, fields) {
+      try {
+        return await usersRepository.updateProfile(id, fields);
+      } catch (err) {
+        if (err.code === UNIQUE_VIOLATION && err.constraint === 'users_email_key') {
+          throw new ConflictError('An account with this email already exists', 'EMAIL_ALREADY_REGISTERED');
+        }
+        throw err;
+      }
+    },
+
+    updatePassword(id, passwordHash) {
+      return usersRepository.updatePassword(id, passwordHash);
+    },
   };
 }

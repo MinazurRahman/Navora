@@ -35,6 +35,11 @@ export function createRefreshTokenRepository(db) {
       await db('refresh_tokens').where({ user_id: userId }).where('expires_at', '<', db.fn.now()).delete();
     },
 
+    // Every session of the user (after a password change or reset).
+    async revokeAllForUser(userId) {
+      await db('refresh_tokens').where({ user_id: userId }).whereNull('revoked_at').update({ revoked_at: db.fn.now() });
+    },
+
     async revokeFamily(familyId) {
       await db('refresh_tokens')
         .where({ family_id: familyId })

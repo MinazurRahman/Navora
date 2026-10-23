@@ -75,6 +75,8 @@ the spec. Change an endpoint → update the spec, or the tests fail.
 | POST | `/api/v1/auth/refresh` | – | `{ refreshToken }` → new `{ user, tokens }`; the old refresh token stops working |
 | POST | `/api/v1/auth/logout` | – | `{ refreshToken }` → revokes that login session |
 | GET | `/api/v1/auth/me` | Bearer | Current user |
+| PATCH | `/api/v1/auth/me` | Bearer | `{ name?, email?, currentPassword? }`; an email change needs the current password |
+| POST | `/api/v1/auth/change-password` | Bearer | `{ currentPassword, newPassword }` → revokes every session, returns a new `{ user, tokens }` |
 | GET | `/api/v1/categories` | – | Category slugs and names |
 | GET | `/api/v1/places` | – | Approved places, newest first. Filters below |
 | GET | `/api/v1/places/nearby` | – | `latitude`, `longitude`, `radiusKm` (≤ 50, default 5); closest first, with `distanceMeters` |

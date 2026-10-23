@@ -21,3 +21,6 @@ npm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Playwright MCP scratch output
+.playwright-mcp/

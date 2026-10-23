@@ -22,5 +22,13 @@ export function createAuthController(authService) {
     async me(req, res) {
       sendSuccess(res, { user: await authService.getCurrentUser(req.user.id) });
     },
+
+    async updateMe(req, res) {
+      sendSuccess(res, { user: await authService.updateProfile(req.user.id, req.validated.body) });
+    },
+
+    async changePassword(req, res) {
+      sendSuccess(res, await authService.changePassword(req.user.id, req.validated.body));
+    },
   };
 }

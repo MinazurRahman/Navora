@@ -116,7 +116,7 @@ describe('route parity (code ⇄ spec)', () => {
 
     expect([...inCode].filter((r) => !inSpec.has(r)), 'routes missing from the spec').toEqual([]);
     expect([...inSpec].filter((r) => !inCode.has(r)), 'documented routes that do not exist').toEqual([]);
-    expect(inCode.size).toBe(46);
+    expect(inCode.size).toBe(48);
   });
 });
 
@@ -200,6 +200,10 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     const moderator = await ctx.signUp('moderator', 'moderator');
     await call('get', '/api/v1/auth/me', { as: user });
     await call('get', '/api/v1/auth/me'); // 401
+    await call('patch', '/api/v1/auth/me', { as: other, body: { name: 'Other Person' } });
+    await call('patch', '/api/v1/auth/me', { as: other, body: { email: 'user@example.com', currentPassword: 'long enough password' } }); // 409
+    await call('patch', '/api/v1/auth/me', { as: other, body: { email: 'new-other@example.com' } }); // 400 password needed
+    await call('patch', '/api/v1/auth/me', { body: { name: 'x' } }); // 401
 
     // --- catalogue ---
     await call('get', '/api/v1/categories');
@@ -309,6 +313,11 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     // --- deletions last ---
     await call('delete', '/api/v1/reviews/{id}', { as: user, params: { id: review.id } });
     await call('delete', '/api/v1/trips/{id}', { as: user, params: { id: trip.id } });
+
+    // Revokes sessions, so it runs last.
+    await call('post', '/api/v1/auth/change-password', { as: other, body: { currentPassword: 'wrong', newPassword: 'another long password' } }); // 400
+    await call('post', '/api/v1/auth/change-password', { as: other, body: { currentPassword: 'long enough password', newPassword: 'another long password' } });
+    await call('post', '/api/v1/auth/change-password', { body: { currentPassword: 'x', newPassword: 'another long password' } }); // 401
 
     expect(failures).toEqual([]);
     const missing = operations().map(({ method, template }) => `${method.toUpperCase()} ${template}`).filter((op) => !covered.has(op));

@@ -1,5 +1,5 @@
 import { request } from '../../api/client.js';
-import { setSession } from '../../api/session.js';
+import { getSession, rotateSession, setSession } from '../../api/session.js';
 
 function storeSession({ user, tokens }) {
   setSession({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, user });
@@ -18,6 +18,22 @@ export async function login({ email, password }) {
 
 export async function getMe({ signal } = {}) {
   const { data } = await request('/auth/me', { signal });
+  return data.user;
+}
+
+// fields: { name?, email?, currentPassword? }. Keeps the stored session's user in step.
+export async function updateProfile(fields) {
+  const { data } = await request('/auth/me', { method: 'PATCH', body: fields });
+  const session = getSession();
+  if (session) setSession({ ...session, user: data.user });
+  return data.user;
+}
+
+// The backend revokes every session and returns a new one for this device; stored as a
+// rotation so a duplicated tab of this device adopts it instead of being signed out.
+export async function changePassword({ currentPassword, newPassword }) {
+  const { data } = await request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } });
+  rotateSession({ accessToken: data.tokens.accessToken, refreshToken: data.tokens.refreshToken, user: data.user });
   return data.user;
 }
 

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { UnauthorizedError } from '../../shared/errors/AppError.js';
+import { UnauthorizedError, ValidationError } from '../../shared/errors/AppError.js';
 import { burnPasswordCheck, hashPassword, verifyPassword } from '../../shared/auth/password.js';
 import { getLogger } from '../../shared/logger.js';
 import { toPublicUser } from '../users/users.mapper.js';
@@ -11,6 +11,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // do not reveal which emails are registered.
 const invalidCredentials = () => new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
 const invalidRefreshToken = () => new UnauthorizedError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+const accountUnavailable = () => new UnauthorizedError('Account is not available');
+// A wrong current password is a field error, not a 401: the session itself is fine.
+const fieldError = (path, message) => new ValidationError('Invalid request data', [{ location: 'body', path, message }]);
 
 export function createAuthService({
   usersService,
@@ -111,6 +114,44 @@ export function createAuthService({
         await refreshTokenRepository.revokeFamily(existing.family_id);
         getLogger().info({ userId: existing.user_id }, 'User logged out');
       }
+    },
+
+    // Name changes need no password; an email change does, so a stolen access token alone
+    // cannot move the account to another address.
+    async updateProfile(userId, { name, email, currentPassword }) {
+      const user = await usersService.findCredentialsById(userId);
+      if (!user || !user.is_active) throw accountUnavailable();
+
+      const fields = {};
+      if (name !== undefined && name !== user.name) fields.name = name;
+      if (email !== undefined && email !== user.email.toLowerCase()) {
+        if (!currentPassword) throw fieldError('currentPassword', 'Enter your current password to change your email');
+        if (!(await verifyPassword(user.password_hash, currentPassword))) {
+          throw fieldError('currentPassword', 'Current password is incorrect');
+        }
+        fields.email = email;
+      }
+      if (Object.keys(fields).length === 0) return toPublicUser(user);
+
+      const updated = await usersService.updateProfile(userId, fields);
+      getLogger().info({ userId, changed: Object.keys(fields) }, 'Profile updated');
+      return toPublicUser(updated);
+    },
+
+    // Signs out every device (all refresh tokens revoked) and returns a new session for
+    // this one, so a stolen session cannot outlive the password it was opened with.
+    async changePassword(userId, { currentPassword, newPassword }) {
+      const user = await usersService.findCredentialsById(userId);
+      if (!user || !user.is_active) throw accountUnavailable();
+      if (!(await verifyPassword(user.password_hash, currentPassword))) {
+        throw fieldError('currentPassword', 'Current password is incorrect');
+      }
+      if (newPassword === currentPassword) throw fieldError('newPassword', 'Choose a password different from the current one');
+
+      await usersService.updatePassword(userId, await hashPassword(newPassword));
+      await refreshTokenRepository.revokeAllForUser(userId);
+      getLogger().info({ userId }, 'Password changed; all sessions revoked');
+      return (await issueSession(user)).session;
     },
 
     async getCurrentUser(userId) {

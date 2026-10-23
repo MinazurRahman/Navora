@@ -274,3 +274,82 @@ describe('POST /api/v1/auth/logout', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('PATCH /api/v1/auth/me', () => {
+  const updateMe = (token, body) => request(app).patch('/api/v1/auth/me').set('Authorization', `Bearer ${token}`).send(body);
+
+  it('changes the name without a password', async () => {
+    const { body } = await register();
+    const res = await updateMe(body.data.tokens.accessToken, { name: '  Ayesha R. ' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.name).toBe('Ayesha R.');
+    expectNoSecrets(res);
+  });
+
+  it('requires the current password to change the email', async () => {
+    const { body } = await register();
+    const token = body.data.tokens.accessToken;
+
+    const missing = await updateMe(token, { email: 'new@example.com' });
+    expect(missing.status).toBe(400);
+    expect(missing.body.error.details).toEqual([{ location: 'body', path: 'currentPassword', message: 'Enter your current password to change your email' }]);
+
+    const wrong = await updateMe(token, { email: 'new@example.com', currentPassword: 'not it' });
+    expect(wrong.body.error.details[0].message).toBe('Current password is incorrect');
+
+    const ok = await updateMe(token, { email: ' New@Example.com ', currentPassword: PASSWORD });
+    expect(ok.body.data.user.email).toBe('new@example.com');
+    expect((await login({ email: 'new@example.com', password: PASSWORD })).status).toBe(200);
+  });
+
+  it('refuses an email that belongs to another account', async () => {
+    await register(newUser({ email: 'taken@example.com' }));
+    const { body } = await register();
+    const res = await updateMe(body.data.tokens.accessToken, { email: 'TAKEN@example.com', currentPassword: PASSWORD });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('EMAIL_ALREADY_REGISTERED');
+  });
+
+  it('needs at least one field and a signed-in user', async () => {
+    const { body } = await register();
+    expect((await updateMe(body.data.tokens.accessToken, {})).status).toBe(400);
+    expect((await request(app).patch('/api/v1/auth/me').send({ name: 'x' })).status).toBe(401);
+  });
+});
+
+describe('POST /api/v1/auth/change-password', () => {
+  const changePassword = (token, body) =>
+    request(app).post('/api/v1/auth/change-password').set('Authorization', `Bearer ${token}`).send(body);
+
+  it('changes the password, signs out every other session and returns a new one', async () => {
+    const first = (await register()).body.data;
+    const second = (await login({ email: 'ayesha@example.com', password: PASSWORD })).body.data;
+
+    const res = await changePassword(first.tokens.accessToken, { currentPassword: PASSWORD, newPassword: 'a brand new passphrase' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.tokens.refreshToken).toBeTruthy();
+    expectNoSecrets(res);
+
+    // Both earlier sessions can no longer refresh; the new one can.
+    expect((await refresh(first.tokens.refreshToken)).status).toBe(401);
+    expect((await refresh(second.tokens.refreshToken)).status).toBe(401);
+    expect((await refresh(res.body.data.tokens.refreshToken)).status).toBe(200);
+
+    expect((await login({ email: 'ayesha@example.com', password: PASSWORD })).status).toBe(401);
+    expect((await login({ email: 'ayesha@example.com', password: 'a brand new passphrase' })).status).toBe(200);
+  });
+
+  it('rejects a wrong current password, a short or unchanged new password', async () => {
+    const token = (await register()).body.data.tokens.accessToken;
+    const wrong = await changePassword(token, { currentPassword: 'nope', newPassword: 'long enough password' });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.error.details[0]).toMatchObject({ path: 'currentPassword', message: 'Current password is incorrect' });
+    expect((await changePassword(token, { currentPassword: PASSWORD, newPassword: 'short' })).status).toBe(400);
+    const same = await changePassword(token, { currentPassword: PASSWORD, newPassword: PASSWORD });
+    expect(same.body.error.details[0].path).toBe('newPassword');
+  });
+
+  it('requires sign-in', async () => {
+    expect((await request(app).post('/api/v1/auth/change-password').send({ currentPassword: 'a', newPassword: 'long enough password' })).status).toBe(401);
+  });
+});

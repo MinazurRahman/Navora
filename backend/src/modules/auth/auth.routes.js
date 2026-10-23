@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate.middleware.js';
 import { byIpAndEmail } from '../../middleware/rateLimit.middleware.js';
-import { loginSchema, refreshTokenSchema, registerSchema } from './auth.schemas.js';
+import { changePasswordSchema, loginSchema, refreshTokenSchema, registerSchema, updateProfileSchema } from './auth.schemas.js';
 
 export function createAuthRouter({ authController, authenticate, rateLimit }) {
   const router = Router();
@@ -24,6 +24,17 @@ export function createAuthRouter({ authController, authenticate, rateLimit }) {
   // access token has expired.
   router.post('/logout', validate({ body: refreshTokenSchema }), authController.logout);
   router.get('/me', authenticate, authController.me);
+  router.patch('/me', authenticate, validate({ body: updateProfileSchema }), authController.updateMe);
+  // Checks the current password: same fail-closed guessing protection as sign-in, counted
+  // per IP and per signed-in user.
+  router.post(
+    '/change-password',
+    authenticate,
+    rateLimit('authIp'),
+    rateLimit('authAccount'),
+    validate({ body: changePasswordSchema }),
+    authController.changePassword,
+  );
 
   return router;
 }

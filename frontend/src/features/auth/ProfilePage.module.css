@@ -107,3 +107,19 @@
   flex-shrink: 0;
   color: var(--text-muted);
 }
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formTitle {
+  font-size: var(--text-lg);
+}

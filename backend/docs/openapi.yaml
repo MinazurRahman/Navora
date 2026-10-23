@@ -298,6 +298,82 @@ paths:
               example: { success: true, data: { user: { id: ff57e577-6935-46cd-8b17-e2e81d72f3cf, name: Ayesha Rahman, email: ayesha@example.com, role: user, profileImageUrl: null, createdAt: '2026-10-01T08:24:19.955Z' } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Auth]
+      summary: 'Update my profile'
+      description: |
+        Change the name and/or email. Changing the email needs `currentPassword` (a stolen access
+        token alone cannot move the account); a missing or wrong password is a 400 with a field error
+        on `currentPassword`. Email is trimmed and lowercased.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+                email: { type: string, format: email, maxLength: 254 }
+                currentPassword: { type: string, minLength: 1, maxLength: 128, description: Required when the email changes. }
+            example: { email: ayesha.rahman@example.com, currentPassword: correct horse battery staple }
+      responses:
+        '200':
+          description: 'The updated user.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                additionalProperties: false
+                properties:
+                  success: { const: true }
+                  data:
+                    type: object
+                    required: [user]
+                    additionalProperties: false
+                    properties: { user: { $ref: '#/components/schemas/User' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: '`EMAIL_ALREADY_REGISTERED` (case-insensitive).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: 'Change my password'
+      description: |
+        Checks `currentPassword`, sets `newPassword`, revokes **every** session of the account (all
+        refresh tokens) and returns a new session for this device: store the new tokens. Rate limited
+        like sign-in (per IP and per user); refuses with 503 if rate limiting is unavailable.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              additionalProperties: false
+              properties:
+                currentPassword: { type: string, minLength: 1, maxLength: 128 }
+                newPassword: { type: string, minLength: 8, maxLength: 128, description: Must differ from the current password. }
+            example: { currentPassword: correct horse battery staple, newPassword: a brand new passphrase }
+      responses:
+        '200':
+          description: 'New session tokens; response is not cacheable (`Cache-Control: no-store`).'
+          content:
+            application/json:
+              schema: *sessionEnvelope
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   # ============================== Catalogue ==============================
   /api/v1/categories:

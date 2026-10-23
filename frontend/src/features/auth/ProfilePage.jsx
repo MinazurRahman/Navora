@@ -4,6 +4,7 @@ import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
+import { ChangePasswordForm, EditProfileForm } from './AccountForms.jsx';
 import { useAuth } from './useAuth.js';
 import styles from './ProfilePage.module.css';
 
@@ -29,41 +30,44 @@ export function ProfilePage() {
       <PageHeader title="Profile" />
 
       <div className={styles.layout}>
-        <Card>
-          <dl className={styles.details}>
-            <div>
-              <dt>Name</dt>
-              <dd>{user.name}</dd>
-            </div>
-            <div>
-              <dt>Email</dt>
-              <dd>{user.email}</dd>
-            </div>
-            <div>
-              <dt>Account</dt>
-              <dd>
-                <Badge tone={moderator ? 'info' : 'neutral'}>{ROLE_LABELS[user.role] ?? user.role}</Badge>
-              </dd>
-            </div>
-            {user.createdAt && (
+        <div className={styles.column}>
+          <Card>
+            <dl className={styles.details}>
               <div>
-                <dt>Member since</dt>
-                <dd>{joinedFormat.format(new Date(user.createdAt))}</dd>
+                <dt>Name</dt>
+                <dd>{user.name}</dd>
               </div>
-            )}
-          </dl>
-          <p className={styles.note}>Changing your name, email or password is not available yet.</p>
-          <Button
-            variant="secondary"
-            icon={LogOut}
-            onClick={async () => {
-              await navigate('/');
-              signOut();
-            }}
-          >
-            Sign out
-          </Button>
-        </Card>
+              <div>
+                <dt>Email</dt>
+                <dd>{user.email}</dd>
+              </div>
+              <div>
+                <dt>Account</dt>
+                <dd>
+                  <Badge tone={moderator ? 'info' : 'neutral'}>{ROLE_LABELS[user.role] ?? user.role}</Badge>
+                </dd>
+              </div>
+              {user.createdAt && (
+                <div>
+                  <dt>Member since</dt>
+                  <dd>{joinedFormat.format(new Date(user.createdAt))}</dd>
+                </div>
+              )}
+            </dl>
+            <Button
+              variant="secondary"
+              icon={LogOut}
+              onClick={async () => {
+                await navigate('/');
+                signOut();
+              }}
+            >
+              Sign out
+            </Button>
+          </Card>
+          <EditProfileForm key={`${user.name}|${user.email}`} user={user} />
+          <ChangePasswordForm user={user} />
+        </div>
 
         <nav aria-label="Your activity">
           <ul className={styles.links}>
