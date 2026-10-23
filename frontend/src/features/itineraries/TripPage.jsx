@@ -291,7 +291,7 @@ export function TripPage() {
 
           <div className={styles.layout}>
             <div className={styles.timelineColumn}>
-              <DayTimeline key={`${plan.id}:${plan.updatedAt}:${day.dayNumber}`} itinerary={plan} day={day} travelMode={t.travelMode} activeOrder={activeOrder} onActiveChange={setActiveOrder} />
+              <DayTimeline key={`${plan.id}:${plan.updatedAt}:${day.dayNumber}`} itinerary={plan} trip={t} day={day} activeOrder={activeOrder} onActiveChange={setActiveOrder} />
             </div>
             <div className={styles.sideColumn}>
               <div className={styles.mapBox}>

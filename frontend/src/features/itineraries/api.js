@@ -15,6 +15,27 @@ export async function updateItinerary(id, days) {
   return (await request(`/itineraries/${encodeURIComponent(id)}`, { method: 'PATCH', body: { days } })).data;
 }
 
+// Places to suggest for one day of a trip, under the trip's own requirements (the
+// backend never relaxes them). Resolves to [{ place, score, reasons, warnings, ... }].
+export async function recommendForDay(trip, date, { signal } = {}) {
+  const body = {
+    location: trip.startLocation,
+    searchRadiusKm: trip.searchRadiusKm,
+    interests: trip.interests,
+    preferredCategories: trip.preferredCategories,
+    startDate: date,
+    durationDays: 1,
+    dailyStartTime: trip.dailyStartTime,
+    dailyEndTime: trip.dailyEndTime,
+    travelingWithPet: trip.travelingWithPet,
+    parkingRequired: trip.parkingRequired,
+    wheelchairAccessRequired: trip.wheelchairAccessRequired,
+    limit: 20,
+  };
+  if (trip.minimumRating !== null) body.minimumRating = trip.minimumRating;
+  return (await request('/recommendations', { method: 'POST', body, signal })).data;
+}
+
 export async function regenerateItinerary(id) {
   return (await request(`/itineraries/${encodeURIComponent(id)}/regenerate`, { method: 'POST' })).data;
 }

@@ -224,6 +224,43 @@ describe('trip page', () => {
     expect(screen.getByText('Edited by you')).toBeDefined();
   });
 
+  it('moves a stop to another day and adds recommended or saved places', async () => {
+    const AHSAN = stopPlace('d', 'Ahsan Manzil');
+    const SHOP = stopPlace('e', 'Aarong');
+    serve({
+      handlers: {
+        'POST /recommendations': () => ok([{ place: AHSAN, score: 80 }, { place: MOSQUE, score: 70 }]),
+        'GET /saved-places': () => ok([FORT, SHOP, AHSAN], { page: 1, limit: 50, total: 3, totalPages: 1 }),
+        'PATCH /itineraries/i1': (body) => {
+          state.patched = body;
+          return ok(itinerary({ userModified: true, updatedAt: '2026-10-22T09:00:00Z' }));
+        },
+      },
+    });
+    renderAt();
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Edit day' }))[0]);
+    await userEvent.selectOptions(screen.getByLabelText('Day for National Museum'), 'Move to day 2');
+
+    const add = screen.getByLabelText(/^Add a place/);
+    await vi.waitFor(() => expect(within(add).getByRole('option', { name: 'Aarong' })).toBeDefined());
+    // Places already in the itinerary are not offered; each place is offered once.
+    expect(within(add).queryByRole('option', { name: 'Star Mosque' })).toBeNull();
+    expect(within(add).getAllByRole('option', { name: 'Ahsan Manzil' })).toHaveLength(1);
+    await userEvent.selectOptions(add, 'Ahsan Manzil');
+    await userEvent.selectOptions(screen.getByLabelText(/^Add a place/), 'Aarong');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save day 1' }));
+    expect(await screen.findByText('Days 1, 2 were updated and re-scheduled.')).toBeDefined();
+    expect(state.patched).toEqual({
+      days: [
+        { dayNumber: 1, placeIds: ['a', 'd', 'e'], optimizeOrder: false },
+        { dayNumber: 2, placeIds: ['c', 'b'], optimizeOrder: false },
+      ],
+    });
+    const recommendation = state.calls.find((c) => c.path === '/recommendations');
+    expect(recommendation.body).toMatchObject({ location: TRIP.startLocation, startDate: '2026-10-24', durationDays: 1, interests: ['history'] });
+  });
+
   it('keeps the day unchanged when the backend refuses an edit', async () => {
     serve({
       handlers: {
