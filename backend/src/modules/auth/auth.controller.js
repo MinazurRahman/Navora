@@ -31,6 +31,10 @@ export function createAuthController(authService) {
       sendSuccess(res, await authService.changePassword(req.user.id, req.validated.body));
     },
 
+    async google(req, res) {
+      sendSuccess(res, await authService.loginWithGoogle(req.validated.body));
+    },
+
     // 202 whether or not the email is registered.
     async forgotPassword(req, res) {
       await authService.requestPasswordReset(req.validated.body);

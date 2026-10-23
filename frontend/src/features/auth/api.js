@@ -16,6 +16,12 @@ export async function login({ email, password }) {
   return storeSession(data);
 }
 
+// credential: the ID token from Google's sign-in button.
+export async function loginWithGoogle(credential) {
+  const { data } = await request('/auth/google', { method: 'POST', body: { credential } });
+  return storeSession(data);
+}
+
 export async function getMe({ signal } = {}) {
   const { data } = await request('/auth/me', { signal });
   return data.user;

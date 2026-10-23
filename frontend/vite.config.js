@@ -9,6 +9,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     // Tests mock relative API paths; a developer's local .env must not change them.
-    env: { VITE_API_BASE_URL: '' },
+    env: { VITE_API_BASE_URL: '', VITE_GOOGLE_CLIENT_ID: '' },
   },
 });

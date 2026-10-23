@@ -97,6 +97,13 @@ describe('parseEnv', () => {
     expect(productionWarnings(good)).toEqual([expect.stringMatching(/^MAIL_PROVIDER=log/)]);
   });
 
+  it('accepts an empty or valid GOOGLE_CLIENT_ID and rejects anything else', () => {
+    expect(parseEnv(base).google.clientId).toBeNull();
+    expect(parseEnv({ ...base, GOOGLE_CLIENT_ID: '' }).google.clientId).toBeNull();
+    expect(parseEnv({ ...base, GOOGLE_CLIENT_ID: '123-abc.apps.googleusercontent.com' }).google.clientId).toBe('123-abc.apps.googleusercontent.com');
+    expect(() => parseEnv({ ...base, GOOGLE_CLIENT_ID: 'my-secret-key' })).toThrow(/GOOGLE_CLIENT_ID/);
+  });
+
   it('warns when reset links would point to localhost in production', () => {
     const config = parseEnv({ ...base, NODE_ENV: 'production' });
     expect(productionWarnings(config)).toContainEqual(expect.stringMatching(/^APP_BASE_URL=http:\/\/localhost:5173/));

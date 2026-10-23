@@ -96,6 +96,14 @@ const envSchema = z.object({
   APP_BASE_URL: originSchema.default('http://localhost:5173'),
   // How mail is delivered. log = written to the server log (development; nothing is sent).
   MAIL_PROVIDER: z.enum(['log']).default('log'),
+  // OAuth client ID (Web) from Google Cloud Console. Empty = Sign in with Google is off.
+  // Not a secret; the frontend needs the same value (VITE_GOOGLE_CLIENT_ID).
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .trim()
+    .regex(/^[\w.-]+\.apps\.googleusercontent\.com$/, 'must be an OAuth client ID ending in .apps.googleusercontent.com')
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
 });
 
 export function parseEnv(source) {
@@ -161,6 +169,7 @@ export function parseEnv(source) {
     }),
     appBaseUrl: e.APP_BASE_URL,
     mail: Object.freeze({ provider: e.MAIL_PROVIDER }),
+    google: Object.freeze({ clientId: e.GOOGLE_CLIENT_ID ?? null }),
     ai: Object.freeze({
       enabled: e.AI_ENABLED === 'true',
       provider: e.AI_PROVIDER,

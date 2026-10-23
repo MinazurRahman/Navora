@@ -77,6 +77,7 @@ the spec. Change an endpoint → update the spec, or the tests fail.
 | GET | `/api/v1/auth/me` | Bearer | Current user |
 | PATCH | `/api/v1/auth/me` | Bearer | `{ name?, email?, currentPassword? }`; an email change needs the current password |
 | POST | `/api/v1/auth/change-password` | Bearer | `{ currentPassword, newPassword }` → revokes every session, returns a new `{ user, tokens }` |
+| POST | `/api/v1/auth/google` | — | `{ credential }` (Google ID token) → `{ user, tokens }`; matches by Google ID, then verified email (links), else creates a password-less account. 503 `GOOGLE_SIGNIN_DISABLED` without `GOOGLE_CLIENT_ID` |
 | POST | `/api/v1/auth/forgot-password` | — | `{ email }` → 202 always; mails a 30-minute single-use link to `APP_BASE_URL/reset-password#token=…` (`MAIL_PROVIDER=log`: written to the server log) |
 | POST | `/api/v1/auth/reset-password` | — | `{ token, newPassword }` → sets the password, revokes every session (`INVALID_RESET_TOKEN` if unknown, used or expired) |
 | GET | `/api/v1/categories` | – | Category slugs and names |
@@ -307,6 +308,11 @@ and `RateLimit-Reset` (seconds); a blocked request gets `429 RATE_LIMITED` with 
 
 - Auth error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `INVALID_CREDENTIALS`,
   `INVALID_REFRESH_TOKEN`, `INVALID_RESET_TOKEN` (400), `EMAIL_ALREADY_REGISTERED` (409), `FORBIDDEN` (403).
+- Sign in with Google: set `GOOGLE_CLIENT_ID` (an OAuth client ID of type Web application from
+  Google Cloud Console, with `http://localhost:5173` as an authorised JavaScript origin) here and the
+  same value as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env`. The ID token is verified locally against
+  Google's public keys (`src/integrations/google`). Codes: `INVALID_GOOGLE_TOKEN` (401),
+  `GOOGLE_ACCOUNT_MISMATCH` (409), `GOOGLE_SIGNIN_DISABLED` / `GOOGLE_SIGNIN_UNAVAILABLE` (503).
 - Password reset mail goes through `src/integrations/mail` (`MAIL_PROVIDER`; only `log` so far,
   which writes the message to the server log). Set `APP_BASE_URL` to the frontend's origin.
 

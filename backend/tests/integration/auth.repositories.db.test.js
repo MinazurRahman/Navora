@@ -50,6 +50,17 @@ describe.skipIf(!url)('auth repositories against PostgreSQL', () => {
     expect((await db('password_reset_tokens').count({ n: '*' }))[0].n).toBe('0');
   });
 
+  it('stores Google-only accounts, links a Google ID once, and requires a way to sign in', async () => {
+    const googleOnly = await users.create({ name: 'G', email: 'g@example.com', passwordHash: null, googleSub: 'g-1' });
+    expect(await users.findByGoogleSub('g-1')).toMatchObject({ id: googleOnly.id });
+    expect(await users.findByGoogleSub('g-1')).not.toHaveProperty('google_sub');
+
+    const withPassword = await users.create({ name: 'P', email: 'p@example.com', passwordHash: 'h' });
+    expect(await users.linkGoogle(withPassword.id, 'g-2')).toMatchObject({ id: withPassword.id });
+    expect(await users.linkGoogle(withPassword.id, 'g-3')).toBeUndefined(); // already linked
+    await expect(users.create({ name: 'N', email: 'n@example.com', passwordHash: null })).rejects.toMatchObject({ code: '23514' });
+  });
+
   it('never returns password_hash from create or findById', async () => {
     const created = await users.create({ name: 'A', email: 'a@example.com', passwordHash: '$argon2id$x' });
     expect(created).not.toHaveProperty('password_hash');

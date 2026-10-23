@@ -8,6 +8,7 @@ import { Field, Input } from '../../components/Field.jsx';
 import { NavoraMark } from '../../components/Logo.jsx';
 import { errorMessage, fieldErrors } from '../../lib/errors.js';
 import { login, register, requestPasswordReset, resetPassword } from './api.js';
+import { GoogleSignIn } from './GoogleSignIn.jsx';
 import { safeNext } from './safeNext.js';
 import { useAuth } from './useAuth.js';
 import { ErrorAlert } from '../../components/ErrorState.jsx';
@@ -80,6 +81,7 @@ export function LoginPage() {
         </>
       }
     >
+      <GoogleSignIn text="signin_with" />
       <form className={styles.form} onSubmit={onSubmit} noValidate>
         {sessionExpired && !showAlert && (
           <Alert tone="warning">Your session has ended. Sign in again to continue where you left off.</Alert>
@@ -158,6 +160,7 @@ export function RegisterPage() {
         </>
       }
     >
+      <GoogleSignIn text="signup_with" />
       <form className={styles.form} onSubmit={onSubmit} noValidate>
         {showAlert && <ErrorAlert error={error} />}
         <Field label="Name" error={errors.name}>

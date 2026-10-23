@@ -8,6 +8,7 @@ import { createCache } from './integrations/redis/cache.js';
 import { createMapServiceFromConfig } from './integrations/maps/index.js';
 import { createAiServiceFromConfig } from './integrations/ai/index.js';
 import { createMailServiceFromConfig } from './integrations/mail/index.js';
+import { createGoogleVerifierFromConfig } from './integrations/google/index.js';
 import { logger } from './shared/logger.js';
 import { createLifecycle } from './shared/lifecycle.js';
 import { createApp } from './app.js';
@@ -30,6 +31,7 @@ const app = createApp({
   mapService: createMapServiceFromConfig(env, { cache }),
   aiService: createAiServiceFromConfig(env, { cache }),
   mailService: createMailServiceFromConfig(env),
+  googleVerifier: createGoogleVerifierFromConfig(env),
 });
 
 const server = http.createServer(app);

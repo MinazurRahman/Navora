@@ -8,9 +8,9 @@ export function createUsersService({ usersRepository }) {
   return {
     // Relies on the unique constraint rather than check-then-insert, so two concurrent
     // registrations with the same email cannot both succeed.
-    async createUser({ name, email, passwordHash }) {
+    async createUser({ name, email, passwordHash, googleSub }) {
       try {
-        return await usersRepository.create({ name, email, passwordHash });
+        return await usersRepository.create({ name, email, passwordHash, googleSub });
       } catch (err) {
         if (err.code === UNIQUE_VIOLATION && err.constraint === 'users_email_key') {
           throw new ConflictError('An account with this email already exists', 'EMAIL_ALREADY_REGISTERED');
@@ -29,6 +29,14 @@ export function createUsersService({ usersRepository }) {
 
     findCredentialsById(id) {
       return usersRepository.findCredentialsById(id);
+    },
+
+    findByGoogleSub(googleSub) {
+      return usersRepository.findByGoogleSub(googleSub);
+    },
+
+    linkGoogle(id, googleSub) {
+      return usersRepository.linkGoogle(id, googleSub);
     },
 
     // Same unique-constraint rule as createUser: a taken email is a 409, never a race.

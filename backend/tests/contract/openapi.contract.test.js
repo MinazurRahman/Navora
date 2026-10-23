@@ -116,7 +116,7 @@ describe('route parity (code ⇄ spec)', () => {
 
     expect([...inCode].filter((r) => !inSpec.has(r)), 'routes missing from the spec').toEqual([]);
     expect([...inSpec].filter((r) => !inCode.has(r)), 'documented routes that do not exist').toEqual([]);
-    expect(inCode.size).toBe(50);
+    expect(inCode.size).toBe(51);
   });
 });
 
@@ -204,6 +204,12 @@ describe.skipIf(!testDatabaseUrl)('live responses match the spec (PostGIS)', () 
     await call('patch', '/api/v1/auth/me', { as: other, body: { email: 'user@example.com', currentPassword: 'long enough password' } }); // 409
     await call('patch', '/api/v1/auth/me', { as: other, body: { email: 'new-other@example.com' } }); // 400 password needed
     await call('patch', '/api/v1/auth/me', { body: { name: 'x' } }); // 401
+    const googleCredential = (claims) => `fake-google:${JSON.stringify({ sub: 'g-contract', email: 'google-user@example.com', name: 'Google User', ...claims })}`;
+    await call('post', '/api/v1/auth/google', { body: { credential: googleCredential() } });
+    await call('post', '/api/v1/auth/google', { body: { credential: 'not-a-valid-google-token' } }); // 401
+    await call('post', '/api/v1/auth/google', { body: { credential: googleCredential({ sub: 'g-other', email: 'user@example.com' }) } }); // links
+    await call('post', '/api/v1/auth/google', { body: { credential: googleCredential({ sub: 'g-third', email: 'user@example.com' }) } }); // 409
+    await call('post', '/api/v1/auth/google', { body: { credential: 'fake-google:unavailable' } }); // 503
 
     // --- catalogue ---
     await call('get', '/api/v1/categories');

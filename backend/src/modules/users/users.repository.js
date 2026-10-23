@@ -3,9 +3,10 @@ const PUBLIC_COLUMNS = ['id', 'name', 'email', 'role', 'profile_image_url', 'is_
 
 export function createUsersRepository(db) {
   return {
-    async create({ name, email, passwordHash }) {
+    // passwordHash is null for an account made through Google (googleSub set).
+    async create({ name, email, passwordHash, googleSub = null }) {
       const [row] = await db('users')
-        .insert({ name, email, password_hash: passwordHash })
+        .insert({ name, email, password_hash: passwordHash, google_sub: googleSub })
         .returning(PUBLIC_COLUMNS);
       return row;
     },
@@ -27,6 +28,17 @@ export function createUsersRepository(db) {
     // fields: { name?, email? } — only the keys given are changed.
     async updateProfile(id, fields) {
       const [row] = await db('users').where({ id }).update(fields).returning(PUBLIC_COLUMNS);
+      return row;
+    },
+
+    async findByGoogleSub(googleSub) {
+      return db('users').select(PUBLIC_COLUMNS).where({ google_sub: googleSub }).first();
+    },
+
+    // Links a Google account to an existing account; only if none is linked yet. Returns
+    // the user, or undefined when the account is already linked to another Google ID.
+    async linkGoogle(id, googleSub) {
+      const [row] = await db('users').where({ id }).whereNull('google_sub').update({ google_sub: googleSub }).returning(PUBLIC_COLUMNS);
       return row;
     },
 

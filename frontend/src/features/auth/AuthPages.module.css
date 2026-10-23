@@ -49,3 +49,33 @@
   margin-top: calc(-1 * var(--space-2));
   font-size: var(--text-sm);
 }
+
+.google {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+/* Google draws its button inside; keep room so the page does not jump when it appears. */
+.googleButton {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}

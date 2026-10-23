@@ -8,7 +8,7 @@ import { createEstimateProvider, createMapService, createMapServiceFromConfig } 
 import { createAiService, createAiServiceFromConfig } from '../../src/integrations/ai/index.js';
 import { CACHE_TTL } from '../../src/config/cache.js';
 import { PLANNING_CONFIG } from '../../src/config/planning.js';
-import { buildTestConfig, createFakeMailService, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
+import { buildTestConfig, createFakeGoogleVerifier, createFakeMailService, createInMemoryRateLimiter, createInMemoryRedis } from './testApp.js';
 
 export const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -41,6 +41,7 @@ export async function createIntegrationApp({ mapProvider, mapRequestBudgetMs, ai
       ? createAiService({ provider: aiProvider, cache, statusTtlSeconds: CACHE_TTL.aiStatus })
       : createAiServiceFromConfig(config, { cache }),
     mailService,
+    googleVerifier: createFakeGoogleVerifier(),
   });
 
   // Registers a user; with `role`, promotes them and logs in again so the token carries it.

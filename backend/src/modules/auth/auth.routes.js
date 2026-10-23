@@ -4,6 +4,7 @@ import { byIpAndEmail } from '../../middleware/rateLimit.middleware.js';
 import {
   changePasswordSchema,
   forgotPasswordSchema,
+  googleSignInSchema,
   loginSchema,
   refreshTokenSchema,
   registerSchema,
@@ -27,6 +28,8 @@ export function createAuthRouter({ authController, authenticate, rateLimit }) {
 
   router.post('/register', credentialLimits, validate({ body: registerSchema }), authController.register);
   router.post('/login', credentialLimits, validate({ body: loginSchema }), authController.login);
+  // Google's signature protects the token; the IP limit bounds key lookups and sign-ups.
+  router.post('/google', rateLimit('authIp'), validate({ body: googleSignInSchema }), authController.google);
   router.post('/refresh', validate({ body: refreshTokenSchema }), authController.refresh);
   // Authenticated by possession of the refresh token, so logout works even after the
   // access token has expired.

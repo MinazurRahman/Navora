@@ -20,6 +20,9 @@ app against the real backend with this list. Each line is one thing to do and wh
 - [ ] Duplicate the tab, wait 15+ minutes, use both tabs: both stay signed in (no second refresh).
 - [ ] Sign out: back to the home page; the backend revoked the refresh token; Back does not show private data.
 - [ ] Revoke the session (delete its `refresh_tokens` rows), wait for expiry: "Your session has ended" banner.
+- [ ] With `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` set: Sign in with Google on Sign in and on Create an
+      account. A new Google user gets an account; a Google account with the email of an existing account
+      signs into that account; Change password then says to use Forgot password first.
 - [ ] Profile: change the name (no password asked); change the email (current password required; a
       taken email shows under the field). The details card updates at once.
 - [ ] Profile: change the password. This tab stays signed in; another browser is signed out; the old

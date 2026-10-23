@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import { buildTestApp, buildTestConfig, createFakeMailService, createInMemoryRepositories } from '../helpers/testApp.js';
+import { buildTestApp, buildTestConfig, createFakeGoogleVerifier, createFakeMailService, createInMemoryRepositories } from '../helpers/testApp.js';
 
 const PASSWORD = 'correct horse battery staple';
 const newUser = (overrides = {}) => ({ name: 'Ayesha Rahman', email: 'ayesha@example.com', password: PASSWORD, ...overrides });
@@ -419,5 +419,64 @@ describe('password reset', () => {
     const short = await reset({ token: 'x', newPassword: 'short' });
     expect(short.status).toBe(400);
     expect(short.body.error.details.map((d) => d.path)).toContain('newPassword');
+  });
+});
+
+describe('POST /api/v1/auth/google', () => {
+  const googleToken = (claims) => `fake-google:${JSON.stringify({ sub: 'g-123', email: 'ayesha@example.com', name: 'Ayesha Rahman', ...claims })}`;
+  const google = (credential) => request(app).post('/api/v1/auth/google').send({ credential });
+
+  beforeEach(() => {
+    app = buildTestApp({ repositories, googleVerifier: createFakeGoogleVerifier() });
+  });
+
+  it('creates an account without a password on first sign-in, and signs it in again later', async () => {
+    const first = await google(googleToken());
+    expect(first.status).toBe(200);
+    expect(first.headers['cache-control']).toBe('no-store');
+    expect(first.body.data.user).toMatchObject({ name: 'Ayesha Rahman', email: 'ayesha@example.com' });
+    expectNoSecrets(first);
+    const [stored] = repositories.state.users.values();
+    expect(stored).toMatchObject({ password_hash: null, google_sub: 'g-123' });
+
+    const again = await google(googleToken({ email: 'changed@example.com' }));
+    expect(again.body.data.user.id).toBe(first.body.data.user.id); // matched by Google ID, not email
+    expect(repositories.state.users.size).toBe(1);
+    // No password: password sign-in fails like any wrong password.
+    expect((await login({ email: 'ayesha@example.com', password: 'anything at all' })).status).toBe(401);
+  });
+
+  it('links Google to an existing account with the same verified email', async () => {
+    const registered = (await register()).body.data.user;
+    const res = await google(googleToken());
+    expect(res.body.data.user.id).toBe(registered.id);
+    expect((await login({ email: 'ayesha@example.com', password: PASSWORD })).status).toBe(200);
+    // Another Google account with that email cannot take it over.
+    const other = await google(googleToken({ sub: 'g-999' }));
+    expect(other.status).toBe(409);
+    expect(other.body.error.code).toBe('GOOGLE_ACCOUNT_MISMATCH');
+  });
+
+  it('asks a Google-only account to set a password before using password features', async () => {
+    const { accessToken } = (await google(googleToken())).body.data.tokens;
+    const res = await request(app)
+      .post('/api/v1/auth/change-password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ currentPassword: 'x', newPassword: 'a new passphrase' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details[0]).toMatchObject({ path: 'currentPassword', message: expect.stringContaining('Forgot password') });
+  });
+
+  it('rejects an unverifiable token, and says when Google is unreachable or sign-in is off', async () => {
+    const bad = await google('not-a-google-token-at-all');
+    expect(bad.status).toBe(401);
+    expect(bad.body.error.code).toBe('INVALID_GOOGLE_TOKEN');
+    expect((await google('fake-google:unavailable')).body.error.code).toBe('GOOGLE_SIGNIN_UNAVAILABLE');
+    expect((await google('short')).status).toBe(400);
+
+    app = buildTestApp({ repositories });
+    const off = await google(googleToken());
+    expect(off.status).toBe(503);
+    expect(off.body.error.code).toBe('GOOGLE_SIGNIN_DISABLED');
   });
 });

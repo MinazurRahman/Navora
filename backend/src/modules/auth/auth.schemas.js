@@ -32,6 +32,11 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'must be at least 8 characters').max(128),
 });
 
+// The ID token from Google's sign-in button (a JWT).
+export const googleSignInSchema = z.object({
+  credential: z.string().min(20).max(4096),
+});
+
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });

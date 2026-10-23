@@ -211,6 +211,52 @@ paths:
               example: { success: false, error: { code: INVALID_CREDENTIALS, message: Invalid email or password, requestId: d4052722-bda2-49d0-9d4a-0056d095d3cc } }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/auth/google:
+    post:
+      tags: [Auth]
+      summary: 'Sign in with Google'
+      description: |
+        Send the ID token (`credential`) from Google's sign-in button. The Google account is matched
+        by its Google ID, then by its verified email (linking it to that account); otherwise a new
+        account without a password is created (the user can set one with a password reset). Returns a
+        session like sign-in. Off (503 `GOOGLE_SIGNIN_DISABLED`) unless the server has `GOOGLE_CLIENT_ID`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential]
+              additionalProperties: false
+              properties:
+                credential: { type: string, minLength: 20, maxLength: 4096, description: The Google ID token (a JWT). }
+            example: { credential: eyJhbGciOiJSUzI1NiIsImtpZCI6IkVYQU1QTEUifQ.EXAMPLE.SIGNATURE }
+      responses:
+        '200':
+          description: 'Signed in; response is not cacheable (`Cache-Control: no-store`).'
+          content:
+            application/json:
+              schema: *sessionEnvelope
+              example: *sessionExample
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: '`INVALID_GOOGLE_TOKEN` (bad, expired or foreign token, or unverified email), or the account is disabled (`INVALID_CREDENTIALS`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example: { success: false, error: { code: INVALID_GOOGLE_TOKEN, message: The Google sign-in could not be verified, requestId: d4052722-bda2-49d0-9d4a-0056d095d3cc } }
+        '409':
+          description: '`GOOGLE_ACCOUNT_MISMATCH`: the account with this email is linked to a different Google account.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503':
+          description: '`GOOGLE_SIGNIN_DISABLED` (not configured), `GOOGLE_SIGNIN_UNAVAILABLE` (Google unreachable), or `RATE_LIMIT_UNAVAILABLE`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
   /api/v1/auth/refresh:
     post:
       tags: [Auth]

@@ -7,6 +7,9 @@ React + Vite (JavaScript, ESM) web app for the NAVORA API in `../backend`.
 1. Start the backend (see `../backend/README.md`). Its `CORS_ORIGINS` must include `http://localhost:5173`.
 2. `cp .env.example .env` and adjust `VITE_API_BASE_URL` if the API is not at `http://localhost:3000/api/v1`.
 3. `npm install`, then `npm run dev` and open http://localhost:5173.
+4. Optional, Sign in with Google: set `VITE_GOOGLE_CLIENT_ID` (and the backend's `GOOGLE_CLIENT_ID`) to
+   an OAuth client ID of type Web application whose authorised JavaScript origins include
+   `http://localhost:5173`. Without it the Google button is hidden.
 
 | Script | What it does |
 |---|---|

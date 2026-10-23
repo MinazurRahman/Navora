@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { AppError, UnauthorizedError, ValidationError } from '../../shared/errors/AppError.js';
+import { AppError, ConflictError, ServiceUnavailableError, UnauthorizedError, ValidationError } from '../../shared/errors/AppError.js';
 import { burnPasswordCheck, hashPassword, verifyPassword } from '../../shared/auth/password.js';
 import { getLogger } from '../../shared/logger.js';
 import { withTimeout } from '../../shared/withTimeout.js';
@@ -16,6 +16,7 @@ const MAIL_TIMEOUT_MS = 10_000;
 const invalidCredentials = () => new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
 const invalidRefreshToken = () => new UnauthorizedError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
 const accountUnavailable = () => new UnauthorizedError('Account is not available');
+const noPassword = (path) => fieldError(path, 'This account signs in with Google and has no password yet. Use Forgot password to set one');
 const invalidResetToken = () => new AppError('INVALID_RESET_TOKEN', 'This reset link is invalid, used or expired', 400);
 // A wrong current password is a field error, not a 401: the session itself is fine.
 const fieldError = (path, message) => new ValidationError('Invalid request data', [{ location: 'body', path, message }]);
@@ -25,6 +26,7 @@ export function createAuthService({
   refreshTokenRepository,
   passwordResetTokenRepository,
   mailService,
+  googleVerifier,
   tokenService,
   refreshTokenTtlDays,
   appBaseUrl,
@@ -73,8 +75,11 @@ export function createAuthService({
         throw invalidCredentials();
       }
 
-      // Verify before checking is_active so both failure paths take the same time.
-      const passwordMatches = await verifyPassword(user.password_hash, password);
+      // Verify before checking is_active so both failure paths take the same time. A
+      // Google-only account (no password) burns the same check.
+      const passwordMatches = user.password_hash
+        ? await verifyPassword(user.password_hash, password)
+        : await burnPasswordCheck(password);
       if (!passwordMatches || !user.is_active) {
         getLogger().info({ userId: user.id }, 'Login failed');
         throw invalidCredentials();
@@ -133,6 +138,7 @@ export function createAuthService({
       const fields = {};
       if (name !== undefined && name !== user.name) fields.name = name;
       if (email !== undefined && email !== user.email.toLowerCase()) {
+        if (!user.password_hash) throw noPassword('currentPassword');
         if (!currentPassword) throw fieldError('currentPassword', 'Enter your current password to change your email');
         if (!(await verifyPassword(user.password_hash, currentPassword))) {
           throw fieldError('currentPassword', 'Current password is incorrect');
@@ -151,6 +157,7 @@ export function createAuthService({
     async changePassword(userId, { currentPassword, newPassword }) {
       const user = await usersService.findCredentialsById(userId);
       if (!user || !user.is_active) throw accountUnavailable();
+      if (!user.password_hash) throw noPassword('currentPassword');
       if (!(await verifyPassword(user.password_hash, currentPassword))) {
         throw fieldError('currentPassword', 'Current password is incorrect');
       }
@@ -159,6 +166,42 @@ export function createAuthService({
       await usersService.updatePassword(userId, await hashPassword(newPassword));
       await refreshTokenRepository.revokeAllForUser(userId);
       getLogger().info({ userId }, 'Password changed; all sessions revoked');
+      return (await issueSession(user)).session;
+    },
+
+    // Signs in with a Google ID token. Matches the Google account by its ID, then by its
+    // verified email (linking it to that NAVORA account), else creates an account without a
+    // password.
+    async loginWithGoogle({ credential }) {
+      if (!googleVerifier.enabled) {
+        throw new ServiceUnavailableError('Sign in with Google is not configured', undefined, 'GOOGLE_SIGNIN_DISABLED');
+      }
+      let google;
+      try {
+        google = await googleVerifier.verify(credential);
+      } catch (err) {
+        if (err.kind === 'UNAVAILABLE') {
+          getLogger().warn({ err: err.message }, 'Google sign-in unavailable');
+          throw new ServiceUnavailableError('Google sign-in is unavailable right now', undefined, 'GOOGLE_SIGNIN_UNAVAILABLE');
+        }
+        getLogger().info({ reason: err.message }, 'Google sign-in rejected');
+        throw new UnauthorizedError('The Google sign-in could not be verified', 'INVALID_GOOGLE_TOKEN');
+      }
+
+      let user = await usersService.findByGoogleSub(google.sub);
+      if (!user) {
+        const existing = await usersService.findCredentialsByEmail(google.email);
+        if (existing) {
+          user = await usersService.linkGoogle(existing.id, google.sub);
+          if (!user) throw new ConflictError('This account is linked to a different Google account', 'GOOGLE_ACCOUNT_MISMATCH');
+          getLogger().info({ userId: user.id }, 'Google account linked');
+        } else {
+          user = await usersService.createUser({ name: google.name.slice(0, 100), email: google.email, passwordHash: null, googleSub: google.sub });
+          getLogger().info({ userId: user.id }, 'User registered with Google');
+        }
+      }
+      if (!user.is_active) throw invalidCredentials();
+      getLogger().info({ userId: user.id }, 'User logged in with Google');
       return (await issueSession(user)).session;
     },
 

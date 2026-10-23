@@ -80,7 +80,7 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
     },
 
     users: {
-      async create({ name, email, passwordHash }) {
+      async create({ name, email, passwordHash, googleSub = null }) {
         if (findUserByEmail(email)) {
           throw Object.assign(new Error('duplicate key value'), { code: '23505', constraint: 'users_email_key' });
         }
@@ -90,6 +90,7 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
           name,
           email,
           password_hash: passwordHash,
+          google_sub: googleSub,
           role: 'user',
           profile_image_url: null,
           is_active: true,
@@ -118,6 +119,16 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
         }
         const row = { ...users.get(id), ...fields, updated_at: new Date() };
         users.set(id, row);
+        return withoutPasswordHash(row);
+      },
+      async findByGoogleSub(googleSub) {
+        const row = [...users.values()].find((u) => u.google_sub === googleSub);
+        return row && withoutPasswordHash(row);
+      },
+      async linkGoogle(id, googleSub) {
+        const row = users.get(id);
+        if (!row || row.google_sub) return undefined;
+        row.google_sub = googleSub;
         return withoutPasswordHash(row);
       },
       async updatePassword(id, passwordHash) {
@@ -186,6 +197,19 @@ export function createInMemoryRepositories({ dbHealthy = true } = {}) {
   };
 }
 
+// Accepts credentials of the form `fake-google:{"sub":…,"email":…,"name":…}`; "unavailable"
+// simulates Google's keys being unreachable.
+export function createFakeGoogleVerifier() {
+  return {
+    enabled: true,
+    async verify(credential) {
+      if (credential === 'fake-google:unavailable') throw Object.assign(new Error('keys unreachable'), { kind: 'UNAVAILABLE' });
+      if (!credential.startsWith('fake-google:')) throw Object.assign(new Error('bad token'), { kind: 'INVALID' });
+      return JSON.parse(credential.slice('fake-google:'.length));
+    },
+  };
+}
+
 // Records messages instead of sending them; `fail: true` makes every send reject.
 export function createFakeMailService({ fail = false } = {}) {
   const sent = [];
@@ -207,6 +231,7 @@ export function buildTestApp({
   mapService = createMapServiceFromConfig(config, { cache }),
   aiService = createAiServiceFromConfig(config, { cache }), // disabled unless config enables it
   mailService = createFakeMailService(),
+  googleVerifier = { enabled: false },
 } = {}) {
-  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService, mailService });
+  return createApp({ config, lifecycle, repositories, rateLimiter, cache, mapService, aiService, mailService, googleVerifier });
 }
