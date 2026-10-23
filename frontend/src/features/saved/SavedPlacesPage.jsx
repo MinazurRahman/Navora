@@ -76,7 +76,7 @@ export function SavedPlacesPage() {
           <ul className={`${styles.grid} ${isPlaceholderData ? styles.stale : ''}`}>
             {data.data.map((place) => (
               <li key={place.id}>
-                <PlaceCard place={place} action={<RemoveButton place={place} />} />
+                <PlaceCard headingLevel="h2" place={place} action={<RemoveButton place={place} />} />
               </li>
             ))}
           </ul>

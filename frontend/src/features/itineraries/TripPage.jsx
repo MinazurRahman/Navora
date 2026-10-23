@@ -156,6 +156,7 @@ export function TripPage() {
         <title>{missing ? 'Trip not found | NAVORA' : 'NAVORA'}</title>
         {missing ? (
           <EmptyState
+            headingLevel={1}
             icon={CalendarRange}
             title="Trip not found"
             description="This trip does not exist or belongs to another account."

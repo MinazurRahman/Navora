@@ -9,6 +9,7 @@ import { Checkbox, Field, Select } from '../../components/Field.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { useCategories } from '../catalogue/api.js';
 import { useExploreResults } from './api.js';
+import { prefersReducedMotion } from '../../lib/motion.js';
 import { activeFilterCount, parseExploreParams, toSearchParams } from './exploreParams.js';
 import { PlaceCard, PlaceCardSkeleton } from './PlaceCard.jsx';
 import styles from './ExplorePage.module.css';
@@ -340,7 +341,7 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
 
   // Keep the selected card visible when it was picked on the map.
   useEffect(() => {
-    cards.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    cards.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }, [selectedId]);
 
   if (results.isPending) {
@@ -393,6 +394,7 @@ function Results({ state, results, places, filterCount, selectedId, onShowOnMap,
       {places.map((place) => (
         <li key={place.id} ref={(el) => (el ? cards.current.set(place.id, el) : cards.current.delete(place.id))}>
           <PlaceCard
+            headingLevel="h2"
             place={place}
             selected={place.id === selectedId}
             action={

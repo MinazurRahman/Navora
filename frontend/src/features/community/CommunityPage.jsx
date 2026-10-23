@@ -62,7 +62,7 @@ export function CommunityPage() {
       )}
       {isError && <ErrorState error={error} onRetry={refetch} title="Places could not be loaded" />}
       {data?.data.length === 0 && (
-        <EmptyState icon={Users} title="No places yet" description="Be the first to suggest a place." />
+        <EmptyState headingLevel={3} icon={Users} title="No places yet" description="Be the first to suggest a place." />
       )}
       {data?.data.length > 0 && (
         <ul className={`${styles.grid} ${isPlaceholderData ? styles.stale : ''}`}>

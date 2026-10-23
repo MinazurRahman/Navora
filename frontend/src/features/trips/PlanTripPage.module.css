@@ -24,6 +24,12 @@
   }
 }
 
+/* A grid item grows to fit its content unless min-width is 0; the step row then scrolls
+   inside its column instead of widening the page. */
+.stepsNav {
+  min-width: 0;
+}
+
 /* Step list: a compact numbered row on small screens, a vertical list on large ones. */
 .steps {
   display: flex;
@@ -97,11 +103,21 @@ button.stepButton:hover {
   color: var(--color-action);
 }
 
-/* Small screens: only numbers for steps other than the current one. */
+/* Small screens: only numbers for steps other than the current one, packed tightly so all
+   six fit without scrolling (a scrolling row would need its own keyboard focus). */
 @media (max-width: 1023.98px) {
+  .steps {
+    gap: 0;
+  }
+
   .step:not(.current) .stepButton {
     font-size: 0;
     gap: 0;
+    padding: 0 var(--space-1);
+  }
+
+  .current .stepButton {
+    padding: 0 var(--space-2);
   }
 }
 

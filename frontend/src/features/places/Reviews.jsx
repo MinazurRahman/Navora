@@ -237,7 +237,7 @@ export function ReviewsSection({ placeId, reviewCount }) {
       {reviews.isPending && <Skeleton height="6rem" />}
       {reviews.isError && <ErrorState error={reviews.error} onRetry={reviews.refetch} title="Reviews could not be loaded" />}
       {reviews.data && items.length === 0 && (
-        <EmptyState icon={MessageSquare} title="No reviews yet" description="Be the first to share your experience." />
+        <EmptyState headingLevel={3} icon={MessageSquare} title="No reviews yet" description="Be the first to share your experience." />
       )}
       {items.length > 0 && (
         <ul className={styles.list}>

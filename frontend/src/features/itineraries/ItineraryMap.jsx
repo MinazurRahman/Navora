@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { decodePolyline } from '../../lib/polyline.js';
+import { prefersReducedMotion } from '../../lib/motion.js';
 import styles from './ItineraryMap.module.css';
 
 // One day of an itinerary: start point, numbered stops and the route. The road route is
@@ -58,16 +59,18 @@ export default function ItineraryMap({ start, day, activeOrder }) {
     [start, stops],
   );
   const points = road ?? straight;
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <figure className={styles.figure}>
-      <MapContainer center={toLatLng(start)} zoom={13} className={styles.map} aria-label={`Map of day ${day.dayNumber}`}>
+      <MapContainer center={toLatLng(start)} zoom={13} className={styles.map} aria-label={`Map of day ${day.dayNumber}`} zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
         <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
         <Polyline
           positions={points}
           pathOptions={road ? { color: '#1e3a8a', weight: 4, opacity: 0.8 } : { color: '#1e3a8a', weight: 2, dashArray: '6 8', opacity: 0.7 }}
         />
-        <Marker position={toLatLng(start)} icon={startIcon} title="Start point" alt="Start point" />
+        {/* Not interactive: it has no popup or action, so it should not be a focusable control. */}
+        <Marker position={toLatLng(start)} icon={startIcon} title="Start point" alt="Start point" interactive={false} keyboard={false} />
         {stops.map((stop) => (
           <Marker
             key={stop.place.id}

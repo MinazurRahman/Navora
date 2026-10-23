@@ -23,6 +23,7 @@ export function RequireAuth({ roles }) {
       <main className="container">
         <title>No access | NAVORA</title>
         <EmptyState
+          headingLevel={1}
           icon={ShieldAlert}
           title="You do not have access to this page"
           description="This page is only available to moderators."

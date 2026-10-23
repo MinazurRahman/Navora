@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import L from 'leaflet';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import { prefersReducedMotion } from '../lib/motion.js';
 import styles from './LocationPicker.module.css';
 
 // Click the map (or drag the pin) to choose a point. Callers give keyboard users coordinate
@@ -33,12 +34,16 @@ function FollowValue({ value }) {
 }
 
 export default function LocationPicker({ value, onChange, label = 'Map: click to choose a point' }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <MapContainer
       center={value ? [value.latitude, value.longitude] : DHAKA}
       zoom={value ? 14 : 12}
       className={styles.map}
       aria-label={label}
+      zoomAnimation={!reduceMotion}
+      fadeAnimation={!reduceMotion}
+      markerZoomAnimation={!reduceMotion}
     >
       <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
       <ClickToPick onChange={onChange} />

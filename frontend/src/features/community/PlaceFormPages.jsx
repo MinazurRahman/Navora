@@ -117,7 +117,7 @@ export function EditPlacePage() {
     return (
       <main className={`container ${styles.page}`}>
         {missing ? (
-          <EmptyState icon={SearchX} title="Place not found" description="This place does not exist or you cannot see it." />
+          <EmptyState headingLevel={1} icon={SearchX} title="Place not found" description="This place does not exist or you cannot see it." />
         ) : (
           <ErrorState error={place.error} onRetry={place.refetch} title="This place could not be loaded" />
         )}

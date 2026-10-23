@@ -573,7 +573,7 @@ function TripWizard({ initial, existingTripId }) {
       </header>
 
       <div className={styles.layout}>
-        <nav aria-label="Trip planning steps">
+        <nav aria-label="Trip planning steps" className={styles.stepsNav}>
           <ol className={styles.steps}>
             {STEPS.map((s, index) => {
               const state = index < stepIndex ? 'done' : index === stepIndex ? 'current' : 'upcoming';

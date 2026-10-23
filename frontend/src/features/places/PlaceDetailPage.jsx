@@ -96,6 +96,7 @@ export function PlaceDetailPage() {
         <title>{error.status === 404 || error.code === 'VALIDATION_ERROR' ? 'Place not found | NAVORA' : 'NAVORA'}</title>
         {error.status === 404 || error.code === 'VALIDATION_ERROR' ? (
           <EmptyState
+            headingLevel={1}
             icon={SearchX}
             title="Place not found"
             description="This place does not exist or is not public."

@@ -5,6 +5,7 @@ import { Circle, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-le
 import { LocateFixed } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '../../components/Button.jsx';
+import { prefersReducedMotion } from '../../lib/motion.js';
 import styles from './PlacesMap.module.css';
 
 // Leaflet + OpenStreetMap tiles (free, no key). All map-provider code stays in this file.
@@ -71,7 +72,7 @@ function FocusSelected({ selectedId, markers }) {
   useEffect(() => {
     const marker = selectedId && markers.current.get(selectedId);
     if (!marker) return;
-    map.panTo(marker.getLatLng());
+    map.panTo(marker.getLatLng(), { animate: !prefersReducedMotion() });
     marker.openPopup();
   }, [map, selectedId, markers]);
   return null;
@@ -81,10 +82,11 @@ export default function PlacesMap({ places, selectedId, onSelect, center, radius
   const [map, setMap] = useState(null);
   const markers = useRef(new Map());
   const located = useMemo(() => places.filter((p) => p.location), [places]);
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <div className={styles.wrapper}>
-      <MapContainer center={DHAKA} zoom={12} className={styles.map} ref={setMap} aria-label="Map of results">
+      <MapContainer center={DHAKA} zoom={12} className={styles.map} ref={setMap} aria-label="Map of results" zoomAnimation={!reduceMotion} fadeAnimation={!reduceMotion} markerZoomAnimation={!reduceMotion}>
         <TileLayer url={TILE_URL} attribution={ATTRIBUTION} />
         {center && (
           <Circle

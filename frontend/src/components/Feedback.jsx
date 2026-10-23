@@ -19,7 +19,10 @@ export function Alert({ tone = 'info', title, children, action, role }) {
   );
 }
 
-export function EmptyState({ icon: Icon, title, description, action }) {
+// headingLevel: 1 when the empty state is the whole page (not found, no access), otherwise
+// one below the section it sits in.
+export function EmptyState({ icon: Icon, title, description, action, headingLevel = 2 }) {
+  const Heading = `h${headingLevel}`;
   return (
     <div className={styles.empty}>
       {Icon && (
@@ -27,7 +30,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
           <Icon size={24} aria-hidden="true" />
         </span>
       )}
-      <h2 className={styles.emptyTitle}>{title}</h2>
+      <Heading className={styles.emptyTitle}>{title}</Heading>
       {description && <p className={styles.emptyDescription}>{description}</p>}
       {action && <div className={styles.emptyAction}>{action}</div>}
     </div>

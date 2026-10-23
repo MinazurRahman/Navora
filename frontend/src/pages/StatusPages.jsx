@@ -10,6 +10,7 @@ export function NotFoundPage() {
     <main className="container">
       <title>Page not found | NAVORA</title>
       <EmptyState
+        headingLevel={1}
         icon={Compass}
         title="Page not found"
         description="The page you are looking for does not exist or has moved."
@@ -37,6 +38,7 @@ export function RouteErrorPage() {
         <Logo />
       </a>
       <EmptyState
+        headingLevel={1}
         icon={TriangleAlert}
         title="Something went wrong"
         description="The page could not be displayed. Reload to try again."
