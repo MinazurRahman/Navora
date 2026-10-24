@@ -19,7 +19,7 @@ describe('demo places', () => {
       expect(latitude, name).toBeGreaterThan(23.3);
       expect(latitude, name).toBeLessThan(24.3);
       expect(longitude, name).toBeGreaterThan(90.2);
-      expect(longitude, name).toBeLessThan(90.7);
+      expect(longitude, name).toBeLessThan(90.9); // Wari-Bateshwar, Narsingdi
       expect(description.length, name).toBeGreaterThanOrEqual(80);
       expect(description.length, name).toBeLessThanOrEqual(5000);
     }

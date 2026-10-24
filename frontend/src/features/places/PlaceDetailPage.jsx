@@ -201,7 +201,12 @@ export function PlaceDetailPage() {
           <section className={styles.section} aria-labelledby="about-heading">
             <h2 id="about-heading">About</h2>
             {place.description ? (
-              <p className={styles.description}>{place.description}</p>
+              // Paragraphs are separated by a blank line.
+              <div className={styles.description}>
+                {place.description.split(/\n\s*\n/).map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
             ) : (
               <p className="muted">No description yet.</p>
             )}

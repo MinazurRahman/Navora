@@ -34,6 +34,7 @@ and `citext` beforehand as a superuser).
 | `npm run migrate:latest` / `migrate:rollback` / `migrate:status` | Database migrations |
 | `npm run seed` | Load reference data (idempotent) |
 | `npm run seed:demo` | Demo places for development: approximate coordinates; fees, hours and facilities unknown; photos from Wikimedia Commons with their credits (`scripts/demo-place-images.js`). Refuses in production |
+| `npm run set-role -- <email> <user\|moderator\|admin>` | Change an account's role, for example to make a moderator (uses `DATABASE_URL`). The person gets the new role after signing in again |
 
 Run migrations as a **separate deploy step**, never on application start, so multiple
 instances do not race each other.

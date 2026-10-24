@@ -18,6 +18,7 @@ export const routes = [
       { index: true, element: <HomePage /> },
       { path: 'explore', lazy: page(() => import('./features/places/ExplorePage.jsx'), 'ExplorePage') },
       { path: 'places/:placeId', lazy: page(() => import('./features/places/PlaceDetailPage.jsx'), 'PlaceDetailPage') },
+      { path: 'about', lazy: page(() => import('./pages/AboutPage.jsx'), 'AboutPage') },
       { path: 'community', lazy: page(() => import('./features/community/CommunityPage.jsx'), 'CommunityPage') },
       { path: 'login', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'LoginPage') },
       { path: 'register', lazy: page(() => import('./features/auth/AuthPages.jsx'), 'RegisterPage') },

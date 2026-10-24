@@ -90,6 +90,9 @@
 
 /* Community text: plain text with the author's line breaks. */
 .description {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   max-width: 42rem;
   white-space: pre-line;
   overflow-wrap: anywhere;

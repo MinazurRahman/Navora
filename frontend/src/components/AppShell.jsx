@@ -135,6 +135,9 @@ function Footer() {
         <div className={styles.footerBrand}>
           <Logo />
           <p className="muted">Discover beyond the usual.</p>
+          <Link to="/about" className={styles.footerLink}>
+            About NAVORA
+          </Link>
         </div>
         <p className={styles.footerNote}>
           Places are contributed by the community and reviewed by moderators before they are listed. Place photos

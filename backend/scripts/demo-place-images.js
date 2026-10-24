@@ -2401,5 +2401,373 @@ export const DEMO_PLACE_IMAGES = {
       "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Intellectual_Martyrs_Memorial_(Side_View_3).jpg"
     }
+  ],
+  "Bahadur Shah Park": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Bahadur_Shah_Park_Entrance.JPG/1280px-Bahadur_Shah_Park_Entrance.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Bahadur_Shah_Park_Entrance.JPG/500px-Bahadur_Shah_Park_Entrance.JPG",
+      "author": "Unknown author",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bahadur_Shah_Park_Entrance.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/Bahadur_Shah_Park_010.jpg/1280px-Bahadur_Shah_Park_010.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/Bahadur_Shah_Park_010.jpg/500px-Bahadur_Shah_Park_010.jpg",
+      "author": "Bellayet",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bahadur_Shah_Park_010.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Bahadur_Shah_Park_003.jpg/1280px-Bahadur_Shah_Park_003.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Bahadur_Shah_Park_003.jpg/500px-Bahadur_Shah_Park_003.jpg",
+      "author": "Rashed Ali",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bahadur_Shah_Park_003.jpg"
+    }
+  ],
+  "Chawk Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/Front_facade_of_the_Chawkbazar_Mosque.jpg/1280px-Front_facade_of_the_Chawkbazar_Mosque.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/Front_facade_of_the_Chawkbazar_Mosque.jpg/500px-Front_facade_of_the_Chawkbazar_Mosque.jpg",
+      "author": "Muyeedkhan69",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Front_facade_of_the_Chawkbazar_Mosque.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Chawkbazar_Shahi_Mosque_2_by_Ragib_Hasan.jpg/1280px-Chawkbazar_Shahi_Mosque_2_by_Ragib_Hasan.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Chawkbazar_Shahi_Mosque_2_by_Ragib_Hasan.jpg/500px-Chawkbazar_Shahi_Mosque_2_by_Ragib_Hasan.jpg",
+      "author": "Ragib Hasan",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chawkbazar_Shahi_Mosque_2_by_Ragib_Hasan.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/One_of_the_smaller_Minarets_of_the_Right_side_of_the_Chawkbazar_Shahi_Mosque.jpg/1280px-One_of_the_smaller_Minarets_of_the_Right_side_of_the_Chawkbazar_Shahi_Mosque.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/One_of_the_smaller_Minarets_of_the_Right_side_of_the_Chawkbazar_Shahi_Mosque.jpg/500px-One_of_the_smaller_Minarets_of_the_Right_side_of_the_Chawkbazar_Shahi_Mosque.jpg",
+      "author": "Muyeedkhan69",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:One_of_the_smaller_Minarets_of_the_Right_side_of_the_Chawkbazar_Shahi_Mosque.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Chak_Bazar_Shahi_Mosque_2.jpg/1280px-Chak_Bazar_Shahi_Mosque_2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Chak_Bazar_Shahi_Mosque_2.jpg/500px-Chak_Bazar_Shahi_Mosque_2.jpg",
+      "author": "Pratyay Hasan (প্রত্যয় হাসান)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chak_Bazar_Shahi_Mosque_2.jpg"
+    }
+  ],
+  "St Thomas Cathedral": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/93/St_Thomas_Cathedral_Old_Dhaka_013.jpg/1280px-St_Thomas_Cathedral_Old_Dhaka_013.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/93/St_Thomas_Cathedral_Old_Dhaka_013.jpg/500px-St_Thomas_Cathedral_Old_Dhaka_013.jpg",
+      "author": "Rashed Ali",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:St_Thomas_Cathedral_Old_Dhaka_013.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/St_Thomas_Cathedral_Old_Dhaka_015.jpg/1280px-St_Thomas_Cathedral_Old_Dhaka_015.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/St_Thomas_Cathedral_Old_Dhaka_015.jpg/500px-St_Thomas_Cathedral_Old_Dhaka_015.jpg",
+      "author": "Rashed Ali",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:St_Thomas_Cathedral_Old_Dhaka_015.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/St_Thomas_Cathedral_Old_Dhaka_002.jpg/1280px-St_Thomas_Cathedral_Old_Dhaka_002.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/St_Thomas_Cathedral_Old_Dhaka_002.jpg/500px-St_Thomas_Cathedral_Old_Dhaka_002.jpg",
+      "author": "Rashed Ali",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:St_Thomas_Cathedral_Old_Dhaka_002.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/St_Thomas_Cathedral_Old_Dhaka_004.jpg/1280px-St_Thomas_Cathedral_Old_Dhaka_004.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/St_Thomas_Cathedral_Old_Dhaka_004.jpg/500px-St_Thomas_Cathedral_Old_Dhaka_004.jpg",
+      "author": "Rashed Ali",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:St_Thomas_Cathedral_Old_Dhaka_004.jpg"
+    }
+  ],
+  "Old High Court Building": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_01.jpg/1280px-%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_01.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_01.jpg/500px-%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_01.jpg",
+      "author": "Aminul joy",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_01.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_02.jpg/1280px-%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_02.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_02.jpg/500px-%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_02.jpg",
+      "author": "Aminul joy",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%AA%E0%A7%81%E0%A6%B0%E0%A6%BE%E0%A6%A4%E0%A6%A8_%E0%A6%B9%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F_%E0%A6%AD%E0%A6%AC%E0%A6%A8_02.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Old_High_Court_Gate%2C_Dhaka.jpg/1280px-Old_High_Court_Gate%2C_Dhaka.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Old_High_Court_Gate%2C_Dhaka.jpg/500px-Old_High_Court_Gate%2C_Dhaka.jpg",
+      "author": "Wasiul Bahar",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Old_High_Court_Gate,_Dhaka.jpg"
+    }
+  ],
+  "Shahbaz Khan Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9139.jpg/1280px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9139.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9139.jpg/500px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9139.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_(1679_)_DHAKA_IMG_9139.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Front_View_Of_Shahbaz_Khan_Mosque_2.jpg/1280px-Front_View_Of_Shahbaz_Khan_Mosque_2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Front_View_Of_Shahbaz_Khan_Mosque_2.jpg/500px-Front_View_Of_Shahbaz_Khan_Mosque_2.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Front_View_Of_Shahbaz_Khan_Mosque_2.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9140.jpg/1280px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9140.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9140.jpg/500px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9140.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_(1679_)_DHAKA_IMG_9140.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9142.jpg/1280px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9142.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9142.jpg/500px-DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_%281679_%29_DHAKA_IMG_9142.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_FOLD_68_-09_HAJI_SHABAZ_KHAN_MOSQUE_(1679_)_DHAKA_IMG_9142.jpg"
+    }
+  ],
+  "Gurdwara Nanak Shahi": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/DG_119_-_10_guru_duara_nanak_shah_a_malek_babul_4.jpg/1280px-DG_119_-_10_guru_duara_nanak_shah_a_malek_babul_4.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/DG_119_-_10_guru_duara_nanak_shah_a_malek_babul_4.jpg/500px-DG_119_-_10_guru_duara_nanak_shah_a_malek_babul_4.jpg",
+      "author": "Babul abdul malek",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DG_119_-_10_guru_duara_nanak_shah_a_malek_babul_4.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Front_Side_of_Gurudwara_Nanak_Shahi_1.jpg/1280px-Front_Side_of_Gurudwara_Nanak_Shahi_1.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Front_Side_of_Gurudwara_Nanak_Shahi_1.jpg/500px-Front_Side_of_Gurudwara_Nanak_Shahi_1.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Front_Side_of_Gurudwara_Nanak_Shahi_1.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Front_Side_of_Gurudwara_Nanak_Shahi_2.jpg/1280px-Front_Side_of_Gurudwara_Nanak_Shahi_2.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Front_Side_of_Gurudwara_Nanak_Shahi_2.jpg/500px-Front_Side_of_Gurudwara_Nanak_Shahi_2.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Front_Side_of_Gurudwara_Nanak_Shahi_2.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Entrance_of_Gurudwara_Nanak_Shahi.jpg/1280px-Entrance_of_Gurudwara_Nanak_Shahi.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Entrance_of_Gurudwara_Nanak_Shahi.jpg/500px-Entrance_of_Gurudwara_Nanak_Shahi.jpg",
+      "author": "Anik Sarker",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Entrance_of_Gurudwara_Nanak_Shahi.jpg"
+    }
+  ],
+  "Ramna Kali Temple": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Durga_with_Family_-_Megacity_Central_Puja_Mandap_-_Dhakeshwari_National_Temple_Complex_-_Dhaka_2015-05-31_2699.JPG/1280px-Durga_with_Family_-_Megacity_Central_Puja_Mandap_-_Dhakeshwari_National_Temple_Complex_-_Dhaka_2015-05-31_2699.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Durga_with_Family_-_Megacity_Central_Puja_Mandap_-_Dhakeshwari_National_Temple_Complex_-_Dhaka_2015-05-31_2699.JPG/500px-Durga_with_Family_-_Megacity_Central_Puja_Mandap_-_Dhakeshwari_National_Temple_Complex_-_Dhaka_2015-05-31_2699.JPG",
+      "author": "Biswarup Ganguly",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Durga_with_Family_-_Megacity_Central_Puja_Mandap_-_Dhakeshwari_National_Temple_Complex_-_Dhaka_2015-05-31_2699.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Bhadra_Kali_-_Ramna_Kali_Mandir_and_Anandamayi_Ashram_-_9-10_Kazi_Nazrul_Islam_Avenue_-_Dhaka_2015-05-31_2129.JPG/1280px-Bhadra_Kali_-_Ramna_Kali_Mandir_and_Anandamayi_Ashram_-_9-10_Kazi_Nazrul_Islam_Avenue_-_Dhaka_2015-05-31_2129.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Bhadra_Kali_-_Ramna_Kali_Mandir_and_Anandamayi_Ashram_-_9-10_Kazi_Nazrul_Islam_Avenue_-_Dhaka_2015-05-31_2129.JPG/500px-Bhadra_Kali_-_Ramna_Kali_Mandir_and_Anandamayi_Ashram_-_9-10_Kazi_Nazrul_Islam_Avenue_-_Dhaka_2015-05-31_2129.JPG",
+      "author": "Biswarup Ganguly",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bhadra_Kali_-_Ramna_Kali_Mandir_and_Anandamayi_Ashram_-_9-10_Kazi_Nazrul_Islam_Avenue_-_Dhaka_2015-05-31_2129.JPG"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3f/Ramna_Kali_Mandir_and_Anandamayee_Ashram_-_Ramna_Park_-_Dhaka_2015-05-31_2127.JPG/1280px-Ramna_Kali_Mandir_and_Anandamayee_Ashram_-_Ramna_Park_-_Dhaka_2015-05-31_2127.JPG",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3f/Ramna_Kali_Mandir_and_Anandamayee_Ashram_-_Ramna_Park_-_Dhaka_2015-05-31_2127.JPG/500px-Ramna_Kali_Mandir_and_Anandamayee_Ashram_-_Ramna_Park_-_Dhaka_2015-05-31_2127.JPG",
+      "author": "Biswarup Ganguly",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ramna_Kali_Mandir_and_Anandamayee_Ashram_-_Ramna_Park_-_Dhaka_2015-05-31_2127.JPG"
+    }
+  ],
+  "National Art Gallery": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/%E0%A6%9C%E0%A6%BE%E0%A6%A4%E0%A7%80%E0%A6%AF%E0%A6%BC_%E0%A6%9A%E0%A6%BF%E0%A6%A4%E0%A7%8D%E0%A6%B0%E0%A6%B6%E0%A6%BE%E0%A6%B2%E0%A6%BE_%E0%A7%AD.jpg/1280px-%E0%A6%9C%E0%A6%BE%E0%A6%A4%E0%A7%80%E0%A6%AF%E0%A6%BC_%E0%A6%9A%E0%A6%BF%E0%A6%A4%E0%A7%8D%E0%A6%B0%E0%A6%B6%E0%A6%BE%E0%A6%B2%E0%A6%BE_%E0%A7%AD.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/%E0%A6%9C%E0%A6%BE%E0%A6%A4%E0%A7%80%E0%A6%AF%E0%A6%BC_%E0%A6%9A%E0%A6%BF%E0%A6%A4%E0%A7%8D%E0%A6%B0%E0%A6%B6%E0%A6%BE%E0%A6%B2%E0%A6%BE_%E0%A7%AD.jpg/500px-%E0%A6%9C%E0%A6%BE%E0%A6%A4%E0%A7%80%E0%A6%AF%E0%A6%BC_%E0%A6%9A%E0%A6%BF%E0%A6%A4%E0%A7%8D%E0%A6%B0%E0%A6%B6%E0%A6%BE%E0%A6%B2%E0%A6%BE_%E0%A7%AD.jpg",
+      "author": "Shariful iea",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E0%A6%9C%E0%A6%BE%E0%A6%A4%E0%A7%80%E0%A6%AF%E0%A6%BC_%E0%A6%9A%E0%A6%BF%E0%A6%A4%E0%A7%8D%E0%A6%B0%E0%A6%B6%E0%A6%BE%E0%A6%B2%E0%A6%BE_%E0%A7%AD.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/National_Art_Gallery%2C_Pohela_Boishak_Event_Pics.jpg/1280px-National_Art_Gallery%2C_Pohela_Boishak_Event_Pics.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/National_Art_Gallery%2C_Pohela_Boishak_Event_Pics.jpg/500px-National_Art_Gallery%2C_Pohela_Boishak_Event_Pics.jpg",
+      "author": "Masudranajoni777",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:National_Art_Gallery,_Pohela_Boishak_Event_Pics.jpg"
+    }
+  ],
+  "Dharmarajika Buddhist Monastery": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Buddha_statue_at_Dharmarajika_Bauddha_Vihara_1.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Buddha_statue_at_Dharmarajika_Bauddha_Vihara_1.jpg/500px-Buddha_statue_at_Dharmarajika_Bauddha_Vihara_1.jpg",
+      "author": "Ifteebd10",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Buddha_statue_at_Dharmarajika_Bauddha_Vihara_1.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Buddha_statue_inside_the_prayer_hall_of_Dharmarajika_Bauddha_Vihara%2C_Dhaka_3.jpg/1280px-Buddha_statue_inside_the_prayer_hall_of_Dharmarajika_Bauddha_Vihara%2C_Dhaka_3.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Buddha_statue_inside_the_prayer_hall_of_Dharmarajika_Bauddha_Vihara%2C_Dhaka_3.jpg/500px-Buddha_statue_inside_the_prayer_hall_of_Dharmarajika_Bauddha_Vihara%2C_Dhaka_3.jpg",
+      "author": "Ifteebd10",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Buddha_statue_inside_the_prayer_hall_of_Dharmarajika_Bauddha_Vihara,_Dhaka_3.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Buddha_statue_at_Dharmarajika_Bauddha_Vihara.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Buddha_statue_at_Dharmarajika_Bauddha_Vihara.jpg/500px-Buddha_statue_at_Dharmarajika_Bauddha_Vihara.jpg",
+      "author": "Ifteebd10",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Buddha_statue_at_Dharmarajika_Bauddha_Vihara.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Bathing_place_of_corpses%2C_Dharmarajika_Bauddha_Vihara%2C_Dhaka.jpg/1280px-Bathing_place_of_corpses%2C_Dharmarajika_Bauddha_Vihara%2C_Dhaka.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Bathing_place_of_corpses%2C_Dharmarajika_Bauddha_Vihara%2C_Dhaka.jpg/500px-Bathing_place_of_corpses%2C_Dharmarajika_Bauddha_Vihara%2C_Dhaka.jpg",
+      "author": "Ifteebd10",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bathing_place_of_corpses,_Dharmarajika_Bauddha_Vihara,_Dhaka.jpg"
+    }
+  ],
+  "Shah Ali Baghdadi Shrine": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Eastern_Gate_2_Shah_Ali_Mazer_Mirpur_1_No.jpg/1280px-Eastern_Gate_2_Shah_Ali_Mazer_Mirpur_1_No.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Eastern_Gate_2_Shah_Ali_Mazer_Mirpur_1_No.jpg/500px-Eastern_Gate_2_Shah_Ali_Mazer_Mirpur_1_No.jpg",
+      "author": "Khasan602",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eastern_Gate_2_Shah_Ali_Mazer_Mirpur_1_No.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Main-Gate_Shah_Ali_Mazer.jpg/1280px-Main-Gate_Shah_Ali_Mazer.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Main-Gate_Shah_Ali_Mazer.jpg/500px-Main-Gate_Shah_Ali_Mazer.jpg",
+      "author": "Khasan602",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Main-Gate_Shah_Ali_Mazer.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Shah_Ali_Mazar_Mirpur_010.jpg/1280px-Shah_Ali_Mazar_Mirpur_010.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Shah_Ali_Mazar_Mirpur_010.jpg/500px-Shah_Ali_Mazar_Mirpur_010.jpg",
+      "author": "Ranadipam Basu",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shah_Ali_Mazar_Mirpur_010.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Shah_Ali_Mazar_Mirpur_007.jpg/1280px-Shah_Ali_Mazar_Mirpur_007.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Shah_Ali_Mazar_Mirpur_007.jpg/500px-Shah_Ali_Mazar_Mirpur_007.jpg",
+      "author": "Ranadipam Basu",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shah_Ali_Mazar_Mirpur_007.jpg"
+    }
+  ],
+  "Bait Ur Rouf Mosque": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Bait_Ur_Rouf_mosque_corridor.jpg/1280px-Bait_Ur_Rouf_mosque_corridor.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Bait_Ur_Rouf_mosque_corridor.jpg/500px-Bait_Ur_Rouf_mosque_corridor.jpg",
+      "author": "Aashaa",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bait_Ur_Rouf_mosque_corridor.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Bait_Ur_Rouf_mosque_wall.jpg/1280px-Bait_Ur_Rouf_mosque_wall.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Bait_Ur_Rouf_mosque_wall.jpg/500px-Bait_Ur_Rouf_mosque_wall.jpg",
+      "author": "Aashaa",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bait_Ur_Rouf_mosque_wall.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/29/Bait_Ur_Rouf_mosque_at_afternoon.jpg/1280px-Bait_Ur_Rouf_mosque_at_afternoon.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/29/Bait_Ur_Rouf_mosque_at_afternoon.jpg/500px-Bait_Ur_Rouf_mosque_at_afternoon.jpg",
+      "author": "Aashaa",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bait_Ur_Rouf_mosque_at_afternoon.jpg"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Bait_Ur_Rouf_mosque_roof.jpg/1280px-Bait_Ur_Rouf_mosque_roof.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Bait_Ur_Rouf_mosque_roof.jpg/500px-Bait_Ur_Rouf_mosque_roof.jpg",
+      "author": "Aashaa",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bait_Ur_Rouf_mosque_roof.jpg"
+    }
+  ],
+  "Wari-Bateshwar": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Wari-Bateshwar_Museum%2C_Narsingdi%2C_Bangladesh_01.jpg/1280px-Wari-Bateshwar_Museum%2C_Narsingdi%2C_Bangladesh_01.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Wari-Bateshwar_Museum%2C_Narsingdi%2C_Bangladesh_01.jpg/500px-Wari-Bateshwar_Museum%2C_Narsingdi%2C_Bangladesh_01.jpg",
+      "author": "Redmin",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wari-Bateshwar_Museum,_Narsingdi,_Bangladesh_01.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/51/PICT0075.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/PICT0075.jpg/500px-PICT0075.jpg",
+      "author": "user:omarshehab",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:PICT0075.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a8/PICT0211.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/PICT0211.jpg/500px-PICT0211.jpg",
+      "author": "user:omarshehab",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:PICT0211.jpg"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ea/The-boundary-wall-of-the-city.jpg",
+      "thumbUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/The-boundary-wall-of-the-city.jpg/500px-The-boundary-wall-of-the-city.jpg",
+      "author": "omarshehab",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:The-boundary-wall-of-the-city.jpg"
+    }
   ]
 };

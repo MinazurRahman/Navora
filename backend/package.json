@@ -17,7 +17,8 @@
     "migrate:rollback": "knex migrate:rollback",
     "migrate:status": "knex migrate:status",
     "seed": "knex seed:run",
-    "seed:demo": "node scripts/seed-demo.js"
+    "seed:demo": "node scripts/seed-demo.js",
+    "set-role": "node scripts/set-role.js"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.2.0",
