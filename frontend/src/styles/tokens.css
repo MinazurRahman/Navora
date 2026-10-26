@@ -1,0 +1,91 @@
+/* Navora design tokens.
+   River ink, cool paper, river teal for actions, marigold only for routes and the trip you are building,
+   Lalbagh brick for problems. Change colours here, not in components. */
+
+:root {
+  --ink: #12313a;
+  --ink-soft: #46636a;
+  --paper: #f3f6f2;
+  --surface: #ffffff;
+  --surface-sunk: #e8eee9;
+  --line: #d3ddd7;
+  --teal: #0e7c7b;
+  --teal-strong: #0a5f5e;
+  --teal-wash: #dcefec;
+  --on-teal: #ffffff;
+  --marigold: #e9a100;
+  --marigold-wash: #fdf1d2;
+  --brick: #b4442f;
+  --brick-wash: #f7e3de;
+  --success: #2e7d4f;
+  --focus: #e9a100;
+
+  --font-display: 'Anek Bangla', 'Hind Siliguri', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Type scale (≈ 1.25 ratio) */
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.5625rem;
+  --step-3: 1.953rem;
+  --step-4: 2.6rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Radii follow hierarchy: controls are tight, panels softer, pills round. */
+  --radius-control: 6px;
+  --radius-panel: 12px;
+  --radius-pill: 999px;
+
+  --shadow-raised: 0 1px 0 rgba(18, 49, 58, 0.06), 0 6px 18px -10px rgba(18, 49, 58, 0.35);
+  --max-width: 1240px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #e4ecea;
+    --ink-soft: #a5b8b6;
+    --paper: #0f2228;
+    --surface: #15303a;
+    --surface-sunk: #102830;
+    --line: #2a4750;
+    --teal: #3fb2ad;
+    --teal-strong: #6fcac5;
+    --teal-wash: #173f43;
+    --on-teal: #0f2228;
+    --marigold: #f2b632;
+    --marigold-wash: #3a3218;
+    --brick: #e57a63;
+    --brick-wash: #3d2420;
+    --success: #6cc08f;
+    --shadow-raised: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ink: #e4ecea;
+  --ink-soft: #a5b8b6;
+  --paper: #0f2228;
+  --surface: #15303a;
+  --surface-sunk: #102830;
+  --line: #2a4750;
+  --teal: #3fb2ad;
+  --teal-strong: #6fcac5;
+  --teal-wash: #173f43;
+  --on-teal: #0f2228;
+  --marigold: #f2b632;
+  --marigold-wash: #3a3218;
+  --brick: #e57a63;
+  --brick-wash: #3d2420;
+  --success: #6cc08f;
+  color-scheme: dark;
+}
