@@ -4,6 +4,7 @@
 
 import { apiUrl, type QueryValue } from './url';
 import { getSession, refreshSession, setSession } from './session';
+import { trackRequest } from './serverStatus';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -70,6 +71,7 @@ async function send(path: string, options: RequestOptions, accessToken: string |
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  const done = trackRequest();
   try {
     return await fetch(apiUrl(path, options.query), {
       method: options.method ?? 'GET',
@@ -84,6 +86,8 @@ async function send(path: string, options: RequestOptions, accessToken: string |
       code: 'NETWORK_ERROR',
       message: 'Could not reach the Navora server. Check that the backend is running.',
     });
+  } finally {
+    done();
   }
 }
 

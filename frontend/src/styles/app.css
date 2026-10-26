@@ -269,6 +269,18 @@ button {
   color: var(--ink-soft);
 }
 
+/* Free hosting: shown while a request takes unusually long (server waking up). */
+.waking {
+  position: sticky;
+  top: 4rem;
+  z-index: 999;
+  margin: 0;
+  padding: var(--space-2) max(var(--space-4), calc((100vw - var(--max-width)) / 2));
+  background: var(--marigold-wash);
+  border-bottom: 1px solid var(--marigold);
+  font-size: 0.92rem;
+}
+
 /* ---------- controls ---------- */
 .btn {
   display: inline-flex;

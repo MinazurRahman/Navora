@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useTripDraft } from '../trip/tripDraft';
+import { useServerSlow } from '../api/serverStatus';
 
 export function Layout() {
   const { user, isModerator, logout } = useAuth();
   const draft = useTripDraft();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const serverSlow = useServerSlow();
 
   const close = () => setMenuOpen(false);
 
@@ -87,6 +89,12 @@ export function Layout() {
           )}
         </nav>
       </header>
+
+      {serverSlow && (
+        <p className="waking" role="status">
+          Still working. If Navora has not been used for a while, its server takes up to a minute to start.
+        </p>
+      )}
 
       <main id="main" className="main">
         <Outlet />
